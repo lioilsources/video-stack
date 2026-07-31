@@ -1,0 +1,20 @@
+=== split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors ===
+=== split_files/vae/wan_2.1_vae.safetensors ===
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+=== split_files/vae/wan2.2_vae.safetensors ===
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+=== split_files/diffusion_models/wan2.2_ti2v_5B_fp16.safetensors ===
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+=== split_files/diffusion_models/wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors ===
+=== split_files/diffusion_models/wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors ===
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+=== split_files/diffusion_models/wan2.2_t2v_high_noise_14B_fp8_scaled.safetensors ===
+=== split_files/diffusion_models/wan2.2_t2v_low_noise_14B_fp8_scaled.safetensors ===
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+=== Wan2.2-I2V-A14B-4steps-lora-rank64-Seko-V1/high_noise_model ===
+=== Wan2.2-I2V-A14B-4steps-lora-rank64-Seko-V1/low_noise_model ===
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+=== Wan2.2-T2V-A14B-4steps-lora-rank64-Seko-V1.1/high_noise_model ===
+=== Wan2.2-T2V-A14B-4steps-lora-rank64-Seko-V1.1/low_noise_model ===
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+=== DOWNLOAD COMPLETE ===

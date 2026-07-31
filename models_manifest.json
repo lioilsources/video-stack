@@ -1,0 +1,45 @@
+{
+  "source": {
+    "repack": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged",
+    "lightning": "lightx2v/Wan2.2-Lightning"
+  },
+  "note": "integrity verified by hf download (xet chunk hashes); sizes recorded post-download",
+  "files": {
+    "diffusion_models/wan2.2_ti2v_5B_fp16.safetensors": {
+      "bytes": 9999658848
+    },
+    "diffusion_models/wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors": {
+      "bytes": 14294742832
+    },
+    "diffusion_models/wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors": {
+      "bytes": 14294742832
+    },
+    "diffusion_models/wan2.2_t2v_high_noise_14B_fp8_scaled.safetensors": {
+      "bytes": 14293923632
+    },
+    "diffusion_models/wan2.2_t2v_low_noise_14B_fp8_scaled.safetensors": {
+      "bytes": 14293923632
+    },
+    "text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors": {
+      "bytes": 6735906897
+    },
+    "vae/wan_2.1_vae.safetensors": {
+      "bytes": 253815318
+    },
+    "vae/wan2.2_vae.safetensors": {
+      "bytes": 1409400960
+    },
+    "loras/Wan2.2-I2V-A14B-4steps-lora-rank64-Seko-V1_high_noise_model.safetensors": {
+      "bytes": 1226977424
+    },
+    "loras/Wan2.2-I2V-A14B-4steps-lora-rank64-Seko-V1_low_noise_model.safetensors": {
+      "bytes": 1226977424
+    },
+    "loras/Wan2.2-T2V-A14B-4steps-lora-rank64-Seko-V1.1_high_noise_model.safetensors": {
+      "bytes": 1226977424
+    },
+    "loras/Wan2.2-T2V-A14B-4steps-lora-rank64-Seko-V1.1_low_noise_model.safetensors": {
+      "bytes": 1226977424
+    }
+  }
+}
