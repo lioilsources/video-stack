@@ -1,0 +1,17 @@
+{
+ "1": {"class_type": "UNETLoader", "inputs": {"unet_name": "wan2.2_fun_camera_high_noise_14B_fp8_scaled.safetensors", "weight_dtype": "default"}},
+ "2": {"class_type": "ModelSamplingSD3", "inputs": {"model": ["1",0], "shift": 8.0}},
+ "3": {"class_type": "UNETLoader", "inputs": {"unet_name": "wan2.2_fun_camera_low_noise_14B_fp8_scaled.safetensors", "weight_dtype": "default"}},
+ "4": {"class_type": "ModelSamplingSD3", "inputs": {"model": ["3",0], "shift": 8.0}},
+ "5": {"class_type": "CLIPLoader", "inputs": {"clip_name": "umt5_xxl_fp8_e4m3fn_scaled.safetensors", "type": "wan", "device": "default"}},
+ "6": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["5",0], "text": "PROMPT_PLACEHOLDER"}},
+ "7": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["5",0], "text": "blurry, static, low quality, watermark, text"}},
+ "8": {"class_type": "VAELoader", "inputs": {"vae_name": "wan_2.1_vae.safetensors"}},
+ "9": {"class_type": "LoadImage", "inputs": {"image": "i2v_input.png"}},
+ "10": {"class_type": "WanCameraEmbedding", "inputs": {"camera_pose": "Zoom In", "width": 832, "height": 480, "length": 33}},
+ "11": {"class_type": "WanCameraImageToVideo", "inputs": {"positive": ["6",0], "negative": ["7",0], "vae": ["8",0], "width": ["10",1], "height": ["10",2], "length": ["10",3], "batch_size": 1, "start_image": ["9",0], "camera_conditions": ["10",0]}},
+ "12": {"class_type": "KSamplerAdvanced", "inputs": {"add_noise": "enable", "noise_seed": 42, "steps": 20, "cfg": 5.0, "sampler_name": "euler", "scheduler": "simple", "model": ["2",0], "positive": ["11",0], "negative": ["11",1], "latent_image": ["11",2], "start_at_step": 0, "end_at_step": 10, "return_with_leftover_noise": "enable"}},
+ "13": {"class_type": "KSamplerAdvanced", "inputs": {"add_noise": "disable", "noise_seed": 42, "steps": 20, "cfg": 5.0, "sampler_name": "euler", "scheduler": "simple", "model": ["4",0], "positive": ["11",0], "negative": ["11",1], "latent_image": ["12",0], "start_at_step": 10, "end_at_step": 20, "return_with_leftover_noise": "disable"}},
+ "14": {"class_type": "VAEDecode", "inputs": {"samples": ["13",0], "vae": ["8",0]}},
+ "15": {"class_type": "SaveWEBM", "inputs": {"images": ["14",0], "filename_prefix": "camera_control", "codec": "vp9", "fps": 16.0, "crf": 32.0}}
+}

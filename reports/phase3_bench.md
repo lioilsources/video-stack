@@ -39,3 +39,16 @@ Kopie pro interaktivní použití: ComfyUI user/default/workflows/video-stack/
 - Prompt enhancement přes AiStack :8080 — gateway žije (aliasy lab/dev/…);
   potřeba potvrdit, který alias je vision model pro I2V.
 - RIFE checkpoint (rife47.pth) se stáhne při prvním použití upscale_interp.
+
+## Dodatek — Tier D (2026-08-01 večer)
+
+Wan 2.1 VACE z plánu nahrazen Wan 2.2 fun_* fp8_scaled z Comfy-Org repacku
+(novější, poloviční velikost). Staženo: fun_control (26.6 GB), fun_camera
+(28.6 GB), fun_vace (32.4 GB).
+
+Nové workflow:
+- v2v_control_14b — driving video přes Canny → Wan22FunControlToVideo;
+  832×480/33f/20 kroků = 666 s. Ověřeno vizuálně: pohyb a kompozice kopírují
+  control video 1:1, vzhled řídí prompt + ref_image.
+- camera_control — Fun Camera, preset trajektorie (Static/Pan×4/Zoom×2/CW/ACW)
+  přes WanCameraEmbedding. Test čeká na doběhnutí download.
