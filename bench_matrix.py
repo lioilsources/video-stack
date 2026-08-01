@@ -12,7 +12,7 @@ def free_mb():
     return (m["MemTotal"] - m["MemAvailable"]) // 1024
 
 def run(wf_path, width, height, length):
-    d = json.load(open(wf_path))
+    d = {"prompt": json.load(open(wf_path))}
     p = d["prompt"]
     for node in p.values():
         i = node["inputs"]
