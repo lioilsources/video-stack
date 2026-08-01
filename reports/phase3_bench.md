@@ -51,4 +51,5 @@ Nové workflow:
   832×480/33f/20 kroků = 666 s. Ověřeno vizuálně: pohyb a kompozice kopírují
   control video 1:1, vzhled řídí prompt + ref_image.
 - camera_control — Fun Camera, preset trajektorie (Static/Pan×4/Zoom×2/CW/ACW)
-  přes WanCameraEmbedding. Test čeká na doběhnutí download.
+  přes WanCameraEmbedding; 832×480/33f/20 kroků = 596 s. Ověřeno: Zoom In ze
+  start image plynule najíždí do scény, obsah konzistentní.

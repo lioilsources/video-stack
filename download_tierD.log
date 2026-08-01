@@ -5,3 +5,8 @@ Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF
 === DONE wan2.2_fun_control_low_noise_14B_fp8_scaled ===
 === wan2.2_fun_camera_high_noise_14B_fp8_scaled ===
 Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+=== DONE wan2.2_fun_camera_high_noise_14B_fp8_scaled ===
+=== wan2.2_fun_camera_low_noise_14B_fp8_scaled ===
+=== DONE wan2.2_fun_camera_low_noise_14B_fp8_scaled ===
+=== wan2.2_fun_vace_high_noise_14B_fp8_scaled ===
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
