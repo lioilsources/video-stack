@@ -53,3 +53,14 @@ Nové workflow:
 - camera_control — Fun Camera, preset trajektorie (Static/Pan×4/Zoom×2/CW/ACW)
   přes WanCameraEmbedding; 832×480/33f/20 kroků = 596 s. Ověřeno: Zoom In ze
   start image plynule najíždí do scény, obsah konzistentní.
+
+Tier D uzavřen — všechny tři řídicí modely ověřeny na 832×480/33f/20 krocích:
+
+| Workflow | Model | Čas | Ověřeno |
+|---|---|---|---|
+| v2v_control_14b | fun_control | 666 s | pohyb 1:1 dle control videa |
+| camera_control | fun_camera | 596 s | Zoom In preset ze start image |
+| vace_edit | fun_vace | 771 s | pohyb z videa + vzhled z reference (TrimVideoLatent nutný) |
+
+Kandidát na zrychlení: T2V Lightning LoRA na fun modely (4 kroky místo 20)
+— netestováno, komunita hlásí smíšené výsledky.
