@@ -64,3 +64,14 @@ Tier D uzavřen — všechny tři řídicí modely ověřeny na 832×480/33f/20 
 
 Kandidát na zrychlení: T2V Lightning LoRA na fun modely (4 kroky místo 20)
 — netestováno, komunita hlásí smíšené výsledky.
+
+## Resty (2026-08-01 večer)
+
+- **Lightning na fun_control funguje**: T2V Seko-V1.1 LoRA na oba control
+  experty, shift 5, 4 kroky, cfg 1 → 170 s místo 666 s (4×) při vizuálně
+  srovnatelné kvalitě i věrnosti controlu. Uloženo jako
+  v2v_control_14b_lightning.json; 20-kroková verze zůstává jako reference.
+- **Prompt enhancement**: enhance_prompt.py — textová expanze ověřena přes
+  alias shop (Qwen3-32B). Vision backendy (dev/lab/ocr) byly uspané,
+  obrazová varianta neověřena; skript degraduje na původní prompt.
+- **GitHub**: repo lioilsources/video-stack (private), push z Macu.
