@@ -1,0 +1,14 @@
+workflow	res	frames	sec	peak_mb	status
+t2v_final_14b_lightning.json	832x480	33	135	83610	ok
+t2v_draft_5b.json	832x480	33	215	85089	ok
+t2v_draft_5b.json	832x480	81	336	85954	ok
+t2v_draft_5b.json	1280x704	33	290	90024	ok
+t2v_draft_5b.json	1280x704	81	711	90822	ok
+t2v_final_14b_lightning.json	832x480	81	285	85378	ok
+t2v_final_14b_lightning.json	1280x704	33	255	88873	ok
+t2v_final_14b_lightning.json	1280x704	81	780	88591	ok
+i2v_final_14b_lightning.json	832x480	33	155	83771	ok
+i2v_final_14b_lightning.json	832x480	81	290	84198	ok
+i2v_final_14b_lightning.json	1280x704	33	266	88289	ok
+i2v_final_14b_lightning.json	1280x704	81	806	89053	ok
+MATRIX DONE
