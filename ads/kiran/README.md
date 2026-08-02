@@ -40,3 +40,34 @@ Mix: −18 dB mean / −1.7 dB max.
 - Sledovat běh podle logu s timeouty je křehké: timeout zabije čekání, ne
   úlohu, a další úloha se zařadí do fronty za tu běžící. Spolehlivější je
   hlídat počet výstupních souborů.
+
+## Reprodukce a úpravy jednotlivých záběrů
+
+Zdroj pravdy je **`shots.json`** — prompty, keyframy, rozlišení, seedy, časová
+osa, hudba, SFX i titulky na jednom místě.
+
+```bash
+./render.py --materialize      # shots.json -> workflows/shotNN.json
+./render.py --validate         # kontrola proti /object_info běžícího ComfyUI
+./render.py --shots 05,09      # přerenderuje jen tyhle dva záběry
+./render.py --all --draft      # všech 10 v 480p (rychlá iterace)
+./render.py --shots 03 --seed 7
+```
+
+`workflows/shotNN.json` jsou plnohodnotné API workflow s **dosazenými**
+hodnotami — žádné placeholdery. Otevřou se v ComfyUI přetažením na plátno
+(sidebar API formát nekonvertuje), dají se ručně doladit a `render.py` je pak
+použije beze změny. Kopie jsou i v ComfyUI pod `workflows/video-stack/kiran-ad/`.
+
+`--validate` kontroluje class_type a povinné vstupy proti běžící instanci —
+právě tenhle druh chyby shodil RIFE i MMAudio loader.
+
+### Slepení
+
+```bash
+./build_keyframes.sh    # keyframy z herních spritů (běží na Macu)
+./assemble_hd.sh        # 1080p finále: concat + hudba + SFX + titulky
+```
+
+Časová osa v `assemble_hd.sh` odpovídá polím `start` v `shots.json`
+(3.0625 s na záběr); při změně délky záběrů je nutné upravit obojí.
