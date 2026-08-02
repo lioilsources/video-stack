@@ -66,8 +66,32 @@ právě tenhle druh chyby shodil RIFE i MMAudio loader.
 
 ```bash
 ./build_keyframes.sh    # keyframy z herních spritů (běží na Macu)
-./assemble_hd.sh        # 1080p finále: concat + hudba + SFX + titulky
+./assemble.py --plan    # vypíše časovou osu, nic nerenderuje
+./assemble.py           # 1080p finále: concat + hudba + SFX + titulky
+./assemble.py --draft   # 480p varianta z shots/
 ```
 
-Časová osa v `assemble_hd.sh` odpovídá polím `start` v `shots.json`
-(3.0625 s na záběr); při změně délky záběrů je nutné upravit obojí.
+### Délka záběrů
+
+Časová osa se **počítá** z `length` (počet snímků / `fps_render`), v manifestu
+žádné `start` není. Změna délky je jediná editace:
+
+```json
+"defaults": { "length": 81 }        // všechny záběry na 5.06 s
+"shots": [ { "id": "09", "length": 81, ... } ]   // jen tenhle
+```
+
+Wan VAE komprimuje čas 4:1, takže **length musí být 4n+1**: 33 (2.06 s),
+49 (3.06 s), 65 (4.06 s), 81 (5.06 s). Nad 81 nechodit — konec trénovacího
+okna Wan 2.2, delší klipy driftují.
+
+Audio a titulky se kotví symbolicky, takže se posunou s ním:
+
+```json
+"at": {"shot": "06"}                  // začátek záběru 6
+"at": {"shot": "09", "offset": 0.6}   // 0.6 s po jeho začátku
+"to": {"end": true}                   // konec spotu
+```
+
+Ověřeno: výstup nového `assemble.py` je proti původnímu ručnímu skriptu
+pixel po pixelu identický (PSNR inf).

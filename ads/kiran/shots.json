@@ -6,60 +6,191 @@
   "negative": "blurry, static, low quality, watermark, text",
   "defaults": {
     "workflow": "i2v_final_14b_lightning",
-    "width": 1280, "height": 704, "length": 49, "seed": 42,
-    "draft": {"width": 832, "height": 480}
+    "width": 1280,
+    "height": 704,
+    "length": 49,
+    "seed": 42,
+    "draft": {
+      "width": 832,
+      "height": 480
+    }
   },
   "shots": [
-    {"id": "01", "start": 0.0000, "title": "hero vessel, kamera krouží",
-     "workflow": "camera_control", "camera_pose": "ClockWise (CW)",
-     "keyframe": "kiran_ad_shot01.png",
-     "prompt": "the vessel hovers, engine flame flickering"},
-    {"id": "02", "start": 3.0625, "title": "drift vesmírem",
-     "keyframe": "kiran_ad_shot02.png",
-     "prompt": "the vessel drifts weightlessly through space, slow camera follow, stars parallax"},
-    {"id": "03", "start": 6.1250, "title": "průlet meteority",
-     "keyframe": "kiran_ad_shot03.png",
-     "prompt": "the vessel weaves between tumbling asteroids, camera tracking, near miss"},
-    {"id": "04", "start": 9.1875, "title": "formace falconů",
-     "keyframe": "kiran_ad_shot04.png",
-     "prompt": "falcon fighters glide into V formation, menacing approach toward camera"},
-    {"id": "05", "start": 12.2500, "title": "souboj s falcony",
-     "keyframe": "kiran_ad_shot05.png",
-     "prompt": "dogfight: lasers firing, fighters strafing, explosion flash, fast motion"},
-    {"id": "06", "start": 15.3125, "title": "boss se objevuje",
-     "keyframe": "kiran_ad_shot06.png",
-     "prompt": "massive boss ship descends from above, small vessel holds position, dread"},
-    {"id": "07", "start": 18.3750, "title": "boss dominuje",
-     "keyframe": "kiran_ad_shot07.png",
-     "prompt": "boss unleashes barrage, vessel takes hits and tumbles, sparks and debris"},
-    {"id": "08", "start": 21.4375, "title": "boss se zahřívá pod palbou",
-     "keyframe": "kiran_ad_shot08.png",
-     "prompt": "vessel fires relentless stream, boss hull glowing hotter, orange heat building"},
-    {"id": "09", "start": 24.5000, "title": "rozpad bosse",
-     "keyframe": "kiran_ad_shot09.png",
-     "prompt": "boss ship breaks apart in chain explosions, fragments scattering, blinding flash"},
-    {"id": "10", "start": 27.5625, "title": "odlet do dalšího perimetru",
-     "keyframe": "kiran_ad_shot10.png",
-     "prompt": "vessel accelerates away toward distant bright gate, engine trail, calm after battle"}
+    {
+      "id": "01",
+      "title": "hero vessel, kamera krouží",
+      "workflow": "camera_control",
+      "camera_pose": "ClockWise (CW)",
+      "keyframe": "kiran_ad_shot01.png",
+      "prompt": "the vessel hovers, engine flame flickering"
+    },
+    {
+      "id": "02",
+      "title": "drift vesmírem",
+      "keyframe": "kiran_ad_shot02.png",
+      "prompt": "the vessel drifts weightlessly through space, slow camera follow, stars parallax"
+    },
+    {
+      "id": "03",
+      "title": "průlet meteority",
+      "keyframe": "kiran_ad_shot03.png",
+      "prompt": "the vessel weaves between tumbling asteroids, camera tracking, near miss"
+    },
+    {
+      "id": "04",
+      "title": "formace falconů",
+      "keyframe": "kiran_ad_shot04.png",
+      "prompt": "falcon fighters glide into V formation, menacing approach toward camera"
+    },
+    {
+      "id": "05",
+      "title": "souboj s falcony",
+      "keyframe": "kiran_ad_shot05.png",
+      "prompt": "dogfight: lasers firing, fighters strafing, explosion flash, fast motion"
+    },
+    {
+      "id": "06",
+      "title": "boss se objevuje",
+      "keyframe": "kiran_ad_shot06.png",
+      "prompt": "massive boss ship descends from above, small vessel holds position, dread"
+    },
+    {
+      "id": "07",
+      "title": "boss dominuje",
+      "keyframe": "kiran_ad_shot07.png",
+      "prompt": "boss unleashes barrage, vessel takes hits and tumbles, sparks and debris"
+    },
+    {
+      "id": "08",
+      "title": "boss se zahřívá pod palbou",
+      "keyframe": "kiran_ad_shot08.png",
+      "prompt": "vessel fires relentless stream, boss hull glowing hotter, orange heat building"
+    },
+    {
+      "id": "09",
+      "title": "rozpad bosse",
+      "keyframe": "kiran_ad_shot09.png",
+      "prompt": "boss ship breaks apart in chain explosions, fragments scattering, blinding flash"
+    },
+    {
+      "id": "10",
+      "title": "odlet do dalšího perimetru",
+      "keyframe": "kiran_ad_shot10.png",
+      "prompt": "vessel accelerates away toward distant bright gate, engine trail, calm after battle"
+    }
   ],
   "audio": {
     "skin_dir": "/Volumes/YOTTA/Dev/Kiran/tyrian_mobile/assets/skins/geometry_wars",
     "music": [
-      {"file": "music/intro.ogg",   "at": 0.0,   "trim": 9.4,  "gain": 0.85},
-      {"file": "music/theme_3.ogg", "at": 9.19,  "trim": 6.8,  "gain": 0.85},
-      {"file": "music/theme_5.ogg", "at": 15.31, "trim": 12.8, "gain": 0.90}
+      {
+        "file": "music/intro.ogg",
+        "at": {
+          "shot": "01"
+        },
+        "trim": 9.4,
+        "gain": 0.85
+      },
+      {
+        "file": "music/theme_3.ogg",
+        "at": {
+          "shot": "04"
+        },
+        "trim": 6.8,
+        "gain": 0.85
+      },
+      {
+        "file": "music/theme_5.ogg",
+        "at": {
+          "shot": "06"
+        },
+        "trim": 12.8,
+        "gain": 0.9
+      }
     ],
     "sfx": [
-      {"file": "sfx/explosion_large.ogg", "at": 13.5,  "gain": 0.70},
-      {"file": "sfx/fire_beam.ogg",       "at": 21.5,  "gain": 0.55},
-      {"file": "sfx/explosion_large.ogg", "at": 24.6,  "gain": 0.65},
-      {"file": "sfx/explosion_small.ogg", "at": 25.6,  "gain": 0.60},
-      {"file": "sfx/sector_complete.ogg", "at": 27.6,  "gain": 0.80}
+      {
+        "file": "sfx/explosion_large.ogg",
+        "at": {
+          "shot": "05",
+          "offset": 1.25
+        },
+        "gain": 0.7
+      },
+      {
+        "file": "sfx/fire_beam.ogg",
+        "at": {
+          "shot": "08",
+          "offset": 0.06
+        },
+        "gain": 0.55
+      },
+      {
+        "file": "sfx/explosion_large.ogg",
+        "at": {
+          "shot": "09",
+          "offset": 0.1
+        },
+        "gain": 0.65
+      },
+      {
+        "file": "sfx/explosion_small.ogg",
+        "at": {
+          "shot": "09",
+          "offset": 1.1
+        },
+        "gain": 0.6
+      },
+      {
+        "file": "sfx/sector_complete.ogg",
+        "at": {
+          "shot": "10"
+        },
+        "gain": 0.8
+      }
     ]
   },
   "titles": [
-    {"text": "KIRAN",              "from": 0.5,  "to": 2.9,  "size": 200, "gravity": "north",  "offset": 130},
-    {"text": "14 skins. One war.", "from": 27.7, "to": 29.2, "size": 96,  "gravity": "south",  "offset": 200},
-    {"text": "olin.now",           "from": 29.3, "to": 30.6, "size": 140, "gravity": "center", "offset": 90}
-  ]
+    {
+      "text": "KIRAN",
+      "from": {
+        "shot": "01",
+        "offset": 0.5
+      },
+      "to": {
+        "shot": "01",
+        "offset": 2.9
+      },
+      "size": 200,
+      "gravity": "north",
+      "offset": 130
+    },
+    {
+      "text": "14 skins. One war.",
+      "from": {
+        "shot": "10",
+        "offset": 0.15
+      },
+      "to": {
+        "shot": "10",
+        "offset": 1.65
+      },
+      "size": 96,
+      "gravity": "south",
+      "offset": 200
+    },
+    {
+      "text": "olin.now",
+      "from": {
+        "shot": "10",
+        "offset": 1.75
+      },
+      "to": {
+        "end": true
+      },
+      "size": 140,
+      "gravity": "center",
+      "offset": 90
+    }
+  ],
+  "_note": "Časová osa se počítá z 'length' záběrů — pole 'start' zde záměrně není. Audio a titulky se kotví symbolicky: {'shot':'06'} = začátek záběru 6, {'shot':'09','offset':0.6} = 0.6 s po jeho začátku, {'end':true} = konec spotu."
 }
