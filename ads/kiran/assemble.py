@@ -21,14 +21,29 @@ M = json.load(open(os.path.join(HERE, "shots.json")))
 FONT = "/System/Library/Fonts/Helvetica.ttc"
 
 
+def shot_trim(shot):
+    """(offset, dur) vybraného úseku záběru. Bez trimu = celý záběr."""
+    full = shot.get("length", M["defaults"]["length"]) / M["fps_render"]
+    tr = shot.get("trim")
+    if not tr:
+        return 0.0, full
+    a = float(tr.get("from", 0.0))
+    b = float(tr.get("to", full))
+    if not (0.0 <= a < b <= full + 1e-6):
+        raise SystemExit("shot%s: neplatný trim %r (záběr má %.3f s)" % (shot["id"], tr, full))
+    return a, min(b, full) - a
+
+
 def timeline():
-    """[(shot, start, dur)] + celková délka — počítáno z length a fps."""
-    fps = M["fps_render"]
-    d = M["defaults"]
+    """[(shot, start, dur, src_offset)] + celková délka.
+
+    Délka záběru ve spotu = jeho trim, nebo celá stopáž. Časy se skládají
+    kumulativně, takže zkrácení jednoho záběru posune všechny následující
+    i s navázaným audiem a titulky."""
     out, t = [], 0.0
-    for s in M["shots"]:
-        dur = s.get("length", d["length"]) / fps
-        out.append((s, t, dur))
+    for shot in M["shots"]:
+        off, dur = shot_trim(shot)
+        out.append((shot, t, dur, off))
         t += dur
     return out, t
 
@@ -39,7 +54,7 @@ def resolve(anchor, tl, total):
         return float(anchor)
     if anchor.get("end"):
         return total + float(anchor.get("offset", 0))
-    for s, start, dur in tl:
+    for s, start, dur, _off in tl:
         if s["id"] == anchor["shot"]:
             return start + float(anchor.get("offset", 0))
     raise SystemExit("neznámá kotva: %r" % (anchor,))
@@ -48,10 +63,12 @@ def resolve(anchor, tl, total):
 def plan():
     tl, total = timeline()
     print("Časová osa (fps render %d, finální %d)" % (M["fps_render"], M["fps_final"]))
-    for s, start, dur in tl:
-        print("  shot%s  %6.2f–%6.2f s  (%4.2f s, %d snímků)  %s"
+    for s, start, dur, off in tl:
+        full = s.get("length", M["defaults"]["length"]) / M["fps_render"]
+        mark = "  [trim %.2f–%.2f z %.2f s]" % (off, off + dur, full) if s.get("trim") else ""
+        print("  shot%s  %6.2f–%6.2f s  (%4.2f s, %d snímků)  %s%s"
               % (s["id"], start, start + dur, dur,
-                 s.get("length", M["defaults"]["length"]), s["title"]))
+                 s.get("length", M["defaults"]["length"]), s["title"], mark))
     print("  celkem: %.2f s\n" % total)
     print("Hudba:")
     for m in M["audio"]["music"]:
@@ -94,15 +111,20 @@ def assemble(hd=True):
         make_titles(hd)
 
     inputs, filt = [], []
-    for s, _, _ in tl:
+    for s, _, dur, off in tl:
         p = os.path.join(shots_dir, "shot%s.webm" % s["id"])
         if not os.path.exists(p):  # tolerantně i k pojmenování z ComfyUI
             alt = os.path.join(shots_dir, "shot%s_00001_.webm" % s["id"])
             p = alt if os.path.exists(alt) else sys.exit("chybí %s" % p)
-        inputs += ["-i", p]
+        if s.get("trim"):
+            inputs += ["-ss", "%.3f" % off, "-t", "%.3f" % dur, "-i", p]
+        else:
+            inputs += ["-i", p]
     n = len(tl)
 
-    filt.append("".join("[%d:v]" % i for i in range(n)) + "concat=n=%d:v=1:a=0[cat];" % n)
+    for i in range(n):
+        filt.append("[%d:v]fps=%d,setpts=PTS-STARTPTS[c%d];" % (i, M["fps_final"], i))
+    filt.append("".join("[c%d]" % i for i in range(n)) + "concat=n=%d:v=1:a=0[cat];" % n)
     if hd:
         filt.append("[cat]scale=1920:1056:flags=lanczos,pad=1920:1080:0:12:color=black[base];")
     else:

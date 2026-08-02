@@ -85,6 +85,19 @@ Wan VAE komprimuje čas 4:1, takže **length musí být 4n+1**: 33 (2.06 s),
 49 (3.06 s), 65 (4.06 s), 81 (5.06 s). Nad 81 nechodit — konec trénovacího
 okna Wan 2.2, delší klipy driftují.
 
+### Střih bez přegenerování
+
+`length` je parametr modelu — jeho změna vyžaduje nový render. Když chceš jen
+zkrátit **hotový** záběr, použij `trim` (sekundy v rámci záběru):
+
+```json
+{ "id": "02", "trim": {"from": 0.5, "to": 2.0}, ... }
+```
+
+Ořez se dělá při montáži, GPU se nedotkne. Tohle je způsob, jak ladit rytmus
+spotu: vygeneruj záběry velkoryse na 81 snímků a pak je ve střihu zkracuj,
+dokud nesednou do hudby. `--plan` ukáže, co je oříznuté.
+
 Audio a titulky se kotví symbolicky, takže se posunou s ním:
 
 ```json
