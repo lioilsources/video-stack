@@ -86,7 +86,7 @@
  "10": {
   "class_type": "LoadImage",
   "inputs": {
-   "image": "i2v_input.png"
+   "image": "flf_start.png"
   }
  },
  "11": {
@@ -213,7 +213,7 @@
  "17": {
   "class_type": "LoadImage",
   "inputs": {
-   "image": "flf2v_end.png"
+   "image": "flf_end.png"
   }
  }
 }
