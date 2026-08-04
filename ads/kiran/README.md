@@ -108,3 +108,22 @@ Audio a titulky se kotví symbolicky, takže se posunou s ním:
 
 Ověřeno: výstup nového `assemble.py` je proti původnímu ručnímu skriptu
 pixel po pixelu identický (PSNR inf).
+
+## flf2v_lightning — interpolace mezi dvěma obrázky
+
+Zadáš **výchozí a koncový snímek, žádný prompt** — model dogeneruje pohyb mezi
+nimi. Postavené na I2V A14B + I2V Lightning LoRA, 4 kroky, cfg 1.
+
+| | |
+|---|---|
+| vstupy | `flf_start.png`, `flf_end.png` v ComfyUI `input/` (node 10 a 11) |
+| prompty | prázdné; při cfg 1 se negativní prompt stejně neuplatní |
+| délka | `length` v node 13 — 4n+1, default 33 (2.06 s) |
+| čas | 155 s @ 832×480/33f |
+
+Ověřeno: první snímek odpovídá vstupnímu startu (RMSE 0.020) a poslední
+koncovému (0.066) — proti 0.206 u nesouvisejícího páru. Vyšší odchylka na
+konci je očekávaná, model ke koncovému snímku konverguje, netrefuje ho přesně.
+
+Použití pro multi-shot: poslední snímek klipu N a první snímek klipu N+1
+jako start/end — tím vznikne plynulý přechod mezi záběry.
