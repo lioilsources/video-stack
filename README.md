@@ -61,14 +61,12 @@ spark-video plan mojevideo
 spark-video run  mojevideo
 ```
 
-Instalace na Macu (repo naklonovaný kdekoliv):
+Nic se neinstaluje a nebuilduje — je to bash a git drží bit spustitelnosti.
+Skript si najde kořen repa sám, takže `./bin/spark-video ls` funguje odkudkoliv;
+kdo ho chce mít pod rukou, přidá si `bin/` do PATH.
 
-```bash
-ln -sf "$PWD/bin/spark-video" ~/.local/bin/spark-video
-```
-
-Manifesty a výstupy zůstávají mimo repo v `~/spark-video/{chains,out}` — jsou to
-data, ne zdroják. Podrobnosti v [bin/README.md](bin/README.md).
+Manifesty jsou v `chains/` (stejné, které čte `chain.py`) a výstupy v `out/`,
+což je v `.gitignore`. V home nezůstává nic. Podrobnosti v [bin/README.md](bin/README.md).
 
 ## chain.py — 15s klip z jednoho obrázku
 

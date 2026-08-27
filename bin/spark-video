@@ -7,13 +7,22 @@
 #   spark-video run  <jméno> [--hd]      # render + slepení + RIFE, stáhne výsledek
 #   spark-video ls                       # co už je hotové
 #
-# Manifesty:  ~/spark-video/chains/<jméno>.json
-# Výsledky:   ~/spark-video/out/<jméno>_{16,32}fps.mp4
+# Manifesty:  <repo>/chains/<jméno>.json      — verzované, čte je i chain.py
+# Výsledky:   <repo>/out/<jméno>_{16,32}fps.mp4  — v .gitignore
 # Přepíše se: SPARK_VIDEO_DIR, SPARK_HOST
 set -euo pipefail
 
 HOST="${SPARK_HOST:-spark}"
-DIR="${SPARK_VIDEO_DIR:-$HOME/spark-video}"
+
+# Data patri do repa, ne do home: manifesty jsou zdrojak (chain.py na SPARKu cte
+# presne stejne chains/) a vystupy jdou do gitignorovaneho out/. Skript si proto
+# najde koren repa sam, at uz se vola odkudkoliv nebo pres symlink.
+SELF="${BASH_SOURCE[0]}"
+while [ -L "$SELF" ]; do
+  SELF="$(cd "$(dirname "$SELF")" && pwd)/$(readlink "$SELF")"
+done
+ROOT="$(cd "$(dirname "$SELF")/.." && pwd)"
+DIR="${SPARK_VIDEO_DIR:-$ROOT}"
 STACK='Code/video-stack'      # relativně k domovskému adresáři na SPARKu
                              # (scp jede přes SFTP a $HOME v remote cestě neexpanduje)
 COMFY='Code/ComfyUI'

@@ -1,26 +1,41 @@
 # spark-video — 15s klip z jednoho obrázku, bez klikání v ComfyUI
 
-Skript: `~/.local/bin/spark-video` (už je v PATH)
-Manifesty: `~/spark-video/chains/<jméno>.json`
-Výsledky: `~/spark-video/out/<jméno>_{16,32}fps.mp4`
+Skript: `bin/spark-video` v tomhle repu.
+Manifesty: `chains/<jméno>.json` — verzované, čte je i `chain.py` na SPARKu.
+Výsledky: `out/<jméno>_{16,32}fps.mp4` — v `.gitignore`.
 
-Na SPARKu to jede přes `~/Code/video-stack/chain.py`, který řetězí Wan 2.2 I2V
-segmenty. Jeden segment = 81 snímků = 5.06 s (víc Wan 2.2 najednou neumí),
-poslední snímek segmentu je vstupním obrázkem toho dalšího.
+Nic z toho neleží v home a nepotřebuje symlink: skript si najde kořen repa sám,
+takže funguje odkudkoliv.
+
+## Instalace
+
+Žádná — je to bash, nic se nebuilduje a git drží bit spustitelnosti.
+
+```bash
+./bin/spark-video ls
+```
+
+Když ho chceš mít pod rukou i mimo repo, přidej si `bin/` do PATH:
+
+```bash
+echo 'export PATH="/cesta/k/video-stack/bin:$PATH"' >> ~/.zshrc
+```
 
 ## Celý postup
 
 ```bash
 spark-video new  mojevideo ~/Pictures/fotka.png   # založí manifest, nahraje obrázek
 spark-video edit mojevideo                        # uprav prompty
-spark-video plan mojevideo                        # kontrola: časová osa a odhad, bez GPU
+spark-video plan mojevideo                        # časová osa a odhad, bez GPU
 spark-video run  mojevideo                        # render + slepení + RIFE + stažení
 ```
 
 `run` vypíše na konci cestu k hotovým souborům a v terminálu je rovnou přehraje.
-`spark-video ls` ukáže, co všechno už je hotové.
+`spark-video ls` ukáže, co všechno už je hotové. ComfyUI se nemusí ani otevřít.
 
-Nic dalšího není potřeba — ComfyUI se ani nemusí otevřít.
+Na SPARKu to jede přes `chain.py`, který řetězí Wan 2.2 I2V segmenty. Jeden
+segment = 81 snímků = 5.06 s (víc Wan 2.2 najednou neumí), poslední snímek
+segmentu je vstupním obrázkem toho dalšího.
 
 ## Manifest
 
@@ -41,9 +56,9 @@ Zadání celého klipu na jednom místě. Jeden **beat** = jeden 5s segment.
 }
 ```
 
-**Delší klip = víc beatů.** 3 beaty = 15 s, 5 beatů = 25 s. Ale pozor: každý
-skok je další generace navíc, takže se pomalu ztrácí podobnost s originálem.
-Nad ~6 beatů je lepší udělat víc kratších klipů a sestříhat je.
+**Delší klip = víc beatů.** 3 beaty = 15 s, 5 beatů = 25 s. Každý skok je ale
+další generace navíc, takže se pomalu ztrácí podobnost s originálem. Nad ~6
+beatů je lepší udělat víc kratších klipů a sestříhat je.
 
 ### Prompty
 
@@ -93,5 +108,5 @@ Zapíše `workflows/chain-mojevideo/beatNN.json`. Ty se dají otevřít v ComfyU
 **přetažením na plátno** (ze sidebaru ne — API formát ComfyUI nekonvertuje, na to
 je `api2ui.py`) a `chain.py` je pak při renderu použije beze změny.
 
-**Jiný stroj:** `SPARK_HOST=jinyhost spark-video run …`, jiná složka:
+**Jiný stroj:** `SPARK_HOST=jinyhost spark-video run …`, jiná datová složka:
 `SPARK_VIDEO_DIR=~/jinde`.
