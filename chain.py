@@ -282,7 +282,7 @@ def resume_index(m, w, h):
 def cmd_plan(m, src, w, h):
     L, fps = m["length"], m["fps"]
     seg, step = L / fps, (L - 1) / fps
-    est = SEC_PER_MPX * (w * h / 1e6)
+    est = SEC_PER_MPX * (w * h / 1e6) * L / 81   # naměřeno na 81 snímcích, škáluje lineárně
     print("zdroj      %s" % src)
     print("rozlišení  %d×%d  (%.2f Mpx)" % (w, h, w * h / 1e6))
     print("segment    %d snímků = %.2f s @ %d fps, odhad %.0f s GPU" % (L, seg, fps, est))
