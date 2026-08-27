@@ -71,6 +71,31 @@ kdo ho chce mít pod rukou, přidá si `bin/` do PATH.
 Manifesty jsou v `chains/` (stejné, které čte `chain.py`) a výstupy v `out/`,
 což je v `.gitignore`. V home nezůstává nic. Podrobnosti v [bin/README.md](bin/README.md).
 
+## serve.py — „Rozhýbat" v Ol1nLLM Image Studiu
+
+Job server nad `chain.py` pro appku: telefon nahraje obrázek a vybere scénu,
+render běží na SPARKu, appka polluje a stáhne mp4. Stdlib + PIL, běží z ComfyUI
+venv jako `video-api.service` (`deploy/video-api.service`, port 8096), ven jde
+přes cloudflared path rule `llm.ol1n.com/v1/video/*` (AiStack).
+
+```
+GET  /v1/video/scenes               katalog ze scenes/*.json
+POST /v1/video/jobs                 {scene, image: base64, seed?} → 202 {job_id}
+GET  /v1/video/jobs/<id>            {status: queued|running|done|error, position, beat, beats, phase}
+GET  /v1/video/jobs/<id>/result     video/mp4
+```
+
+Scény jsou v `scenes/<id>.json` — kus manifestu (`style_tail`, `negative`,
+`scenes[]` s beaty) + `id`/`label`/`desc`; server doplní `name`/`source`/`seed`.
+Prompty se ladí tady, bez release appky. Jeden worker (GPU je sériová), stav
+v `jobs/<id>.json`, výsledek je durable `output/<id>/<id>_32fps.mp4`. Před
+startem jobu se kontroluje `vram_free` — pod 12 GB job skončí chybou místo
+hodiny na CPU. TODO: úklid `input/<id>_src.png`, `output/<id>/`, `jobs/` po TTL.
+
+Deploy: `git pull` na SPARKu, `sudo cp deploy/video-api.service /etc/systemd/system/
+&& sudo systemctl daemon-reload && sudo systemctl enable --now video-api`;
+po změně `serve.py` `sudo systemctl restart video-api` (scény se čtou při startu).
+
 ## chain.py — dlouhý klip z jednoho obrázku
 
 Wan 2.2 umí najednou nejvýš **81 snímků** (5.06 s @ 16 fps) a `length` musí být
