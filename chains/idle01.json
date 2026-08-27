@@ -1,0 +1,19 @@
+{
+  "name": "idle01",
+  "source": "chain_src/portrait_00001_.png",
+  "base": "i2v_final_14b_lightning_portrait",
+  "length": 81,
+  "fps": 16,
+  "crf": 18,
+  "style_tail": ", static camera, soft natural window light, photorealistic, subtle motion",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers",
+  "colormatch": { "method": "mkl", "strength": 0.6 },
+  "beats": [
+    { "id": "01", "seed": 42,
+      "prompt": "she breathes gently and blinks slowly, tiny head movement, hair strands settle" },
+    { "id": "02", "seed": 43,
+      "prompt": "a warm smile slowly spreads across her face, eyes crease, slight head tilt" },
+    { "id": "03", "seed": 44,
+      "prompt": "she unfolds her arms and raises one hand in a small friendly wave, then lowers it" }
+  ]
+}

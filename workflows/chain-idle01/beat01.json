@@ -1,0 +1,252 @@
+{
+ "1": {
+  "class_type": "UNETLoader",
+  "inputs": {
+   "unet_name": "wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors",
+   "weight_dtype": "default"
+  }
+ },
+ "2": {
+  "class_type": "LoraLoaderModelOnly",
+  "inputs": {
+   "model": [
+    "1",
+    0
+   ],
+   "lora_name": "Wan2.2-I2V-A14B-4steps-lora-rank64-Seko-V1_high_noise_model.safetensors",
+   "strength_model": 1.0
+  }
+ },
+ "3": {
+  "class_type": "ModelSamplingSD3",
+  "inputs": {
+   "model": [
+    "2",
+    0
+   ],
+   "shift": 5.0
+  }
+ },
+ "4": {
+  "class_type": "UNETLoader",
+  "inputs": {
+   "unet_name": "wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors",
+   "weight_dtype": "default"
+  }
+ },
+ "5": {
+  "class_type": "LoraLoaderModelOnly",
+  "inputs": {
+   "model": [
+    "4",
+    0
+   ],
+   "lora_name": "Wan2.2-I2V-A14B-4steps-lora-rank64-Seko-V1_low_noise_model.safetensors",
+   "strength_model": 1.0
+  }
+ },
+ "6": {
+  "class_type": "ModelSamplingSD3",
+  "inputs": {
+   "model": [
+    "5",
+    0
+   ],
+   "shift": 5.0
+  }
+ },
+ "7": {
+  "class_type": "CLIPLoader",
+  "inputs": {
+   "clip_name": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+   "type": "wan",
+   "device": "default"
+  }
+ },
+ "8": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "clip": [
+    "7",
+    0
+   ],
+   "text": "she breathes gently and blinks slowly, tiny head movement, hair strands settle, static camera, soft natural window light, photorealistic, subtle motion"
+  }
+ },
+ "9": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "clip": [
+    "7",
+    0
+   ],
+   "text": "blurry, low quality, watermark, text, distorted face, extra fingers"
+  }
+ },
+ "10": {
+  "class_type": "LoadImage",
+  "inputs": {
+   "image": "idle01_seed00.png"
+  }
+ },
+ "11": {
+  "class_type": "VAELoader",
+  "inputs": {
+   "vae_name": "wan_2.1_vae.safetensors"
+  }
+ },
+ "12": {
+  "class_type": "WanImageToVideo",
+  "inputs": {
+   "positive": [
+    "8",
+    0
+   ],
+   "negative": [
+    "9",
+    0
+   ],
+   "vae": [
+    "11",
+    0
+   ],
+   "width": 592,
+   "height": 752,
+   "length": 81,
+   "batch_size": 1,
+   "start_image": [
+    "10",
+    0
+   ]
+  }
+ },
+ "13": {
+  "class_type": "KSamplerAdvanced",
+  "inputs": {
+   "add_noise": "enable",
+   "noise_seed": 42,
+   "steps": 4,
+   "cfg": 1.0,
+   "sampler_name": "euler",
+   "scheduler": "simple",
+   "model": [
+    "3",
+    0
+   ],
+   "positive": [
+    "12",
+    0
+   ],
+   "negative": [
+    "12",
+    1
+   ],
+   "latent_image": [
+    "12",
+    2
+   ],
+   "start_at_step": 0,
+   "end_at_step": 2,
+   "return_with_leftover_noise": "enable"
+  }
+ },
+ "14": {
+  "class_type": "KSamplerAdvanced",
+  "inputs": {
+   "add_noise": "disable",
+   "noise_seed": 42,
+   "steps": 4,
+   "cfg": 1.0,
+   "sampler_name": "euler",
+   "scheduler": "simple",
+   "model": [
+    "6",
+    0
+   ],
+   "positive": [
+    "12",
+    0
+   ],
+   "negative": [
+    "12",
+    1
+   ],
+   "latent_image": [
+    "13",
+    0
+   ],
+   "start_at_step": 2,
+   "end_at_step": 4,
+   "return_with_leftover_noise": "disable"
+  }
+ },
+ "15": {
+  "class_type": "VAEDecode",
+  "inputs": {
+   "samples": [
+    "14",
+    0
+   ],
+   "vae": [
+    "11",
+    0
+   ]
+  }
+ },
+ "16": {
+  "class_type": "SaveWEBM",
+  "inputs": {
+   "images": [
+    "15",
+    0
+   ],
+   "filename_prefix": "idle01/seg01",
+   "codec": "vp9",
+   "fps": 16.0,
+   "crf": 18.0
+  }
+ },
+ "30": {
+  "class_type": "LoadImage",
+  "inputs": {
+   "image": "idle01_seed00.png"
+  }
+ },
+ "20": {
+  "class_type": "ImageFromBatch",
+  "inputs": {
+   "image": [
+    "15",
+    0
+   ],
+   "batch_index": 80,
+   "length": 1
+  }
+ },
+ "21": {
+  "class_type": "ColorMatchV2",
+  "inputs": {
+   "image_target": [
+    "20",
+    0
+   ],
+   "image_ref": [
+    "30",
+    0
+   ],
+   "method": "mkl",
+   "strength": 0.6,
+   "multithread": true
+  }
+ },
+ "22": {
+  "class_type": "SaveImage",
+  "inputs": {
+   "images": [
+    "21",
+    0
+   ],
+   "filename_prefix": "idle01/seed01"
+  }
+ }
+}
