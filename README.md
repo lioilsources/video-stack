@@ -48,6 +48,28 @@ hodnoty widgetů posunou — graf se načte, ale s tichým rozhozením parametr�
 což je horší než prázdné plátno. Proto `--selftest`: vezme skutečná UI
 workflow ze stroje, udělá z nich API a převede zpět; 25 z 25 sedí.
 
+## bin/spark-video — celý běh z Macu
+
+`chain.py` běží na SPARKu. Když nechceš SSH ani klikat v ComfyUI, je na Macu
+`bin/spark-video`: nahraje obrázek a manifest, spustí `chain.py --all`, převede
+výsledek a stáhne ho.
+
+```bash
+spark-video new  mojevideo ~/Pictures/fotka.png
+spark-video edit mojevideo
+spark-video plan mojevideo
+spark-video run  mojevideo
+```
+
+Instalace na Macu (repo naklonovaný kdekoliv):
+
+```bash
+ln -sf "$PWD/bin/spark-video" ~/.local/bin/spark-video
+```
+
+Manifesty a výstupy zůstávají mimo repo v `~/spark-video/{chains,out}` — jsou to
+data, ne zdroják. Podrobnosti v [bin/README.md](bin/README.md).
+
 ## chain.py — 15s klip z jednoho obrázku
 
 Wan 2.2 umí najednou nejvýš **81 snímků** (5.06 s @ 16 fps) a `length` musí být

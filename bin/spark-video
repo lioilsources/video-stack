@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+# spark-video — 15s klip z jednoho obrázku, celé z Macu, bez klikání v ComfyUI.
+#
+#   spark-video new  <jméno> <obrázek>   # založí manifest a nahraje obrázek na SPARK
+#   spark-video edit <jméno>             # otevře manifest v $EDITOR
+#   spark-video plan <jméno>             # časová osa a odhad, nic nerenderuje
+#   spark-video run  <jméno> [--hd]      # render + slepení + RIFE, stáhne výsledek
+#   spark-video ls                       # co už je hotové
+#
+# Manifesty:  ~/spark-video/chains/<jméno>.json
+# Výsledky:   ~/spark-video/out/<jméno>_{16,32}fps.mp4
+# Přepíše se: SPARK_VIDEO_DIR, SPARK_HOST
+set -euo pipefail
+
+HOST="${SPARK_HOST:-spark}"
+DIR="${SPARK_VIDEO_DIR:-$HOME/spark-video}"
+STACK='Code/video-stack'      # relativně k domovskému adresáři na SPARKu
+                             # (scp jede přes SFTP a $HOME v remote cestě neexpanduje)
+COMFY='Code/ComfyUI'
+CHAINS="$DIR/chains"; OUT="$DIR/out"
+mkdir -p "$CHAINS" "$OUT"
+
+die() { echo "spark-video: $*" >&2; exit 1; }
+usage() { sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+manifest() { echo "$CHAINS/$1.json"; }
+need() { [ -f "$(manifest "$1")" ] || die "manifest $1 neexistuje — založ ho: spark-video new $1 <obrázek>"; }
+
+cmd_new() {
+  local name="$1" img="${2:-}"
+  [ -n "$name" ] || usage 1
+  [[ "$name" =~ ^[A-Za-z0-9_-]+$ ]] || die "jméno smí být jen [A-Za-z0-9_-]"
+  [ -n "$img" ] || die "chybí obrázek: spark-video new $name /cesta/k/fotce.png"
+  [ -f "$img" ] || die "obrázek $img neexistuje"
+  [ -f "$(manifest "$name")" ] && die "manifest $name už existuje (smaž ho, nebo použij jiné jméno)"
+
+  local ext="${img##*.}"
+  local remote="${name}_src.${ext}"
+  echo "  nahrávám $img -> $HOST:input/$remote"
+  scp -q "$img" "$HOST:$COMFY/input/$remote"
+
+  cat > "$(manifest "$name")" <<JSON
+{
+  "name": "$name",
+  "source": "$remote",
+  "base": "i2v_final_14b_lightning_portrait",
+  "length": 81,
+  "fps": 16,
+  "crf": 18,
+  "style_tail": ", static camera, soft natural window light, photorealistic, subtle motion",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers",
+  "colormatch": { "method": "mkl", "strength": 0.6 },
+
+  "_dialy": "motion = síla LoRA na high-noise expertu (níž = víc pohybu, zkus 0.8); boundary = hranice expertů, default 2 (na 3 = víc pohybu); shift = default 5.0 (výš = klidnější)",
+  "_delka": "jeden beat = 81 snímků = 5.06 s. Přidej beat = o 5 s delší klip.",
+
+  "beats": [
+    { "id": "01", "seed": 42,
+      "prompt": "she breathes gently and blinks slowly, tiny head movement" },
+    { "id": "02", "seed": 43,
+      "prompt": "a warm smile slowly spreads across her face, slight head tilt" },
+    { "id": "03", "seed": 44,
+      "prompt": "she raises one hand in a small friendly wave, then lowers it" }
+  ]
+}
+JSON
+  echo "  manifest: $(manifest "$name")"
+  echo
+  echo "  Uprav prompty (spark-video edit $name) a spusť: spark-video run $name"
+}
+
+cmd_edit() { need "$1"; "${EDITOR:-vi}" "$(manifest "$1")"; }
+
+push() { scp -q "$(manifest "$1")" "$HOST:$STACK/chains/$1.json"; }
+
+cmd_plan() {
+  need "$1"; push "$1"
+  ssh "$HOST" "cd $STACK && ./chain.py chains/$1.json --plan"
+}
+
+cmd_run() {
+  local name="$1"; shift; need "$name"; push "$name"
+  local hd=""; [ "${1:-}" = "--hd" ] && hd="--hd"
+
+  ssh "$HOST" "cd $STACK && ./chain.py chains/$name.json --validate" \
+    || die "workflow neprošlo validací, nic jsem nespouštěl"
+
+  echo "  renderuju na $HOST (3 beaty ~7 min GPU, víc když je fronta)…"
+  ssh "$HOST" "cd $STACK && ./chain.py chains/$name.json --all $hd"
+
+  # 32fps webm má v názvu pořadové číslo, beru nejnovější
+  echo "  převádím a stahuju…"
+  ssh "$HOST" "cd $COMFY/output/$name \
+    && latest=\$(ls -t final_*fps_*.webm | head -1) \
+    && ffmpeg -y -hide_banner -loglevel error -i \"\$latest\" \
+         -c:v libx264 -crf 16 -preset slow -pix_fmt yuv420p /tmp/${name}_32fps.mp4"
+  scp -q "$HOST:/tmp/${name}_32fps.mp4" "$OUT/${name}_32fps.mp4"
+  scp -q "$HOST:$COMFY/output/$name/${name}_full.mp4" "$OUT/${name}_16fps.mp4"
+
+  echo
+  echo "HOTOVO"
+  ls -lh "$OUT/${name}_32fps.mp4" "$OUT/${name}_16fps.mp4" | awk '{print "  "$5"\t"$9}'
+  # přehrát jen v interaktivním terminálu, ať to neotevírá okno ve skriptu/CI
+  [ -t 1 ] && command -v open >/dev/null && open "$OUT/${name}_32fps.mp4" || true
+}
+
+cmd_ls() {
+  echo "manifesty  $CHAINS"
+  ls -1 "$CHAINS" 2>/dev/null | sed 's/\.json$//' | sed 's/^/  /' || true
+  echo "výsledky   $OUT"
+  ls -lh "$OUT" 2>/dev/null | awk 'NR>1{print "  "$5"\t"$9}' || true
+}
+
+case "${1:-}" in
+  new)  shift; cmd_new "${1:-}" "${2:-}" ;;
+  edit) shift; cmd_edit "${1:?chybí jméno}" ;;
+  plan) shift; cmd_plan "${1:?chybí jméno}" ;;
+  run)  shift; cmd_run "${1:?chybí jméno}" "${2:-}" ;;
+  ls)   cmd_ls ;;
+  ""|-h|--help) usage ;;
+  *) die "neznámý příkaz ${1} (zkus spark-video --help)" ;;
+esac
