@@ -93,7 +93,14 @@ cmd_run() {
   ssh "$HOST" "cd $STACK && ./chain.py chains/$name.json --validate" \
     || die "workflow neprošlo validací, nic jsem nespouštěl"
 
-  echo "  renderuju na $HOST (3 beaty ~7 min GPU, víc když je fronta)…"
+  # počet beatů ber z manifestu, ne z hlavy — šablona má tři, klip může mít pět
+  local n per est
+  n=$(python3 -c 'import json,sys; print(len(json.load(open(sys.argv[1]))["beats"]))' \
+        "$(manifest "$name")")
+  per=147; [ -n "$hd" ] && per=331   # s/beat: 0.44 Mpx vs 1.0 Mpx při 333 s/Mpx
+  est=$(( n * per / 60 ))
+  local slovo=beatů; [ "$n" = 1 ] && slovo=beat; [ "$n" -ge 2 ] && [ "$n" -le 4 ] && slovo=beaty
+  echo "  renderuju na $HOST ($n $slovo${hd:+ v HD}, ~$est min GPU, víc když je fronta)…"
   ssh "$HOST" "cd $STACK && ./chain.py chains/$name.json --all $hd"
 
   # 32fps webm má v názvu pořadové číslo, beru nejnovější

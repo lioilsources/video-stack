@@ -36,6 +36,10 @@ IN, OUT = os.path.join(COMFY, "input"), os.path.join(COMFY, "output")
 BUDGET = {"draft": 442368, "hd": 995328}
 SEC_PER_MPX = 333  # naměřeno 26. 8.: 140–155 s @ 0.445 Mpx / 81 snímků
 
+# Trénované pásmo poměru stran Wan 2.2 I2V: 9:16 až 16:9. Mimo něj model kreslí,
+# ale kompozice ujíždí (zdvojené končetiny, protažený obličej).
+ASPECT_BAND = (9 / 16, 16 / 9)
+
 
 def die(msg):
     sys.exit("chain.py: " + msg)
@@ -75,18 +79,44 @@ def source_path(m):
 
 
 def resolution(m, src, tier):
-    """Rozměr násobný 16 se zachovaným poměrem stran zdroje.
+    """Rozměr násobný 16. Klíč "fit" v manifestu řídí poměr stran.
 
-    WanImageToVideo dělá center-crop na zadaný poměr, takže poměr zdroje se má
-    trefit, ne ohnout do 9:16 — jinak přijdeš o okraje kompozice."""
-    if m.get("width") and m.get("height") and tier == "draft":
+    WanImageToVideo dělá center-crop na zadaný poměr, takže "source" (default)
+    poměr zdroje zachová a neuřízne nic — za cenu renderu mimo distribuci
+    modelu. "9:16" poměr srovná do trénovaného pásma a nechá node oříznout.
+
+    Wan 2.2 I2V je trénovaný na 480×832 a 720×1280, tedy kolem 9:16. Telefonní
+    fotka bývá 19.5:9 = 0.462, což je 18 % pod spodní hranicí, a u řetězených
+    beatů se odchylka sčítá — každý beat startuje z výstupu předchozího."""
+    if m.get("width") and m.get("height"):
         return m["width"], m["height"]
     from PIL import Image
     w0, h0 = Image.open(src).size
-    aspect = w0 / h0
+    src_aspect = w0 / h0
+    lo, hi = ASPECT_BAND
+    fit = m.get("fit", "source")
+    if fit not in ("source", "9:16"):
+        die("fit: čekám \"source\" nebo \"9:16\", dostal jsem %r" % fit)
+    aspect = min(max(src_aspect, lo), hi) if fit == "9:16" else src_aspect
+
+    if not lo <= src_aspect <= hi:
+        cut = (100 * (1 - src_aspect / lo) if src_aspect < lo
+               else 100 * (1 - hi / src_aspect))
+        if fit == "source":
+            print("  ! poměr zdroje %.3f je mimo trénované pásmo %.3f-%.3f — "
+                  "kompozice může ujíždět. \"fit\": \"9:16\" to srovná, "
+                  "ořízne ale %.0f %% (center-crop)." % (src_aspect, lo, hi, cut))
+        else:
+            print("  ! srovnávám poměr %.3f -> %.3f, center-crop ubere %.0f %%"
+                  % (src_aspect, aspect, cut))
+
     h = math.sqrt(BUDGET[tier] / aspect)
     w = aspect * h
-    return max(16, round(w / 16) * 16), max(16, round(h / 16) * 16)
+    w, h = max(16, round(w / 16) * 16), max(16, round(h / 16) * 16)
+    if w > w0 or h > h0:
+        print("  ! zdroj %d×%d je menší než render %d×%d — upscaluje se, "
+              "detaily v obličeji tím trpí" % (w0, h0, w, h))
+    return w, h
 
 
 # ---------------------------------------------------------------- graf
