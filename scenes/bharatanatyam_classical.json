@@ -1,0 +1,36 @@
+{
+  "id": "bharatanatyam_classical",
+  "label": "Tanec · Bharatanátjam",
+  "desc": "Půldřep, mudry u hrudi, dupání se zvonky, výpad na patu, namaste s úsměvem.",
+  "length": 81,
+  "fps": 16,
+  "crf": 18,
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, graceful and dynamic motion, highly detailed",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "scenes": [
+    {
+      "name": "bharatanatyam_classical",
+      "beats": [
+        {
+          "prompt": "an Indian classical dancer in traditional temple attire assumes a deep half-squat pose with knees bent outward"
+        },
+        {
+          "prompt": "she forms precise mudra hand gestures near her chest while moving her head rhythmically side to side"
+        },
+        {
+          "prompt": "she sharply stamps her feet, causing her ghungroo anklet bells to chime loudly on the floor"
+        },
+        {
+          "prompt": "she extends one leg forward onto her heel, shifting her gaze sharply along her fingertips"
+        },
+        {
+          "prompt": "she brings her palms together in front of her chest in a namaste gesture, smiling peacefully at the camera"
+        }
+      ]
+    }
+  ]
+}

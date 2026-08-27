@@ -1,0 +1,36 @@
+{
+  "id": "waacking_expression",
+  "label": "Tanec · Waacking",
+  "desc": "Teatrální pohled, švihy paží nad hlavou, dramatická póza, rolování trupu, freeze.",
+  "length": 81,
+  "fps": 16,
+  "crf": 18,
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, graceful and dynamic motion, highly detailed",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "scenes": [
+    {
+      "name": "waacking_expression",
+      "beats": [
+        {
+          "prompt": "a dancer in a 1970s disco outfit stands tall, staring with an intense theatrical gaze into the camera"
+        },
+        {
+          "prompt": "they whip their arms in fast, sharp overhead circles, moving wrist-over-wrist around their shoulders"
+        },
+        {
+          "prompt": "they strike a dramatic pose, pressing one hand to their chest while thrusting the other arm outward"
+        },
+        {
+          "prompt": "they roll their torso fluidly, moving their arms in intricate framing patterns around their neck"
+        },
+        {
+          "prompt": "they end with a sudden freeze, holding a fierce head-tilt pose with one arm pointing at the viewer"
+        }
+      ]
+    }
+  ]
+}

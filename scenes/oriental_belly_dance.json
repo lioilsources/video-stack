@@ -1,0 +1,36 @@
+{
+  "id": "oriental_belly_dance",
+  "label": "Tanec · Břišní tanec",
+  "desc": "Shimmy boků, vlna trupu, hip drop, kroužení hrudníku, pomalá otočka se závojem.",
+  "length": 81,
+  "fps": 16,
+  "crf": 18,
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, graceful and dynamic motion, highly detailed",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "scenes": [
+    {
+      "name": "oriental_belly_dance",
+      "beats": [
+        {
+          "prompt": "a belly dancer in an ornate coin costume initiates a fast, isolated hip shimmy motion"
+        },
+        {
+          "prompt": "she lifts both arms overhead, undulating her torso in a smooth, continuous wave"
+        },
+        {
+          "prompt": "she executes a sharp, rhythmic hip drop to the side, making her coin belt accent the beat"
+        },
+        {
+          "prompt": "she performs an isolated chest circle while keeping her hips completely still"
+        },
+        {
+          "prompt": "she spins slowly on the spot, wrapping her silk veil softly around her shoulders in a final pose"
+        }
+      ]
+    }
+  ]
+}

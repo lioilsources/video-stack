@@ -1,0 +1,36 @@
+{
+  "id": "breakdancing_b_boying",
+  "label": "Tanec · Breakdance",
+  "desc": "Toprock, 6-step na zemi, backspin, freeze na jedné ruce, sed s pokývnutím.",
+  "length": 81,
+  "fps": 16,
+  "crf": 18,
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, graceful and dynamic motion, highly detailed",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "scenes": [
+    {
+      "name": "breakdancing_b_boying",
+      "beats": [
+        {
+          "prompt": "a b-boy in urban streetwear steps side to side in a rhythmic standing toprock footwork pattern"
+        },
+        {
+          "prompt": "he drops swiftly to the ground, launching into a fast 6-step footwork circle on his hands and toes"
+        },
+        {
+          "prompt": "he kicks his legs upward, sweeping into a dynamic back-spin power move across the floor"
+        },
+        {
+          "prompt": "he catches himself on one arm, lifting his legs into a balanced, frozen stance in mid-air"
+        },
+        {
+          "prompt": "he drops down into a relaxed sitting pose on the floor, looking up at the camera with a nod"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "id": "irish_stepdance",
+  "label": "Tanec · Irský step",
+  "desc": "Ruce podél těla, rychlé nohy, vysoký výskok s kopem, klapání pat, strnulý postoj.",
+  "length": 81,
+  "fps": 16,
+  "crf": 18,
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, graceful and dynamic motion, highly detailed",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "scenes": [
+    {
+      "name": "irish_stepdance",
+      "beats": [
+        {
+          "prompt": "an Irish dancer holds their arms completely rigid at their sides while standing perfectly tall"
+        },
+        {
+          "prompt": "their feet move at intense speed, tapping hard shoes rhythmically in precise crossover patterns"
+        },
+        {
+          "prompt": "they leap high into the air, kicking one leg straight up while keeping their torso perfectly still"
+        },
+        {
+          "prompt": "they land on pointed toes, executing a rapid series of hard heel clicks on the floor"
+        },
+        {
+          "prompt": "they snap instantly back into a proud, perfectly stationary posture staring at the camera"
+        }
+      ]
+    }
+  ]
+}

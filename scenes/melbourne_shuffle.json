@@ -1,0 +1,36 @@
+{
+  "id": "melbourne_shuffle",
+  "label": "Tanec · Shuffle",
+  "desc": "Running man, T-step, otočka na patách, rychlé kopy, dupnutí do širokého postoje.",
+  "length": 81,
+  "fps": 16,
+  "crf": 18,
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, graceful and dynamic motion, highly detailed",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "scenes": [
+    {
+      "name": "melbourne_shuffle",
+      "beats": [
+        {
+          "prompt": "a shuffle dancer in loose streetwear starts running in place using rapid running-man footwork"
+        },
+        {
+          "prompt": "they slide their feet laterally in a fast T-step pattern, pivoting heels and toes to the rhythm"
+        },
+        {
+          "prompt": "they execute a fast 360-degree spin on their heels while keeping their legs shifting constantly"
+        },
+        {
+          "prompt": "they perform a series of fast forward kicks, lightly tapping their soles against the ground"
+        },
+        {
+          "prompt": "they stomp hard on the floor to hit the final beat, landing in a wide low stance with arms open"
+        }
+      ]
+    }
+  ]
+}

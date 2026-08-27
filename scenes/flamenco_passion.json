@@ -1,0 +1,36 @@
+{
+  "id": "flamenco_passion",
+  "label": "Tanec · Flamenco",
+  "desc": "Dupání podpatků, kroužení zápěstí, tlesknutí, otočka se sukní, hrdý postoj.",
+  "length": 81,
+  "fps": 16,
+  "crf": 18,
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, graceful and dynamic motion, highly detailed",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "scenes": [
+    {
+      "name": "flamenco_passion",
+      "beats": [
+        {
+          "prompt": "a female dancer in a red ruffled dress fiercely stomps her heels on the wooden floor, arching her back"
+        },
+        {
+          "prompt": "she slowly raises both arms overhead, her wrists twisting smoothly in circular flamenco wrist-work"
+        },
+        {
+          "prompt": "she sharply claps her hands above her head, snapping her face toward the camera with an intense gaze"
+        },
+        {
+          "prompt": "she spins rapidly, her red skirt flaring out in a wide dynamic arc around her legs"
+        },
+        {
+          "prompt": "she abruptly stops the spin, striking a proud final stance with one hand on her hip and head tilted back"
+        }
+      ]
+    }
+  ]
+}
