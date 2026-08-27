@@ -92,8 +92,12 @@ class Jobs:
             j.update(kw)
             self._write(j)
 
-    def submit(self, scene, seed):
-        jid = uuid.uuid4().hex[:8]
+    def new_id(self):
+        return uuid.uuid4().hex[:8]
+
+    def submit(self, jid, scene, seed):
+        """Zařadí job. Vstupy (obrázek, manifest) už musí ležet na disku — worker
+        může sáhnout po manifestu hned, jak se job objeví ve frontě."""
         j = {"id": jid, "scene": scene["id"], "status": "queued", "beat": 0,
              "beats": scene["beats"], "phase": None, "error": None, "seed": seed,
              "created": time.time(), "started": None, "finished": None}
@@ -253,14 +257,14 @@ class Handler(BaseHTTPRequestHandler):
         seed = body.get("seed")
         seed = int(seed) if isinstance(seed, int) and seed >= 0 else int.from_bytes(os.urandom(4), "big") >> 1
 
-        j = JOBSTORE.submit(scene, seed)
-        jid = j["id"]
+        jid = JOBSTORE.new_id()
         # zdroj jako PNG bez ohledu na to, co přišlo — chain.py source nezávisí na příponě
         im.convert("RGB").save(os.path.join(IN, "%s_src.png" % jid))
         m = {k: v for k, v in scene["_tpl"].items() if k not in ("id", "label", "desc")}
         m.update(name=jid, source="%s_src.png" % jid, seed=seed, _scene=scene["id"])
         os.makedirs(CHAINS, exist_ok=True)
         json.dump(m, open(os.path.join(CHAINS, jid + ".json"), "w"), indent=2, ensure_ascii=False)
+        JOBSTORE.submit(jid, scene, seed)
         log("job", jid, "přijat: scéna", scene["id"], "%dx%d" % im.size, "seed", seed)
         self._json(202, {"job_id": jid, "beats": scene["beats"], "seconds": scene["seconds"],
                          "minutes_est": scene["minutes_est"]})
