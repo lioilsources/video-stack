@@ -1,0 +1,30 @@
+{
+  "id": "wink",
+  "label": "Mrknutí na kameru",
+  "desc": "Pohled do kamery, hravé mrknutí jedním okem, tichý smích.",
+  "length": 81,
+  "fps": 16,
+  "crf": 18,
+  "style_tail": ", static camera, soft natural light, photorealistic, natural motion",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, extra limbs, deformed hands",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "scenes": [
+    {
+      "name": "wink",
+      "beats": [
+        {
+          "prompt": "she looks straight into the camera, head tilting slightly to one side, a faint smile forming, breathing calmly"
+        },
+        {
+          "prompt": "she winks one eye with a playful smile, eyebrow lifting, then opens the eye again and holds the smile"
+        },
+        {
+          "prompt": "she laughs softly, eyes creasing, shoulders dropping as she relaxes, then settles into a warm gaze at the camera"
+        }
+      ]
+    }
+  ]
+}

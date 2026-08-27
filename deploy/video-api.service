@@ -1,0 +1,15 @@
+[Unit]
+Description=video-api — job server nad chain.py pro Ol1nLLM (video-stack/serve.py)
+After=comfyui.service network-online.target
+Wants=network-online.target
+
+[Service]
+User=ol1n
+WorkingDirectory=/home/ol1n/Code/video-stack
+ExecStart=/home/ol1n/Code/ComfyUI/.venv/bin/python /home/ol1n/Code/video-stack/serve.py
+Restart=on-failure
+RestartSec=5
+# Environment=VIDEO_API_PORT=8096
+
+[Install]
+WantedBy=multi-user.target
