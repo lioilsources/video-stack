@@ -1,4 +1,4 @@
-# spark-video — 15s klip z jednoho obrázku, bez klikání v ComfyUI
+# spark-video — dlouhý klip z jednoho obrázku, bez klikání v ComfyUI
 
 Skript: `bin/spark-video` v tomhle repu.
 Manifesty: `chains/<jméno>.json` — verzované, čte je i `chain.py` na SPARKu.
@@ -57,8 +57,54 @@ Zadání celého klipu na jednom místě. Jeden **beat** = jeden 5s segment.
 ```
 
 **Delší klip = víc beatů.** 3 beaty = 15 s, 5 beatů = 25 s. Každý skok je ale
-další generace navíc, takže se pomalu ztrácí podobnost s originálem. Nad ~6
-beatů je lepší udělat víc kratších klipů a sestříhat je.
+další generace navíc, takže se pomalu ztrácí podobnost s originálem —
+colormatch drží barvy, ne identitu. Po dlouhém běhu porovnej poslední
+`input/<jméno>_seedNN.png` s originálem, `plan` na to nad 6 beatů upozorní.
+
+### Dlouhá scéna: `scenes`
+
+Pro N×5 beatů se manifest píše po scénách. `id` a `seed` se dopočítají
+(seed = kořenový `seed` + pořadí beatu), scéna může přepsat `style_tail`
+a `negative`, beat zase cokoliv ze scény:
+
+```json
+{
+  "name": "mojevideo",
+  "source": "mojevideo_src.png",
+  "seed": 42,
+  "style_tail": ", static camera, soft natural window light, photorealistic",
+  "scenes": [
+    { "name": "intro",
+      "beats": [ { "prompt": "she breathes gently and blinks slowly" },
+                 { "prompt": "a warm smile slowly spreads across her face" } ] },
+    { "name": "turn", "style_tail": ", static camera, golden hour",
+      "beats": [ { "prompt": "she shifts her weight onto the other leg" },
+                 { "prompt": "her hand comes to rest on her hip", "seed": 99 } ] }
+  ]
+}
+```
+
+Kostru vyrobí `spark-video new mojevideo fotka.png --scenes 4` — 4 scény × 5
+prázdných beatů; prázdný prompt render odmítne, takže se nedá pustit
+nevyplněná. Řetěz jde přes hranice scén beze změny (každý beat startuje
+z posledního snímku předchozího). Scény jsou k trojímu:
+
+```bash
+spark-video run mojevideo --until intro   # jen první scéna — podívej se, než pustíš zbytek
+spark-video run mojevideo --resume        # pokračuj od prvního nehotového beatu
+spark-video run mojevideo --from turn     # přegeneruj od scény (nebo beatu "03") dál
+```
+
+`--resume` se řídí `output/<jméno>/state.json` na SPARKu: u každého hotového
+beatu je otisk zadání (prompt, seed, rozlišení…). Změníš prompt beatu 07 →
+`--resume` přegeneruje 07 a všechno za ním, protože každý další beat stojí na
+jeho posledním snímku. Beze změn se render přeskočí a jde se rovnou na slepení.
+`--from` a `--resume` se vylučují; `--until` jde kombinovat s oběma.
+
+RIFE (16 → 32 fps) jede **po scénách** s překryvem jednoho snímku a pak se
+slepí — celý dlouhý klip naráz by nešel do paměti (VHS_LoadVideo drží všechny
+snímky v RAM, RIFE k tomu dvojnásobek). Na výsledku to není poznat: spoje mezi
+scénami se interpolují taky a snímků vyjde stejně jako při jednom průchodu.
 
 ### Prompty
 
@@ -72,7 +118,8 @@ Negativní prompt je při `cfg 1.0` **neúčinný** — na množství pohybu se 
 
 ### Když je pohybu málo nebo moc
 
-Množství pohybu řídí *high-noise expert*. Volitelné klíče v manifestu:
+Množství pohybu řídí *high-noise expert*. Volitelné klíče v manifestu (platí
+pro celý řetěz, ne po scénách):
 
 | klíč | default | co dělá |
 |---|---|---|
@@ -84,19 +131,15 @@ Množství pohybu řídí *high-noise expert*. Volitelné klíče v manifestu:
 
 **Rozlišení** se počítá z poměru stran zdroje (Wan dělá center-crop, takže se
 poměr trefuje, neohýbá). Default ~0.45 Mpx, `spark-video run <jméno> --hd`
-zhruba 1 Mpx — ale je to ~3× pomalejší.
+zhruba 1 Mpx — ale je to ~2,3× pomalejší. Wan 2.2 je trénovaný kolem 9:16 až
+16:9; telefonní fotka (19.5:9) je pod tím pásmem a `plan` na to upozorní.
+`"fit": "9:16"` v manifestu poměr srovná za cenu center-cropu; nebo si fotku
+ořízni sám, ať rozhoduješ ty, co odejde.
 
-**Čas:** ~150 s na segment, 15s klip ~7 min GPU. Na SPARKu ale běží fronta, takže
-když tam někdo pouští SDXL dávku, wall-clock je delší.
-
-**Přegenerovat jeden beat** (typicky když třetí segment nesedí) jde jen přímo
-na SPARKu, kvůli navazujícím snímkům:
-
-```bash
-ssh spark 'cd Code/video-stack && ./chain.py chains/mojevideo.json --beats 02'
-```
-
-Přegeneruje beat 02 **a všechny následující** — navazují na sebe.
+**Čas:** ~150 s na segment draft, ~330 s HD. 5 beatů draft ~12 min GPU, 25 beatů
+~45 min. Na SPARKu ale běží fronta a paměť sdílí s LLM: když je `vram_free`
+(`/system_stats`) pod `--reserve-vram`, ComfyUI odloží model na CPU a render se
+plazí — před dlouhým během to zkontroluj.
 
 **Ručně doladit workflow v ComfyUI** (když už se klikat chce):
 

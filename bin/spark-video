@@ -1,11 +1,17 @@
 #!/usr/bin/env bash
-# spark-video — 15s klip z jednoho obrázku, celé z Macu, bez klikání v ComfyUI.
+# spark-video — dlouhý klip z jednoho obrázku, celé z Macu, bez klikání v ComfyUI.
 #
-#   spark-video new  <jméno> <obrázek>   # založí manifest a nahraje obrázek na SPARK
-#   spark-video edit <jméno>             # otevře manifest v $EDITOR
-#   spark-video plan <jméno>             # časová osa a odhad, nic nerenderuje
-#   spark-video run  <jméno> [--hd]      # render + slepení + RIFE, stáhne výsledek
-#   spark-video ls                       # co už je hotové
+#   spark-video new  <jméno> <obrázek> [--scenes N]  # založí manifest, nahraje obrázek
+#   spark-video edit <jméno>                         # otevře manifest v $EDITOR
+#   spark-video plan <jméno>                         # časová osa a odhad, nic nerenderuje
+#   spark-video run  <jméno> [--hd] [--from X] [--until X] [--resume]
+#                                                    # render + slepení + RIFE, stáhne výsledek
+#   spark-video ls                                   # co už je hotové
+#
+# --scenes N   kostra N scén × 5 beatů s prázdnými prompty (bez toho 3-beatová ukázka)
+# --from X     od beatu / scény X dál (vše za ní se přegeneruje)
+# --until X    skonči po beatu / scéně X — náhled první části
+# --resume     pokračuj od prvního nehotového beatu (po pádu, nebo po --until)
 #
 # Manifesty:  <repo>/chains/<jméno>.json      — verzované, čte je i chain.py
 # Výsledky:   <repo>/out/<jméno>_{16,32}fps.mp4  — v .gitignore
@@ -30,24 +36,58 @@ CHAINS="$DIR/chains"; OUT="$DIR/out"
 mkdir -p "$CHAINS" "$OUT"
 
 die() { echo "spark-video: $*" >&2; exit 1; }
-usage() { sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+usage() { sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
 manifest() { echo "$CHAINS/$1.json"; }
 need() { [ -f "$(manifest "$1")" ] || die "manifest $1 neexistuje — založ ho: spark-video new $1 <obrázek>"; }
+# jméno beatu/scény jde do ssh příkazu, tak ať v něm není nic, co by shell četl
+token() { [[ "${1:-}" =~ ^[A-Za-z0-9_-]+$ ]] || die "$2 čeká beat nebo scénu ([A-Za-z0-9_-]), dostal jsem '${1:-}'"; }
+# počet beatů z manifestu — scény i plochý seznam
+nbeats() { python3 -c 'import json,sys; m=json.load(open(sys.argv[1])); print(sum(len(s["beats"]) for s in m["scenes"]) if m.get("scenes") else len(m["beats"]))' "$1"; }
+mfps()   { python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("fps",16))' "$1"; }
 
 cmd_new() {
-  local name="$1" img="${2:-}"
+  local name="${1:-}" img="${2:-}" scenes=""
   [ -n "$name" ] || usage 1
   [[ "$name" =~ ^[A-Za-z0-9_-]+$ ]] || die "jméno smí být jen [A-Za-z0-9_-]"
   [ -n "$img" ] || die "chybí obrázek: spark-video new $name /cesta/k/fotce.png"
   [ -f "$img" ] || die "obrázek $img neexistuje"
   [ -f "$(manifest "$name")" ] && die "manifest $name už existuje (smaž ho, nebo použij jiné jméno)"
+  shift 2
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --scenes) [[ "${2:-}" =~ ^[1-9][0-9]*$ ]] || die "--scenes čeká číslo ≥ 1"; scenes="$2"; shift ;;
+      *) die "neznámý přepínač $1 (new umí jen --scenes N)" ;;
+    esac; shift
+  done
 
   local ext="${img##*.}"
   local remote="${name}_src.${ext}"
   echo "  nahrávám $img -> $HOST:input/$remote"
   scp -q "$img" "$HOST:$COMFY/input/$remote"
 
-  cat > "$(manifest "$name")" <<JSON
+  if [ -n "$scenes" ]; then
+    # kostra: N scén × 5 prázdných beatů; id a seed si chain.py dopočítá,
+    # prázdný prompt odmítne — takže se nedá omylem renderovat nevyplněná
+    python3 - "$(manifest "$name")" "$name" "$remote" "$scenes" <<'PY'
+import json, sys
+path, name, remote, n = sys.argv[1], sys.argv[2], sys.argv[3], int(sys.argv[4])
+m = {
+  "name": name, "source": remote, "seed": 42,
+  "base": "i2v_final_14b_lightning_portrait",
+  "length": 81, "fps": 16, "crf": 18,
+  "style_tail": ", static camera, soft natural window light, photorealistic, subtle motion",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers",
+  "colormatch": {"method": "mkl", "strength": 0.6},
+  "_dialy": "motion = síla LoRA na high-noise expertu (níž = víc pohybu, zkus 0.8); boundary = hranice expertů, default 2 (na 3 = víc pohybu); shift = default 5.0 (výš = klidnější)",
+  "_delka": "jeden beat = 81 snímků = 5.06 s. Přidej beat = o 5 s delší klip.",
+  "_sceny": "id a seed beatů se dopočítají (seed = 42 + pořadí); scéna může přepsat style_tail a negative. Přejmenuj scény, ať jde říct: spark-video run %s --until <scéna>" % name,
+  "scenes": [{"name": "scene%d" % (k + 1), "beats": [{"prompt": ""} for _ in range(5)]}
+             for k in range(n)],
+}
+json.dump(m, open(path, "w"), indent=2, ensure_ascii=False)
+PY
+  else
+    cat > "$(manifest "$name")" <<JSON
 {
   "name": "$name",
   "source": "$remote",
@@ -72,9 +112,14 @@ cmd_new() {
   ]
 }
 JSON
+  fi
   echo "  manifest: $(manifest "$name")"
   echo
-  echo "  Uprav prompty (spark-video edit $name) a spusť: spark-video run $name"
+  if [ -n "$scenes" ]; then
+    echo "  Vyplň prompty ($scenes scén × 5 beatů: spark-video edit $name) a spusť: spark-video run $name"
+  else
+    echo "  Uprav prompty (spark-video edit $name) a spusť: spark-video run $name"
+  fi
 }
 
 cmd_edit() { need "$1"; "${EDITOR:-vi}" "$(manifest "$1")"; }
@@ -88,35 +133,37 @@ cmd_plan() {
 
 cmd_run() {
   local name="$1"; shift; need "$name"; push "$name"
-  local hd=""; [ "${1:-}" = "--hd" ] && hd="--hd"
+  local hd="" extra=()
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --hd) hd="--hd" ;;
+      --resume) extra+=(--resume) ;;
+      --from|--until) token "${2:-}" "$1"; extra+=("$1" "$2"); shift ;;
+      *) die "neznámý přepínač $1 (run umí --hd, --from X, --until X, --resume)" ;;
+    esac; shift
+  done
 
   ssh "$HOST" "cd $STACK && ./chain.py chains/$name.json --validate" \
     || die "workflow neprošlo validací, nic jsem nespouštěl"
 
-  # počet beatů ber z manifestu, ne z hlavy — šablona má tři, klip může mít pět
-  local n per est
-  n=$(python3 -c 'import json,sys; print(len(json.load(open(sys.argv[1]))["beats"]))' \
-        "$(manifest "$name")")
+  local n per est fps
+  n=$(nbeats "$(manifest "$name")"); fps=$(mfps "$(manifest "$name")")
   per=147; [ -n "$hd" ] && per=331   # s/beat: 0.44 Mpx vs 1.0 Mpx při 333 s/Mpx
   est=$(( n * per / 60 ))
   local slovo=beatů; [ "$n" = 1 ] && slovo=beat; [ "$n" -ge 2 ] && [ "$n" -le 4 ] && slovo=beaty
-  echo "  renderuju na $HOST ($n $slovo${hd:+ v HD}, ~$est min GPU, víc když je fronta)…"
-  ssh "$HOST" "cd $STACK && ./chain.py chains/$name.json --all $hd"
+  echo "  renderuju na $HOST ($n $slovo${hd:+ v HD}, ~$est min GPU pro celý manifest${extra[0]:+; ${extra[*]} rozsah zúží}, víc když je fronta)…"
+  ssh "$HOST" "cd $STACK && ./chain.py chains/$name.json --all $hd ${extra[*]:-}"
 
-  # 32fps webm má v názvu pořadové číslo, beru nejnovější
-  echo "  převádím a stahuju…"
-  ssh "$HOST" "cd $COMFY/output/$name \
-    && latest=\$(ls -t final_*fps_*.webm | head -1) \
-    && ffmpeg -y -hide_banner -loglevel error -i \"\$latest\" \
-         -c:v libx264 -crf 16 -preset slow -pix_fmt yuv420p /tmp/${name}_32fps.mp4"
-  scp -q "$HOST:/tmp/${name}_32fps.mp4" "$OUT/${name}_32fps.mp4"
-  scp -q "$HOST:$COMFY/output/$name/${name}_full.mp4" "$OUT/${name}_16fps.mp4"
+  # obě verze dělá chain.py rovnou jako H.264 mp4
+  echo "  stahuju…"
+  scp -q "$HOST:$COMFY/output/$name/${name}_full.mp4"         "$OUT/${name}_${fps}fps.mp4"
+  scp -q "$HOST:$COMFY/output/$name/${name}_$((fps*2))fps.mp4" "$OUT/${name}_$((fps*2))fps.mp4"
 
   echo
   echo "HOTOVO"
-  ls -lh "$OUT/${name}_32fps.mp4" "$OUT/${name}_16fps.mp4" | awk '{print "  "$5"\t"$9}'
+  ls -lh "$OUT/${name}_$((fps*2))fps.mp4" "$OUT/${name}_${fps}fps.mp4" | awk '{print "  "$5"\t"$9}'
   # přehrát jen v interaktivním terminálu, ať to neotevírá okno ve skriptu/CI
-  [ -t 1 ] && command -v open >/dev/null && open "$OUT/${name}_32fps.mp4" || true
+  [ -t 1 ] && command -v open >/dev/null && open "$OUT/${name}_$((fps*2))fps.mp4" || true
 }
 
 cmd_ls() {
@@ -127,10 +174,10 @@ cmd_ls() {
 }
 
 case "${1:-}" in
-  new)  shift; cmd_new "${1:-}" "${2:-}" ;;
+  new)  shift; cmd_new "$@" ;;
   edit) shift; cmd_edit "${1:?chybí jméno}" ;;
   plan) shift; cmd_plan "${1:?chybí jméno}" ;;
-  run)  shift; cmd_run "${1:?chybí jméno}" "${2:-}" ;;
+  run)  shift; cmd_run "${1:?chybí jméno}" "${@:2}" ;;
   ls)   cmd_ls ;;
   ""|-h|--help) usage ;;
   *) die "neznámý příkaz ${1} (zkus spark-video --help)" ;;

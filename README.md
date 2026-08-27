@@ -51,14 +51,17 @@ workflow ze stroje, udělá z nich API a převede zpět; 25 z 25 sedí.
 ## bin/spark-video — celý běh z Macu
 
 `chain.py` běží na SPARKu. Když nechceš SSH ani klikat v ComfyUI, je na Macu
-`bin/spark-video`: nahraje obrázek a manifest, spustí `chain.py --all`, převede
-výsledek a stáhne ho.
+`bin/spark-video`: nahraje obrázek a manifest, spustí `chain.py --all` a stáhne
+obě verze výsledku.
 
 ```bash
-spark-video new  mojevideo ~/Pictures/fotka.png
+spark-video new  mojevideo ~/Pictures/fotka.png              # 3-beatová ukázka
+spark-video new  mojevideo ~/Pictures/fotka.png --scenes 4   # kostra 4 scén × 5 beatů
 spark-video edit mojevideo
 spark-video plan mojevideo
-spark-video run  mojevideo
+spark-video run  mojevideo --until intro     # náhled první scény
+spark-video run  mojevideo --resume          # pokračuj, kde to skončilo
+spark-video run  mojevideo --from turn       # přegeneruj od scény dál
 ```
 
 Nic se neinstaluje a nebuilduje — je to bash a git drží bit spustitelnosti.
@@ -68,7 +71,7 @@ kdo ho chce mít pod rukou, přidá si `bin/` do PATH.
 Manifesty jsou v `chains/` (stejné, které čte `chain.py`) a výstupy v `out/`,
 což je v `.gitignore`. V home nezůstává nic. Podrobnosti v [bin/README.md](bin/README.md).
 
-## chain.py — 15s klip z jednoho obrázku
+## chain.py — dlouhý klip z jednoho obrázku
 
 Wan 2.2 umí najednou nejvýš **81 snímků** (5.06 s @ 16 fps) a `length` musí být
 **4n+1**, protože VAE komprimuje čas 4:1. Není to limit stroje — 49 snímků
@@ -81,15 +84,22 @@ návazně: poslední snímek segmentu N je vstupním obrázkem segmentu N+1.
 ./chain.py chains/idle01.json --validate   # kontrola proti /object_info
 ./chain.py chains/idle01.json --materialize # zapiš beatNN.json k ruční úpravě
 ./chain.py chains/idle01.json              # render všech beatů
-./chain.py chains/idle01.json --beats 02   # beat 02 a všechny následující
+./chain.py chains/idle01.json --from 02    # od beatu (nebo scény) dál
+./chain.py chains/idle01.json --until idle # skonči po beatu/scéně — náhled
+./chain.py chains/idle01.json --resume     # od prvního nehotového beatu
 ./chain.py chains/idle01.json --hd         # ~1 Mpx místo ~0.44 Mpx
 ./chain.py chains/idle01.json --assemble   # slepení (ffmpeg, bez GPU)
-./chain.py chains/idle01.json --smooth     # RIFE 16 -> 32 fps přes celek
+./chain.py chains/idle01.json --smooth     # RIFE 16 -> 32 fps po scénách
 ```
 
 Zdroj pravdy je manifest `chains/<jméno>.json` — jeden beat = jeden segment,
-vlastní prompt a seed. Základní workflow (`base`) se čte z `workflows/`
-beze změny, chain.py do něj jen dosazuje a přidává tři nody.
+vlastní prompt a seed. Delší scéna se píše jako `scenes`: pojmenované skupiny
+beatů, `id` a `seed` se dopočítají, scéna může přepsat `style_tail`/`negative`.
+Řetěz jede přes hranice scén beze změny (každý beat startuje z posledního
+snímku předchozího); scény jsou adresy pro `--from`/`--until` a hranice, po
+kterých se dělí RIFE, aby dlouhý klip nešel do paměti naráz. Základní workflow
+(`base`) se čte z `workflows/` beze změny, chain.py do něj jen dosazuje a
+přidává tři nody.
 
 ### Kde je workflow
 

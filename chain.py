@@ -13,17 +13,24 @@ Dvě věci, bez kterých se řetěz rozpadne:
 2. Na předávaný snímek jde **ColorMatchV2** proti původnímu obrázku (node 21).
    Bez toho každý skok posune barvy a expozici a drift se kumuluje.
 
+Manifest je buď plochý seznam `beats`, nebo `scenes` — pojmenované skupiny
+beatů. `id` a `seed` se dopočítají (seed = kořenový `seed` + pořadí beatu),
+scéna může přepsat `style_tail` a `negative`. Číslování segNN/seedNN je
+globální přes celý řetěz, scény ho nemění.
+
     ./chain.py chains/idle01.json --plan       # časová osa a odhad, bez GPU
     ./chain.py chains/idle01.json --validate   # kontrola proti /object_info
     ./chain.py chains/idle01.json --materialize # zapiš beatNN.json k ruční úpravě
     ./chain.py chains/idle01.json --all        # render + slepení + RIFE naráz
     ./chain.py chains/idle01.json              # jen render všech beatů
-    ./chain.py chains/idle01.json --beats 02   # beat 02 a všechny následující
+    ./chain.py chains/idle01.json --from 02    # od beatu (nebo scény) dál
+    ./chain.py chains/idle01.json --until idle # skonči po beatu/scéně — náhled
+    ./chain.py chains/idle01.json --resume     # od prvního nehotového beatu
     ./chain.py chains/idle01.json --hd         # větší rozlišení
     ./chain.py chains/idle01.json --assemble   # slepení (ffmpeg, bez GPU)
-    ./chain.py chains/idle01.json --smooth     # RIFE 16 -> 32 fps přes celek
+    ./chain.py chains/idle01.json --smooth     # RIFE 16 -> 32 fps po scénách
 """
-import argparse, glob, json, math, os, shutil, subprocess, sys, time
+import argparse, glob, hashlib, json, math, os, shutil, subprocess, sys, time
 import urllib.error, urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -51,6 +58,7 @@ def load(path):
     m = json.load(open(path))
     m.setdefault("fps", 16)
     m.setdefault("length", 81)
+    m.setdefault("seed", 42)
     m.setdefault("negative", "blurry, static, low quality, watermark, text")
     m.setdefault("style_tail", "")
     m.setdefault("colormatch", {"method": "mkl", "strength": 0.6})
@@ -59,9 +67,50 @@ def load(path):
         die("length %d není 4n+1 (Wan VAE komprimuje čas 4:1)" % m["length"])
     if m["length"] > 81:
         die("length %d > 81 — za trénovacím oknem Wan 2.2, klip driftuje" % m["length"])
-    if not m.get("beats"):
-        die("manifest nemá žádné beats")
+
+    # Scény se zploští do m["beats"]; plochý manifest je jedna bezejmenná scéna,
+    # takže dál jede všechno jednou cestou. Co beat nemá, zdědí ze scény, pak
+    # z kořene manifestu.
+    scenes = m.get("scenes")
+    if not scenes:
+        if not m.get("beats"):
+            die("manifest nemá žádné beats ani scenes")
+        scenes = [{"name": "", "beats": m["beats"]}]
+    beats, m["scenes"] = [], []
+    for k, s in enumerate(scenes):
+        name = s.get("name") or ("scene%d" % (k + 1) if m.get("scenes") else "")
+        if not s.get("beats"):
+            die("scéna %r nemá žádné beats" % name)
+        first = len(beats)
+        for b in s["beats"]:
+            i = len(beats)
+            b.setdefault("id", "%02d" % (i + 1))
+            b.setdefault("seed", m["seed"] + i)
+            b.setdefault("style_tail", s.get("style_tail", m["style_tail"]))
+            b.setdefault("negative", s.get("negative", m["negative"]))
+            b["scene"] = name
+            if not (b.get("prompt") or "").strip():
+                die("beat %s%s nemá prompt" % (b["id"], " (%s)" % name if name else ""))
+            beats.append(b)
+        m["scenes"].append({"name": name, "first": first, "last": len(beats) - 1})
+    ids = [b["id"] for b in beats]
+    dup = sorted({i for i in ids if ids.count(i) > 1})
+    if dup:
+        die("duplicitní id beatů: %s" % ", ".join(dup))
+    m["beats"] = beats
     return m
+
+
+def resolve(m, token, end=False):
+    """Beat id nebo jméno scény → index beatu. U scény první beat, s end=True poslední."""
+    ids = [b["id"] for b in m["beats"]]
+    if token in ids:
+        return ids.index(token)
+    for s in m["scenes"]:
+        if s["name"] and s["name"] == token:
+            return s["last"] if end else s["first"]
+    names = ", ".join(s["name"] for s in m["scenes"] if s["name"]) or "—"
+    die("%r není beat ani scéna (beaty: %s; scény: %s)" % (token, ", ".join(ids), names))
 
 
 def source_path(m):
@@ -127,12 +176,12 @@ def build(m, beat, idx, seed_img, orig_img, w, h):
     L, name = m["length"], m["name"]
     cm = m["colormatch"]
 
-    g["8"]["inputs"]["text"] = beat["prompt"] + m["style_tail"]
-    g["9"]["inputs"]["text"] = m.get("negative")
+    g["8"]["inputs"]["text"] = beat["prompt"] + beat["style_tail"]
+    g["9"]["inputs"]["text"] = beat["negative"]
     g["10"]["inputs"]["image"] = seed_img
     g["12"]["inputs"].update(width=w, height=h, length=L)
     for n in ("13", "14"):
-        g[n]["inputs"]["noise_seed"] = beat.get("seed", 42)
+        g[n]["inputs"]["noise_seed"] = beat["seed"]
     if "boundary" in m:  # víc kroků v high-noise expertu = víc pohybu
         g["13"]["inputs"]["end_at_step"] = m["boundary"]
         g["14"]["inputs"]["start_at_step"] = m["boundary"]
@@ -191,26 +240,76 @@ def outfile(outputs, node, ext):
     die("node %s nevrátil žádný %s" % (node, ext))
 
 
+# ---------------------------------------------------------------- stav řetězu
+
+def state_path(m):
+    return os.path.join(OUT, m["name"], "state.json")
+
+
+def beat_hash(m, b, w, h):
+    """Otisk všeho, co ovlivní segment i navazovací snímek. Změna = přegenerovat."""
+    key = (b["prompt"], b["style_tail"], b["negative"], b["seed"], w, h, m["length"],
+           m["base"], m.get("motion"), m.get("boundary"), m.get("shift"), m["colormatch"])
+    return hashlib.sha1(json.dumps(key, sort_keys=True).encode()).hexdigest()[:12]
+
+
+def load_state(m):
+    try:
+        return json.load(open(state_path(m)))
+    except (OSError, ValueError):
+        return {}
+
+
+def save_state(m, st):
+    os.makedirs(os.path.dirname(state_path(m)), exist_ok=True)
+    json.dump(st, open(state_path(m), "w"), indent=1)
+
+
+def resume_index(m, w, h):
+    """První beat, který není hotový: chybí segment, chybí navazovací snímek,
+    nebo se od renderu změnilo zadání (otisk ve state.json)."""
+    st = load_state(m)
+    for i, b in enumerate(m["beats"]):
+        seg = glob.glob(os.path.join(OUT, m["name"], "seg%s_*.webm" % b["id"]))
+        nxt = os.path.join(IN, "%s_seed%02d.png" % (m["name"], i + 1))
+        if not seg or not os.path.exists(nxt) or st.get(b["id"]) != beat_hash(m, b, w, h):
+            return i
+    return len(m["beats"])
+
+
 # ---------------------------------------------------------------- příkazy
 
 def cmd_plan(m, src, w, h):
     L, fps = m["length"], m["fps"]
-    seg = L / fps
-    total = seg + (len(m["beats"]) - 1) * (L - 1) / fps
+    seg, step = L / fps, (L - 1) / fps
     est = SEC_PER_MPX * (w * h / 1e6)
     print("zdroj      %s" % src)
     print("rozlišení  %d×%d  (%.2f Mpx)" % (w, h, w * h / 1e6))
     print("segment    %d snímků = %.2f s @ %d fps, odhad %.0f s GPU" % (L, seg, fps, est))
-    print()
-    for i, b in enumerate(m["beats"]):
-        start = 0 if i == 0 else seg + (i - 1) * (L - 1) / fps
-        print("  beat %-4s %6.2f–%5.2f s  seed%02d → seed%02d  %s"
-              % (b["id"], start, start + (seg if i == 0 else (L - 1) / fps),
-                 i, i + 1, b["prompt"][:58]))
-    frames = L + (len(m["beats"]) - 1) * (L - 1)
+    for s in m["scenes"]:
+        n = s["last"] - s["first"] + 1
+        if s["name"]:
+            t0 = 0 if s["first"] == 0 else seg + (s["first"] - 1) * step
+            t1 = seg + s["last"] * step
+            print("\n%-10s %s–%s  %.1f–%.1f s  ~%.0f min GPU"
+                  % (s["name"], m["beats"][s["first"]]["id"], m["beats"][s["last"]]["id"],
+                     t0, t1, est * n / 60))
+        else:
+            print()
+        for i in range(s["first"], s["last"] + 1):
+            b = m["beats"][i]
+            start = 0 if i == 0 else seg + (i - 1) * step
+            print("  beat %-4s %6.2f–%5.2f s  seed%02d → seed%02d  %s"
+                  % (b["id"], start, start + (seg if i == 0 else step),
+                     i, i + 1, b["prompt"][:58]))
+    n = len(m["beats"])
+    frames = L + (n - 1) * (L - 1)
     print("\ncelkem     %d snímků = %.2f s @ %d fps" % (frames, frames / fps, fps))
     print("odhad GPU  %.0f min (bez fronty; --cache-none načítá modely znovu)"
-          % (est * len(m["beats"]) / 60))
+          % (est * n / 60))
+    if n > 6:
+        print("  ! %d beatů = %d generací za sebou. Colormatch drží barvy, ne identitu — "
+              "po renderu porovnej input/%s_seed%02d.png s originálem." % (n, n, m["name"], n))
 
 
 def beat_path(m, beat):
@@ -253,25 +352,25 @@ def cmd_validate(m, src, w, h):
     return bad == 0
 
 
-def cmd_render(m, src, w, h, only, hd):
-    name = m["name"]
+def cmd_render(m, src, w, h, start, stop, hd):
+    """Beaty [start, stop). Každý startuje z navazovacího snímku předchozího."""
+    name, beats = m["name"], m["beats"]
     orig = "%s_seed00.png" % name
     shutil.copy(src, os.path.join(IN, orig))
-    start = 0
-    if only:
-        ids = [b["id"] for b in m["beats"]]
-        if only not in ids:
-            die("beat %r není v manifestu (%s)" % (only, ", ".join(ids)))
-        start = ids.index(only)
+    if start >= stop:
+        print("  nic k renderu — beaty %s–%s jsou hotové" % (beats[0]["id"], beats[stop - 1]["id"]))
+        return
+    if start:
         need = os.path.join(IN, "%s_seed%02d.png" % (name, start))
         if not os.path.exists(need):
             die("chybí %s — beat %s navazuje na předchozí, spusť napřed ty"
-                % (os.path.basename(need), only))
-        if start:
-            print("  pozn.: beaty za %s se přegenerují taky (mění se navazující snímek)" % only)
+                % (os.path.basename(need), beats[start]["id"]))
+        print("  od beatu %s (%s hotové); co je za ním se přegeneruje taky — mění se navazující snímek"
+              % (beats[start]["id"], "%s–%s" % (beats[0]["id"], beats[start - 1]["id"])))
 
-    for i in range(start, len(m["beats"])):
-        b = m["beats"][i]
+    st = load_state(m)
+    for i in range(start, stop):
+        b = beats[i]
         seed_img = "%s_seed%02d.png" % (name, i)
         path = beat_path(m, b)
         if os.path.exists(path) and not hd:
@@ -280,17 +379,24 @@ def cmd_render(m, src, w, h, only, hd):
         else:
             g = build(m, b, i, seed_img, orig, w, h)
             note = ""
-        outputs = submit(g, "beat %s%s" % (b["id"], note))
+        label = "beat %s%s%s" % (b["id"], " %s" % b["scene"] if b["scene"] else "", note)
+        outputs = submit(g, label)
         nxt = os.path.join(IN, "%s_seed%02d.png" % (name, i + 1))
         shutil.copy(outfile(outputs, "22", ".png"), nxt)
         print("     %s  →  %s" % (os.path.basename(outfile(outputs, "16", ".webm")),
                                   os.path.basename(nxt)))
+        st[b["id"]] = beat_hash(m, b, w, h)
+        # co je za právě vyrenderovaným beatem, stojí na starém navazovacím
+        # snímku — pro --resume už neplatí
+        for later in beats[i + 1:]:
+            st.pop(later["id"], None)
+        save_state(m, st)
     print("hotovo — slep to přes --assemble")
 
 
-def segments(m):
+def segments(m, upto):
     out = []
-    for b in m["beats"]:
+    for b in m["beats"][:upto]:
         hits = sorted(glob.glob(os.path.join(OUT, m["name"], "seg%s_*.webm" % b["id"])))
         if not hits:
             die("chybí vyrenderovaný segment pro beat %s" % b["id"])
@@ -298,56 +404,84 @@ def segments(m):
     return out
 
 
-def cmd_assemble(m):
-    """Concat s zahozením prvního snímku každého navazujícího segmentu.
+def concat(files, fps, dst):
+    """ffmpeg concat se zahozením prvního snímku každého dalšího vstupu.
 
-    Segment N+1 začíná přesně tím snímkem, kterým segment N končí (je to jeho
-    vstupní obrázek), takže bez select=gte(n,1) by ve výsledku každý spoj
-    zadrhl o jeden zdvojený snímek."""
-    segs, fps = segments(m), m["fps"]
-    dst = os.path.join(OUT, m["name"], "%s_full.mp4" % m["name"])
+    Vstup N+1 začíná přesně tím snímkem, kterým vstup N končí (sdílený
+    navazovací snímek), takže bez select=gte(n,1) by každý spoj zadrhl
+    o jeden zdvojený snímek. Platí pro segmenty i pro RIFE chunky."""
     parts, labels = [], []
-    for i, _ in enumerate(segs):
+    for i, _ in enumerate(files):
         sel = "" if i == 0 else "select=gte(n\\,1),"
         parts.append("[%d:v]%ssetpts=N/%d/TB[v%d];" % (i, sel, fps, i))
         labels.append("[v%d]" % i)
-    fc = "".join(parts) + "".join(labels) + "concat=n=%d:v=1:a=0[out]" % len(segs)
+    fc = "".join(parts) + "".join(labels) + "concat=n=%d:v=1:a=0[out]" % len(files)
     cmd = ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error"]
-    for s in segs:
-        cmd += ["-i", s]
+    for f in files:
+        cmd += ["-i", f]
     cmd += ["-filter_complex", fc, "-map", "[out]", "-r", str(fps),
             "-c:v", "libx264", "-crf", "16", "-preset", "slow", "-pix_fmt", "yuv420p", dst]
     subprocess.run(cmd, check=True)
-    n = subprocess.run(["ffprobe", "-v", "error", "-count_frames", "-select_streams", "v:0",
-                        "-show_entries", "stream=nb_read_frames", "-of", "csv=p=0", dst],
-                       capture_output=True, text=True).stdout.strip()
-    print("  %s  %s snímků = %.2f s @ %d fps" % (dst, n, int(n) / fps, fps))
     return dst
 
 
-def cmd_smooth(m):
-    """RIFE přes celý slepený klip, ne po segmentech — vyhladí i spoje."""
-    full = os.path.join(OUT, m["name"], "%s_full.mp4" % m["name"])
+def nframes(path):
+    return int(subprocess.run(["ffprobe", "-v", "error", "-count_frames", "-select_streams", "v:0",
+                               "-show_entries", "stream=nb_read_frames", "-of", "csv=p=0", path],
+                              capture_output=True, text=True).stdout.strip())
+
+
+def full_path(m):
+    return os.path.join(OUT, m["name"], "%s_full.mp4" % m["name"])
+
+
+def cmd_assemble(m, upto):
+    segs, fps = segments(m, upto), m["fps"]
+    dst = concat(segs, fps, full_path(m))
+    n = nframes(dst)
+    print("  %s  %d snímků = %.2f s @ %d fps" % (dst, n, n / fps, fps))
+    return dst
+
+
+def cmd_smooth(m, upto):
+    """RIFE po scénách s překryvem jednoho snímku, pak concat.
+
+    Celý klip naráz by u dlouhé scény neprošel pamětí — VHS_LoadVideo drží
+    všechny snímky v RAM a RIFE k tomu dvojnásobek. Chunk končí snímkem, kterým
+    další začíná, takže dvojice přes hranici scén se interpoluje taky. RIFE ×2
+    vrací 2F−1 snímků (poslední originál jednou), po zahození prvního snímku
+    každého dalšího chunku vyjde 2N−1 — totéž co jednorázový průchod."""
+    full = full_path(m)
     if not os.path.exists(full):
         die("nejdřív --assemble")
+    L, fps = m["length"], m["fps"]
     staged = "%s_full.mp4" % m["name"]
     shutil.copy(full, os.path.join(IN, staged))
-    g = json.load(open(os.path.join(HERE, "workflows", "upscale_interp.json")))
-    g["1"]["inputs"]["video"] = staged
-    g["2"]["inputs"]["scale_by"] = float(m.get("upscale", 1.0))
-    g["4"]["inputs"].update(filename_prefix="%s/final_%dfps" % (m["name"], m["fps"] * 2),
-                            fps=float(m["fps"] * 2), crf=20.0)
-    outputs = submit(g, "RIFE %d→%d fps" % (m["fps"], m["fps"] * 2))
-    final = outfile(outputs, "4", ".webm")
-    print("  %s" % final)
-    return final
+    chunks = []
+    for s in m["scenes"]:
+        a, b = s["first"], min(s["last"], upto - 1)
+        if a > b:
+            break                                   # scéna celá za --until
+        skip = 0 if a == 0 else L + (a - 1) * (L - 1) - 1
+        cap = L + b * (L - 1) - skip
+        g = json.load(open(os.path.join(HERE, "workflows", "upscale_interp.json")))
+        g["1"]["inputs"].update(video=staged, skip_first_frames=skip, frame_load_cap=cap)
+        g["2"]["inputs"]["scale_by"] = float(m.get("upscale", 1.0))
+        g["4"]["inputs"].update(filename_prefix="%s/rife_%s" % (m["name"], s["name"] or "all"),
+                                fps=float(fps * 2), crf=20.0)
+        label = "RIFE %d→%d fps%s" % (fps, fps * 2, " " + s["name"] if s["name"] else "")
+        chunks.append(outfile(submit(g, label), "4", ".webm"))
+    dst = concat(chunks, fps * 2, os.path.join(OUT, m["name"], "%s_%dfps.mp4" % (m["name"], fps * 2)))
+    n = nframes(dst)
+    print("  %s  %d snímků = %.2f s @ %d fps" % (dst, n, n / (fps * 2), fps * 2))
+    return dst
 
 
-def cmd_all(m, src, w, h, only, hd):
+def cmd_all(m, src, w, h, start, stop, hd):
     """Render → slepení → RIFE na jeden zátah. Co si obvykle přeješ."""
-    cmd_render(m, src, w, h, only, hd)
-    full = cmd_assemble(m)
-    final = cmd_smooth(m)
+    cmd_render(m, src, w, h, start, stop, hd)
+    full = cmd_assemble(m, stop)
+    final = cmd_smooth(m, stop)
     print("\nHOTOVO")
     print("  %d fps  %s" % (m["fps"], full))
     print("  %d fps  %s" % (m["fps"] * 2, final))
@@ -361,21 +495,37 @@ if __name__ == "__main__":
     ap.add_argument("--validate", action="store_true", help="kontrola proti /object_info")
     ap.add_argument("--materialize", action="store_true",
                     help="zapiš workflows/chain-<name>/beatNN.json, bez renderu")
-    ap.add_argument("--beats", help="přegeneruj od tohoto beatu dál, např. 02")
+    ap.add_argument("--from", dest="start", metavar="BEAT|SCÉNA",
+                    help="renderuj od beatu / scény dál (vše za ním se přegeneruje)")
+    ap.add_argument("--beats", dest="start", help=argparse.SUPPRESS)      # starší jméno
+    ap.add_argument("--until", metavar="BEAT|SCÉNA",
+                    help="skonči po beatu / scéně; slepení a RIFE jen přes tenhle prefix")
+    ap.add_argument("--resume", action="store_true",
+                    help="pokračuj od prvního nehotového beatu (output/<name>/state.json)")
     ap.add_argument("--hd", action="store_true", help="~1 Mpx místo ~0.44 Mpx")
     ap.add_argument("--assemble", action="store_true", help="slepení, bez GPU")
-    ap.add_argument("--smooth", action="store_true", help="RIFE 2× fps přes celek")
+    ap.add_argument("--smooth", action="store_true", help="RIFE 2× fps po scénách")
     ap.add_argument("--all", action="store_true",
                     help="render + slepení + RIFE naráz")
     a = ap.parse_args()
 
     m = load(a.manifest)
+    stop = resolve(m, a.until, end=True) + 1 if a.until else len(m["beats"])
     if a.assemble:
-        cmd_assemble(m); sys.exit(0)
+        cmd_assemble(m, stop); sys.exit(0)
     if a.smooth:
-        cmd_smooth(m); sys.exit(0)
+        cmd_smooth(m, stop); sys.exit(0)
     src = source_path(m)
     w, h = resolution(m, src, "hd" if a.hd else "draft")
+    if a.start and a.resume:
+        die("--from a --resume se vylučují")
+    start = 0
+    if a.start:
+        start = resolve(m, a.start)
+        if start >= stop:
+            die("--from %s je za --until %s" % (a.start, a.until))
+    elif a.resume:
+        start = resume_index(m, w, h)
     if a.plan:
         cmd_plan(m, src, w, h)
     elif a.materialize:
@@ -383,6 +533,6 @@ if __name__ == "__main__":
     elif a.validate:
         sys.exit(0 if cmd_validate(m, src, w, h) else 1)
     elif a.all:
-        cmd_all(m, src, w, h, a.beats, a.hd)
+        cmd_all(m, src, w, h, start, stop, a.hd)
     else:
-        cmd_render(m, src, w, h, a.beats, a.hd)
+        cmd_render(m, src, w, h, start, stop, a.hd)
