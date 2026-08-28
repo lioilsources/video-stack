@@ -1,7 +1,9 @@
 {
   "id": "blink_smile",
-  "label": "Blink and smile",
-  "desc": "Breathes, blinks slowly, smiles and looks into the camera. The safest choice.",
+  "label": "Mrknutí a úsměv",
+  "desc": "Dýchá, pomalu mrkne, usměje se a podívá se do kamery. Nejjistější volba.",
+  "label_en": "Blink and smile",
+  "desc_en": "Breathes, blinks slowly, smiles and looks into the camera. The safest choice.",
   "length": 81,
   "fps": 16,
   "crf": 18,

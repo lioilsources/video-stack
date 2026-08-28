@@ -1,7 +1,9 @@
 {
   "id": "tap_dance_rhythm",
-  "label": "Dance · Tap",
-  "desc": "Fast heel and toe taps, a shuffle, a jump with a clap, a closing pose with the hat.",
+  "label": "Tanec · Step",
+  "desc": "Rychlé údery pat a špiček, shuffle, skok s klapnutím, závěrečná póza s kloboukem.",
+  "label_en": "Dance · Tap",
+  "desc_en": "Fast heel and toe taps, a shuffle, a jump with a clap, a closing pose with the hat.",
   "length": 81,
   "fps": 16,
   "crf": 18,

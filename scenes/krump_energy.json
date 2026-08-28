@@ -1,7 +1,9 @@
 {
   "id": "krump_energy",
-  "label": "Dance · Krump",
-  "desc": "A heavy stomp, chest pops and jabs, a buck, an arm swing, a freeze in a crouch.",
+  "label": "Tanec · Krump",
+  "desc": "Těžké dupnutí, chest popy a jaby, buck, švih paží, freeze v podřepu.",
+  "label_en": "Dance · Krump",
+  "desc_en": "A heavy stomp, chest pops and jabs, a buck, an arm swing, a freeze in a crouch.",
   "length": 81,
   "fps": 16,
   "crf": 18,

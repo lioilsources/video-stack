@@ -40,7 +40,11 @@ def log(*a):
 # ---------------------------------------------------------------- scény
 
 def load_scenes():
-    """scenes/<id>.json = kus manifestu (style_tail, negative, scenes[]) + id/label/desc."""
+    """scenes/<id>.json = kus manifestu (style_tail, negative, scenes[]) + id/label/desc.
+
+    label/desc jsou česky (Ol1nLLM), label_en/desc_en anglicky (TsumikiBot pro
+    globální trh). Klient si vybere; kdo _en nezná, dostane češtinu jako dřív.
+    """
     out = {}
     for p in sorted(glob.glob(os.path.join(SCENES, "*.json"))):
         t = json.load(open(p))
@@ -48,6 +52,8 @@ def load_scenes():
         n = sum(len(s["beats"]) for s in t["scenes"])
         out[t["id"]] = {
             "id": t["id"], "label": t["label"], "desc": t.get("desc", ""),
+            "label_en": t.get("label_en", t["label"]),
+            "desc_en": t.get("desc_en", t.get("desc", "")),
             "beats": n, "seconds": round((L + (n - 1) * (L - 1)) / fps, 1),
             "minutes_est": round(n * SEC_PER_BEAT * L / 81 / 60),
             "_tpl": t,

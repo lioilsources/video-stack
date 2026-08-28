@@ -1,7 +1,9 @@
 {
   "id": "oriental_belly_dance",
-  "label": "Dance · Belly dance",
-  "desc": "Hip shimmy, a torso wave, a hip drop, circling the chest, a slow turn with the veil.",
+  "label": "Tanec · Břišní tanec",
+  "desc": "Shimmy boků, vlna trupu, hip drop, kroužení hrudníku, pomalá otočka se závojem.",
+  "label_en": "Dance · Belly dance",
+  "desc_en": "Hip shimmy, a torso wave, a hip drop, circling the chest, a slow turn with the veil.",
   "length": 81,
   "fps": 16,
   "crf": 18,

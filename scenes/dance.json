@@ -1,7 +1,9 @@
 {
   "id": "dance",
-  "label": "Dance",
-  "desc": "Sways to the beat, a step to the side, arms up, a spin and a settle. The most demanding — the whole body.",
+  "label": "Tanec",
+  "desc": "Pohupuje se do rytmu, krok stranou, ruce nahoru, otočka a zklidnění. Nejnáročnější — celé tělo.",
+  "label_en": "Dance",
+  "desc_en": "Sways to the beat, a step to the side, arms up, a spin and a settle. The most demanding — the whole body.",
   "length": 81,
   "fps": 16,
   "crf": 18,

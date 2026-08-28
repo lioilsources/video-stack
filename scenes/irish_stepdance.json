@@ -1,7 +1,9 @@
 {
   "id": "irish_stepdance",
-  "label": "Dance · Irish stepdance",
-  "desc": "Arms at the sides, fast feet, a high jump with a kick, heel clicks, a rigid stance.",
+  "label": "Tanec · Irský step",
+  "desc": "Ruce podél těla, rychlé nohy, vysoký výskok s kopem, klapání pat, strnulý postoj.",
+  "label_en": "Dance · Irish stepdance",
+  "desc_en": "Arms at the sides, fast feet, a high jump with a kick, heel clicks, a rigid stance.",
   "length": 81,
   "fps": 16,
   "crf": 18,

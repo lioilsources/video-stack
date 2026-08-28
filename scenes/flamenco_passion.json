@@ -1,7 +1,9 @@
 {
   "id": "flamenco_passion",
-  "label": "Dance · Flamenco",
-  "desc": "Heel stamping, circling wrists, a clap, a spin with the skirt, a proud stance.",
+  "label": "Tanec · Flamenco",
+  "desc": "Dupání podpatků, kroužení zápěstí, tlesknutí, otočka se sukní, hrdý postoj.",
+  "label_en": "Dance · Flamenco",
+  "desc_en": "Heel stamping, circling wrists, a clap, a spin with the skirt, a proud stance.",
   "length": 81,
   "fps": 16,
   "crf": 18,

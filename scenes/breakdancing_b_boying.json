@@ -1,7 +1,9 @@
 {
   "id": "breakdancing_b_boying",
-  "label": "Dance · Breakdance",
-  "desc": "Toprock, 6-step on the floor, a backspin, a one-handed freeze, sits down with a nod.",
+  "label": "Tanec · Breakdance",
+  "desc": "Toprock, 6-step na zemi, backspin, freeze na jedné ruce, sed s pokývnutím.",
+  "label_en": "Dance · Breakdance",
+  "desc_en": "Toprock, 6-step on the floor, a backspin, a one-handed freeze, sits down with a nod.",
   "length": 81,
   "fps": 16,
   "crf": 18,
