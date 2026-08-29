@@ -52,7 +52,8 @@ def load_scenes():
         t = json.load(open(p))
         fps = t.get("fps", 16)
         lens = beat_lengths(t)
-        frames = lens[0] + sum(L - 1 for L in lens[1:])      # sdílený navazovací snímek se zahazuje
+        k = t.get("crossfade", 1)                            # překryv na střihu (1 = sdílený snímek)
+        frames = lens[0] + sum(L - k for L in lens[1:])
         out[t["id"]] = {
             "id": t["id"], "label": t["label"], "desc": t.get("desc", ""),
             "beats": len(lens), "seconds": round(frames / fps, 1),

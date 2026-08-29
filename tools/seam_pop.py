@@ -29,13 +29,13 @@ def frames(path, w=232, h=472):
 def main(names):
     for name in names:
         m = chain.load(os.path.join(HERE, "chains", name + ".json"))
-        path = os.path.join(OUT, name, "%s_full.mp4" % name)
+        path = os.path.join(OUT, m["name"], "%s_full.mp4" % m["name"])   # manifest může být varianta se stejným name
         if not os.path.exists(path):
             print("%s: chybí %s" % (name, path)); continue
         f = frames(path).astype(np.int16)
         top = f[:, : f.shape[1] // 3]                       # horní třetina = hlava
         d = np.abs(np.diff(top, axis=0)).mean(axis=(1, 2, 3))   # d[i] = rozdíl snímků i, i+1
-        print(name)
+        print("%s  (crossfade %d)" % (name, m["crossfade"]))
         ratios = []
         for i in range(1, len(m["beats"])):
             cut = chain.frames_upto(m, i)                  # první snímek beatu i

@@ -63,7 +63,10 @@ def load(path):
     m.setdefault("style_tail", "")
     m.setdefault("colormatch", {"method": "mkl", "strength": 0.6})
     m.setdefault("base", "i2v_final_14b_lightning_portrait")
+    m.setdefault("crossfade", 1)
     check_length(m["length"], "manifest")
+    if not isinstance(m["crossfade"], int) or not 1 <= m["crossfade"] <= 16:
+        die("crossfade %r: čekám 1–16 snímků (1 = tvrdý střih)" % m["crossfade"])
 
     # Scény se zploští do m["beats"]; plochý manifest je jedna bezejmenná scéna,
     # takže dál jede všechno jednou cestou. Co beat nemá, zdědí ze scény, pak
@@ -113,10 +116,12 @@ def check_length(L, what):
 
 def frames_upto(m, upto):
     """Počet snímků slepeného klipu po prvních `upto` beatech: první celý,
-    každý další bez sdíleného navazovacího snímku."""
+    každý další kratší o překryv střihu — 1 snímek (sdílený navazovací) při
+    tvrdém střihu, `crossfade` snímků při prolínačce."""
+    k = m["crossfade"]
     n = 0
     for i, b in enumerate(m["beats"][:upto]):
-        n += b["length"] if i == 0 else b["length"] - 1
+        n += b["length"] if i == 0 else b["length"] - k
     return n
 
 
@@ -488,18 +493,34 @@ def segments(m, upto):
     return out
 
 
-def concat(files, fps, dst):
-    """ffmpeg concat se zahozením prvního snímku každého dalšího vstupu.
+def concat(files, fps, dst, xfade=1, lengths=None):
+    """ffmpeg spojení vstupů, které sdílejí hraniční snímek.
 
     Vstup N+1 začíná přesně tím snímkem, kterým vstup N končí (sdílený
-    navazovací snímek), takže bez select=gte(n,1) by každý spoj zadrhl
-    o jeden zdvojený snímek. Platí pro segmenty i pro RIFE chunky."""
-    parts, labels = [], []
-    for i, _ in enumerate(files):
-        sel = "" if i == 0 else "select=gte(n\\,1),"
-        parts.append("[%d:v]%ssetpts=N/%d/TB[v%d];" % (i, sel, fps, i))
-        labels.append("[v%d]" % i)
-    fc = "".join(parts) + "".join(labels) + "concat=n=%d:v=1:a=0[out]" % len(files)
+    navazovací snímek). xfade=1: tvrdý střih, první snímek každého dalšího
+    vstupu se zahodí (select=gte(n,1)), jinak by spoj zadrhl o zdvojený
+    snímek. xfade>1: posledních k snímků N se prolne s prvními k snímky N+1
+    (ffmpeg xfade) — skok z re-encode navazovacího snímku a resetu pohybu se
+    rozloží do k snímků; `lengths` = počty snímků vstupů, kvůli offsetům.
+    Platí pro segmenty i pro RIFE chunky."""
+    if xfade > 1:
+        assert lengths and len(lengths) == len(files)
+        parts = ["[%d:v]setpts=PTS-STARTPTS,fps=%d[v%d];" % (i, fps, i) for i in range(len(files))]
+        prev, out_frames = "[v0]", lengths[0]
+        for i in range(1, len(files)):
+            off = (out_frames - xfade) / fps
+            parts.append("%s[v%d]xfade=transition=fade:duration=%.4f:offset=%.4f[x%d];"
+                         % (prev, i, xfade / fps, off, i))
+            prev, out_frames = "[x%d]" % i, out_frames + lengths[i] - xfade
+        fc = "".join(parts)[:-1].replace("[x%d]" % (len(files) - 1), "[out]") \
+            if len(files) > 1 else "[0:v]setpts=PTS-STARTPTS[out]"
+    else:
+        parts, labels = [], []
+        for i, _ in enumerate(files):
+            sel = "" if i == 0 else "select=gte(n\\,1),"
+            parts.append("[%d:v]%ssetpts=N/%d/TB[v%d];" % (i, sel, fps, i))
+            labels.append("[v%d]" % i)
+        fc = "".join(parts) + "".join(labels) + "concat=n=%d:v=1:a=0[out]" % len(files)
     cmd = ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error"]
     for f in files:
         cmd += ["-i", f]
@@ -521,7 +542,8 @@ def full_path(m):
 
 def cmd_assemble(m, upto):
     segs, fps = segments(m, upto), m["fps"]
-    dst = concat(segs, fps, full_path(m))
+    dst = concat(segs, fps, full_path(m), xfade=m["crossfade"],
+                 lengths=[b["length"] for b in m["beats"][:upto]])
     n = nframes(dst)
     print("  %s  %d snímků = %.2f s @ %d fps" % (dst, n, n / fps, fps))
     return dst

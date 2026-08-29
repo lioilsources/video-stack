@@ -1,0 +1,44 @@
+{
+  "name": "bench_identity_face",
+  "source": "leather_shorts_src.png",
+  "seed": 42,
+  "style_tail": ", static camera, soft natural window light, photorealistic, natural motion",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, extra limbs, deformed hands",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "_ucel": "jen re-assemble existujících segmentů bench_identity_face s crossfade 8 — měření seam_pop",
+  "scenes": [
+    {
+      "name": "calm",
+      "beats": [
+        {
+          "prompt": "she breathes gently, chest rising, and blinks slowly, loose strands of hair sway near her cheek, body otherwise still"
+        },
+        {
+          "prompt": "a warm smile slowly spreads across her face, lips parting slightly, a small tilt of the head, then she holds the smile"
+        }
+      ]
+    },
+    {
+      "name": "dance",
+      "beats": [
+        {
+          "prompt": "she starts to sway her hips gently side to side to a slow beat, arms loose and relaxed, feet staying in place"
+        },
+        {
+          "prompt": "she steps to one side and shifts her weight onto that leg, arms rising slowly to shoulder height, hips still swaying"
+        },
+        {
+          "prompt": "she turns halfway away from the camera and back again, hair swinging with the turn, arms flowing with the motion"
+        },
+        {
+          "prompt": "she raises both arms above her head, hips swaying to the beat, then lowers the arms and stands still, smiling at the camera"
+        }
+      ]
+    }
+  ],
+  "identity": "face",
+  "crossfade": 8
+}
