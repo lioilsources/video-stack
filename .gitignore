@@ -12,4 +12,4 @@ __pycache__/
 !/chains/eval_*.json
 !/chains/mw_*.json
 !/chains/robot_ctl.json
-!/chains/gangnam_ctl.json
+!/chains/gangnam_ctl*.json

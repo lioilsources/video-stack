@@ -45,7 +45,8 @@ SEC_PER_MPX = 333  # naměřeno 26. 8.: 140–155 s @ 0.445 Mpx / 81 snímků
 
 # Control beat: pohyb z kostry řídicího klipu (drive/<id>_pose.webm), vzhled z
 # navazovacího snímku — pro pohyby, které Wan z textu neumí (moonwalk…).
-CONTROL_BASE = "control_beat_14b_lightning_portrait"
+CONTROL_BASE = {"fun": "control_beat_14b_lightning_portrait",     # fun_control: ref_image = vzhled
+                "vace": "vace_control_14b_lightning_portrait"}    # VACE: reference_image = vzhled, silnější kotva
 DRIVE = os.path.join(HERE, "drive")
 
 
@@ -113,7 +114,8 @@ def load_dict(m):
             b.setdefault("style_tail", s.get("style_tail", m["style_tail"]))
             b.setdefault("negative", s.get("negative", m["negative"]))
             # tempo se ladí po beatech: délka a knoby pohybu dědí beat ← scéna ← kořen
-            for k in ("length", "motion", "boundary", "shift", "sharpen", "identity", "face_denoise"):
+            for k in ("length", "motion", "boundary", "shift", "sharpen", "identity", "face_denoise",
+                      "control_ref", "control_model"):
                 if k in s or k in m:
                     b.setdefault(k, s.get(k, m.get(k)))
             b.setdefault("length", 81)
@@ -225,7 +227,10 @@ def resolution(m, src, tier):
 def build(m, beat, idx, seed_img, orig_img, w, h):
     """Základní I2V workflow + tři nody navíc pro předání snímku dál."""
     control = beat.get("control")
-    g = json.load(open(os.path.join(HERE, "workflows", (CONTROL_BASE if control else m["base"]) + ".json")))
+    cmodel = beat.get("control_model") or "fun"
+    if cmodel not in CONTROL_BASE:
+        die("control_model %r: čekám fun nebo vace" % cmodel)
+    g = json.load(open(os.path.join(HERE, "workflows", (CONTROL_BASE[cmodel] if control else m["base"]) + ".json")))
     L, name = beat["length"], m["name"]
     cm = m["colormatch"]
     if control:
@@ -235,7 +240,10 @@ def build(m, beat, idx, seed_img, orig_img, w, h):
 
     g["8"]["inputs"]["text"] = beat["prompt"] + beat["style_tail"]
     g["9"]["inputs"]["text"] = beat["negative"]
-    g["10"]["inputs"]["image"] = seed_img
+    # Vzhled control beatu: "handoff" = navazovací snímek (kontinuita, ale každý
+    # klip zdědí drift), "original" = úvodní fotka (postava, oblečení a místnost
+    # se v každém klipu vrátí k originálu; střih je stejně záměrný)
+    g["10"]["inputs"]["image"] = orig_img if (control and beat.get("control_ref") == "original") else seed_img
     g["12"]["inputs"].update(width=w, height=h, length=L)
     if g["12"]["class_type"] == "WanVaceToVideo":
         # VACE báze: control_video = [navazovací snímek, šedé×(L−1)], masky [0, 1×(L−1)];
@@ -395,6 +403,7 @@ def beat_hash(m, b, w, h):
     key = (b["prompt"], b["style_tail"], b["negative"], b["seed"], w, h, b["length"],
            m["base"], b.get("motion"), b.get("boundary"), b.get("shift"), b.get("sharpen"),
            b.get("identity"), b.get("face_denoise"), m["colormatch"], b.get("control"),
+           b.get("control_ref"), b.get("control_model"),
            os.path.getmtime(pose_path(b["control"])) if b.get("control") else None)
     return hashlib.sha1(json.dumps(key, sort_keys=True).encode()).hexdigest()[:12]
 

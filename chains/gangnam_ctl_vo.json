@@ -1,0 +1,30 @@
+{
+  "name": "gangnam_ctl_vo",
+  "source": "leather_shorts_src.png",
+  "seed": 42,
+  "length": 81,
+  "boundary": 3,
+  "motion": 0.8,
+  "identity": "face",
+  "transition": "slices",
+  "crossfade": 6,
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "_ucel": "A/B kotvy vzhledu control beatu: {'control_ref': 'original', 'control_model': 'vace'}",
+  "beats": [
+    {
+      "length": 65,
+      "prompt": "the dancer lets go of the door frame, takes two steps away from the wall toward the center of the room and stops with feet together and flat on the floor, arms hanging loose, facing the camera"
+    },
+    {
+      "control": "gangnam",
+      "prompt": "the dancer does the horse-riding dance with bouncing knees and crossed wrists holding invisible reins, photorealistic, same clothes and room",
+      "control_ref": "original",
+      "control_model": "vace"
+    }
+  ]
+}
