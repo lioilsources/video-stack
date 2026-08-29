@@ -193,7 +193,7 @@ cmd_drive() {
   echo "  nahrávám $clip -> $HOST:$STACK/drive/src/$id.$ext"
   ssh "$HOST" "mkdir -p $STACK/drive/src"
   scp -q "$clip" "$HOST:$STACK/drive/src/$id.$ext"
-  echo "  DWPose na $HOST…"
+  echo "  DWPose na ${HOST}…"
   ssh "$HOST" "cd $STACK && ~/Code/ComfyUI/.venv/bin/python tools/drive.py pose $id --src drive/src/$id.$ext --start $start $loop" \
     || die "kostra se nepovedla"
   scp -q "$HOST:$STACK/drive/${id}_pose.webm" "$DIR/drive/${id}_pose.webm"
