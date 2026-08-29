@@ -2,8 +2,8 @@
   "id": "icon_gangnam",
   "label": "Ikony · Gangnam Style",
   "label_en": "Icons · Gangnam Style",
-  "desc": "Zkřížená zápěstí, jízda na koni s poskoky, točení lasa, cval do strany a zpět.",
-  "desc_en": "Crossed wrists, the horse-riding bounce, twirling a lasso, a gallop to the side and back.",
+  "desc": "Přípravný krok, jízda na koni a točení lasa podle kostry z Mixama, zastavení se zkříženými zápěstími.",
+  "desc_en": "A setup step, the horse-riding bounce and the lasso twirl driven by Mixamo skeletons, a stop with crossed wrists.",
   "length": 81,
   "fps": 16,
   "crf": 18,
@@ -28,20 +28,14 @@
           "prompt": "the dancer lets go of anything they are holding, takes two steps away from the wall toward the center of the room and stops with feet together and flat on the floor, arms hanging loose, facing the camera"
         },
         {
-          "length": 49,
-          "prompt": "the dancer stands with knees bent and crosses the wrists in front of the body, hands in loose fists, bouncing lightly, and holds the crossed-wrist pose"
+          "length": 81,
+          "control": "gangnam",
+          "prompt": "the dancer does the horse-riding dance with bouncing knees and crossed wrists holding invisible reins, photorealistic, same clothes and room"
         },
         {
           "length": 81,
-          "prompt": "the dancer bounces in place as if riding a horse, knees lifting alternately, fists held together in front like holding reins, and ends with both feet down"
-        },
-        {
-          "length": 65,
-          "prompt": "one arm swings above the head in circles as if twirling a lasso while the other hand holds the reins and the knees keep bouncing, and ends with the arm up"
-        },
-        {
-          "length": 65,
-          "prompt": "the dancer gallops sideways with small hops to one side and then back, holding the reins, and ends in the starting spot"
+          "control": "gangnam_lasso",
+          "prompt": "the dancer keeps the horse-riding bounce while one arm twirls a lasso above the head, photorealistic, same clothes and room"
         },
         {
           "length": 49,
