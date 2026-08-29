@@ -42,7 +42,9 @@ need() { [ -f "$(manifest "$1")" ] || die "manifest $1 neexistuje — založ ho:
 # jméno beatu/scény jde do ssh příkazu, tak ať v něm není nic, co by shell četl
 token() { [[ "${1:-}" =~ ^[A-Za-z0-9_-]+$ ]] || die "$2 čeká beat nebo scénu ([A-Za-z0-9_-]), dostal jsem '${1:-}'"; }
 # počet beatů z manifestu — scény i plochý seznam
-nbeats() { python3 -c 'import json,sys; m=json.load(open(sys.argv[1])); print(sum(len(s["beats"]) for s in m["scenes"]) if m.get("scenes") else len(m["beats"]))' "$1"; }
+nbeats() { python3 -c 'import json,sys; m=json.load(open(sys.argv[1])); sc=m.get("scenes") or [{"beats": m["beats"]}]; print(sum(len(s["beats"]) for s in sc))' "$1"; }
+# součet délek beatů v 81-snímkových jednotkách; délka dědí beat ← scéna ← kořen ← 81 jako v chain.py
+beatunits() { python3 -c 'import json,sys; m=json.load(open(sys.argv[1])); sc=m.get("scenes") or [{"beats": m["beats"]}]; print(round(sum(b.get("length", s.get("length", m.get("length", 81)))/81 for s in sc for b in s["beats"]), 2))' "$1"; }
 mfps()   { python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("fps",16))' "$1"; }
 
 cmd_new() {
@@ -148,8 +150,8 @@ cmd_run() {
 
   local n per est fps
   n=$(nbeats "$(manifest "$name")"); fps=$(mfps "$(manifest "$name")")
-  per=147; [ -n "$hd" ] && per=331   # s/beat: 0.44 Mpx vs 1.0 Mpx při 333 s/Mpx
-  est=$(( n * per / 60 ))
+  per=147; [ -n "$hd" ] && per=331   # s na 81 snímků: 0.44 Mpx vs 1.0 Mpx při 333 s/Mpx
+  est=$(python3 -c "print(round($(beatunits "$(manifest "$name")") * $per / 60))")
   local slovo=beatů; [ "$n" = 1 ] && slovo=beat; [ "$n" -ge 2 ] && [ "$n" -le 4 ] && slovo=beaty
   echo "  renderuju na $HOST ($n $slovo${hd:+ v HD}, ~$est min GPU pro celý manifest${extra[0]:+; ${extra[*]} rozsah zúží}, víc když je fronta)…"
   ssh "$HOST" "cd $STACK && ./chain.py chains/$name.json --all $hd ${extra[*]:-}"

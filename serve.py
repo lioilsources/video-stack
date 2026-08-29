@@ -39,23 +39,24 @@ def log(*a):
 
 # ---------------------------------------------------------------- scény
 
-def load_scenes():
-    """scenes/<id>.json = kus manifestu (style_tail, negative, scenes[]) + id/label/desc.
+def beat_lengths(t):
+    """Délky beatů se stejným děděním jako v chain.py: beat ← scéna ← kořen ← 81."""
+    return [b.get("length", s.get("length", t.get("length", 81)))
+            for s in t["scenes"] for b in s["beats"]]
 
-    label/desc jsou česky (Ol1nLLM), label_en/desc_en anglicky (TsumikiBot pro
-    globální trh). Klient si vybere; kdo _en nezná, dostane češtinu jako dřív.
-    """
+
+def load_scenes():
+    """scenes/<id>.json = kus manifestu (style_tail, negative, scenes[]) + id/label/desc."""
     out = {}
     for p in sorted(glob.glob(os.path.join(SCENES, "*.json"))):
         t = json.load(open(p))
-        L, fps = t.get("length", 81), t.get("fps", 16)
-        n = sum(len(s["beats"]) for s in t["scenes"])
+        fps = t.get("fps", 16)
+        lens = beat_lengths(t)
+        frames = lens[0] + sum(L - 1 for L in lens[1:])      # sdílený navazovací snímek se zahazuje
         out[t["id"]] = {
             "id": t["id"], "label": t["label"], "desc": t.get("desc", ""),
-            "label_en": t.get("label_en", t["label"]),
-            "desc_en": t.get("desc_en", t.get("desc", "")),
-            "beats": n, "seconds": round((L + (n - 1) * (L - 1)) / fps, 1),
-            "minutes_est": round(n * SEC_PER_BEAT * L / 81 / 60),
+            "beats": len(lens), "seconds": round(frames / fps, 1),
+            "minutes_est": round(sum(SEC_PER_BEAT * L / 81 for L in lens) / 60),
             "_tpl": t,
         }
     return out

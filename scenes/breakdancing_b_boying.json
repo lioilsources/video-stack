@@ -2,12 +2,10 @@
   "id": "breakdancing_b_boying",
   "label": "Tanec · Breakdance",
   "desc": "Toprock, 6-step na zemi, backspin, freeze na jedné ruce, sed s pokývnutím.",
-  "label_en": "Dance · Breakdance",
-  "desc_en": "Toprock, 6-step on the floor, a backspin, a one-handed freeze, sits down with a nod.",
   "length": 81,
   "fps": 16,
   "crf": 18,
-  "style_tail": ", static camera, cinematic studio lighting, photorealistic, graceful and dynamic motion, highly detailed",
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
   "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
   "colormatch": {
     "method": "mkl",
@@ -16,21 +14,28 @@
   "scenes": [
     {
       "name": "breakdancing_b_boying",
+      "boundary": 3,
+      "motion": 0.8,
       "beats": [
         {
-          "prompt": "a b-boy in urban streetwear steps side to side in a rhythmic standing toprock footwork pattern"
+          "length": 65,
+          "prompt": "he steps side to side in a rhythmic toprock pattern, arms swinging, and ends with feet apart and knees bent"
         },
         {
-          "prompt": "he drops swiftly to the ground, launching into a fast 6-step footwork circle on his hands and toes"
+          "length": 65,
+          "prompt": "he drops to the ground and circles once in a 6-step footwork pattern on hands and toes, and ends crouched low"
         },
         {
-          "prompt": "he kicks his legs upward, sweeping into a dynamic back-spin power move across the floor"
+          "length": 65,
+          "prompt": "he kicks his legs up and sweeps into a single back-spin on the floor, and ends lying on his back"
         },
         {
-          "prompt": "he catches himself on one arm, lifting his legs into a balanced, frozen stance in mid-air"
+          "length": 65,
+          "prompt": "he catches himself on one arm and lifts his legs into a frozen balanced stance, and holds the freeze"
         },
         {
-          "prompt": "he drops down into a relaxed sitting pose on the floor, looking up at the camera with a nod"
+          "length": 81,
+          "prompt": "he lowers into a relaxed sitting pose on the floor, looks up at the camera and gives a nod, then sits still"
         }
       ]
     }

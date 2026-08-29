@@ -63,10 +63,7 @@ def load(path):
     m.setdefault("style_tail", "")
     m.setdefault("colormatch", {"method": "mkl", "strength": 0.6})
     m.setdefault("base", "i2v_final_14b_lightning_portrait")
-    if (m["length"] - 1) % 4:
-        die("length %d není 4n+1 (Wan VAE komprimuje čas 4:1)" % m["length"])
-    if m["length"] > 81:
-        die("length %d > 81 — za trénovacím oknem Wan 2.2, klip driftuje" % m["length"])
+    check_length(m["length"], "manifest")
 
     # Scény se zploští do m["beats"]; plochý manifest je jedna bezejmenná scéna,
     # takže dál jede všechno jednou cestou. Co beat nemá, zdědí ze scény, pak
@@ -88,6 +85,12 @@ def load(path):
             b.setdefault("seed", m["seed"] + i)
             b.setdefault("style_tail", s.get("style_tail", m["style_tail"]))
             b.setdefault("negative", s.get("negative", m["negative"]))
+            # tempo se ladí po beatech: délka a knoby pohybu dědí beat ← scéna ← kořen
+            for k in ("length", "motion", "boundary", "shift", "sharpen", "identity"):
+                if k in s or k in m:
+                    b.setdefault(k, s.get(k, m.get(k)))
+            b.setdefault("length", 81)
+            check_length(b["length"], "beat %s" % b["id"])
             b["scene"] = name
             if not (b.get("prompt") or "").strip():
                 die("beat %s%s nemá prompt" % (b["id"], " (%s)" % name if name else ""))
@@ -99,6 +102,22 @@ def load(path):
         die("duplicitní id beatů: %s" % ", ".join(dup))
     m["beats"] = beats
     return m
+
+
+def check_length(L, what):
+    if not isinstance(L, int) or L < 5 or (L - 1) % 4:
+        die("%s: length %r není 4n+1 (Wan VAE komprimuje čas 4:1)" % (what, L))
+    if L > 81:
+        die("%s: length %d > 81 — za trénovacím oknem Wan 2.2, klip driftuje" % (what, L))
+
+
+def frames_upto(m, upto):
+    """Počet snímků slepeného klipu po prvních `upto` beatech: první celý,
+    každý další bez sdíleného navazovacího snímku."""
+    n = 0
+    for i, b in enumerate(m["beats"][:upto]):
+        n += b["length"] if i == 0 else b["length"] - 1
+    return n
 
 
 def resolve(m, token, end=False):
@@ -173,7 +192,7 @@ def resolution(m, src, tier):
 def build(m, beat, idx, seed_img, orig_img, w, h):
     """Základní I2V workflow + tři nody navíc pro předání snímku dál."""
     g = json.load(open(os.path.join(HERE, "workflows", m["base"] + ".json")))
-    L, name = m["length"], m["name"]
+    L, name = beat["length"], m["name"]
     cm = m["colormatch"]
 
     g["8"]["inputs"]["text"] = beat["prompt"] + beat["style_tail"]
@@ -182,14 +201,14 @@ def build(m, beat, idx, seed_img, orig_img, w, h):
     g["12"]["inputs"].update(width=w, height=h, length=L)
     for n in ("13", "14"):
         g[n]["inputs"]["noise_seed"] = beat["seed"]
-    if "boundary" in m:  # víc kroků v high-noise expertu = víc pohybu
-        g["13"]["inputs"]["end_at_step"] = m["boundary"]
-        g["14"]["inputs"]["start_at_step"] = m["boundary"]
-    if "motion" in m:  # síla I2V Lightning LoRA na high-noise expertu
-        g["2"]["inputs"]["strength_model"] = m["motion"]
-    if "shift" in m:
+    if beat.get("boundary") is not None:  # víc kroků v high-noise expertu = víc pohybu
+        g["13"]["inputs"]["end_at_step"] = beat["boundary"]
+        g["14"]["inputs"]["start_at_step"] = beat["boundary"]
+    if beat.get("motion") is not None:  # síla I2V Lightning LoRA na high-noise expertu
+        g["2"]["inputs"]["strength_model"] = beat["motion"]
+    if beat.get("shift") is not None:
         for n in ("3", "6"):
-            g[n]["inputs"]["shift"] = m["shift"]
+            g[n]["inputs"]["shift"] = beat["shift"]
     g["16"]["inputs"].update(filename_prefix="%s/seg%s" % (name, beat["id"]),
                              fps=float(m["fps"]), crf=float(m.get("crf", 18)))
 
@@ -202,8 +221,16 @@ def build(m, beat, idx, seed_img, orig_img, w, h):
                "inputs": {"image_target": ["20", 0], "image_ref": ["30", 0],
                           "method": cm["method"], "strength": cm["strength"],
                           "multithread": True}}
+    handoff = ["21", 0]
+    # Navazovací snímek je VAE-dekódovaný, tedy měkčí než originál, a další beat
+    # z něj startuje — měkkost se sčítá. Doostření je levná protiváha.
+    if beat.get("sharpen"):
+        g["23"] = {"class_type": "ImageSharpen",
+                   "inputs": {"image": handoff, "sharpen_radius": 1,
+                              "sigma": 1.0, "alpha": float(beat["sharpen"])}}
+        handoff = ["23", 0]
     g["22"] = {"class_type": "SaveImage",
-               "inputs": {"images": ["21", 0],
+               "inputs": {"images": handoff,
                           "filename_prefix": "%s/seed%02d" % (name, idx + 1)}}
     return g
 
@@ -248,8 +275,9 @@ def state_path(m):
 
 def beat_hash(m, b, w, h):
     """Otisk všeho, co ovlivní segment i navazovací snímek. Změna = přegenerovat."""
-    key = (b["prompt"], b["style_tail"], b["negative"], b["seed"], w, h, m["length"],
-           m["base"], m.get("motion"), m.get("boundary"), m.get("shift"), m["colormatch"])
+    key = (b["prompt"], b["style_tail"], b["negative"], b["seed"], w, h, b["length"],
+           m["base"], b.get("motion"), b.get("boundary"), b.get("shift"), b.get("sharpen"),
+           b.get("identity"), m["colormatch"])
     return hashlib.sha1(json.dumps(key, sort_keys=True).encode()).hexdigest()[:12]
 
 
@@ -280,33 +308,32 @@ def resume_index(m, w, h):
 # ---------------------------------------------------------------- příkazy
 
 def cmd_plan(m, src, w, h):
-    L, fps = m["length"], m["fps"]
-    seg, step = L / fps, (L - 1) / fps
-    est = SEC_PER_MPX * (w * h / 1e6) * L / 81   # naměřeno na 81 snímcích, škáluje lineárně
+    fps = m["fps"]
+    per_frame = SEC_PER_MPX * (w * h / 1e6) / 81   # naměřeno na 81 snímcích, škáluje lineárně
+    est = lambda beats: sum(per_frame * b["length"] for b in beats)
     print("zdroj      %s" % src)
     print("rozlišení  %d×%d  (%.2f Mpx)" % (w, h, w * h / 1e6))
-    print("segment    %d snímků = %.2f s @ %d fps, odhad %.0f s GPU" % (L, seg, fps, est))
+    print("beat       %s snímků @ %d fps, ~%.0f s GPU na 81 snímků"
+          % ("/".join(sorted({str(b["length"]) for b in m["beats"]})), fps, per_frame * 81))
     for s in m["scenes"]:
-        n = s["last"] - s["first"] + 1
+        beats = m["beats"][s["first"]:s["last"] + 1]
         if s["name"]:
-            t0 = 0 if s["first"] == 0 else seg + (s["first"] - 1) * step
-            t1 = seg + s["last"] * step
+            t0, t1 = frames_upto(m, s["first"]) / fps, frames_upto(m, s["last"] + 1) / fps
             print("\n%-10s %s–%s  %.1f–%.1f s  ~%.0f min GPU"
-                  % (s["name"], m["beats"][s["first"]]["id"], m["beats"][s["last"]]["id"],
-                     t0, t1, est * n / 60))
+                  % (s["name"], beats[0]["id"], beats[-1]["id"], t0, t1, est(beats) / 60))
         else:
             print()
         for i in range(s["first"], s["last"] + 1):
             b = m["beats"][i]
-            start = 0 if i == 0 else seg + (i - 1) * step
-            print("  beat %-4s %6.2f–%5.2f s  seed%02d → seed%02d  %s"
-                  % (b["id"], start, start + (seg if i == 0 else step),
-                     i, i + 1, b["prompt"][:58]))
+            start = frames_upto(m, i) / fps
+            print("  beat %-4s %6.2f–%5.2f s  %2d sn  seed%02d → seed%02d  %s"
+                  % (b["id"], start, frames_upto(m, i + 1) / fps, b["length"],
+                     i, i + 1, b["prompt"][:52]))
     n = len(m["beats"])
-    frames = L + (n - 1) * (L - 1)
+    frames = frames_upto(m, n)
     print("\ncelkem     %d snímků = %.2f s @ %d fps" % (frames, frames / fps, fps))
     print("odhad GPU  %.0f min (bez fronty; --cache-none načítá modely znovu)"
-          % (est * n / 60))
+          % (est(m["beats"]) / 60))
     if n > 6:
         print("  ! %d beatů = %d generací za sebou. Colormatch drží barvy, ne identitu — "
               "po renderu porovnej input/%s_seed%02d.png s originálem." % (n, n, m["name"], n))
@@ -454,7 +481,7 @@ def cmd_smooth(m, upto):
     full = full_path(m)
     if not os.path.exists(full):
         die("nejdřív --assemble")
-    L, fps = m["length"], m["fps"]
+    fps = m["fps"]
     staged = "%s_full.mp4" % m["name"]
     shutil.copy(full, os.path.join(IN, staged))
     chunks = []
@@ -462,8 +489,10 @@ def cmd_smooth(m, upto):
         a, b = s["first"], min(s["last"], upto - 1)
         if a > b:
             break                                   # scéna celá za --until
-        skip = 0 if a == 0 else L + (a - 1) * (L - 1) - 1
-        cap = L + b * (L - 1) - skip
+        # chunk začíná posledním snímkem předchozího beatu (sdílený) a končí
+        # posledním snímkem beatu b
+        skip = 0 if a == 0 else frames_upto(m, a) - 1
+        cap = frames_upto(m, b + 1) - skip
         g = json.load(open(os.path.join(HERE, "workflows", "upscale_interp.json")))
         g["1"]["inputs"].update(video=staged, skip_first_frames=skip, frame_load_cap=cap)
         g["2"]["inputs"]["scale_by"] = float(m.get("upscale", 1.0))

@@ -2,12 +2,10 @@
   "id": "sit_down",
   "label": "Sedne si na zem",
   "desc": "Pomalu se sníží k zemi, sedne si, zakloní hlavu se zavřenýma očima, pak úsměv do kamery.",
-  "label_en": "Sits down on the floor",
-  "desc_en": "Lowers slowly to the floor, sits down, head tipped back with eyes closed, then a smile into the camera.",
   "length": 81,
   "fps": 16,
   "crf": 18,
-  "style_tail": ", static camera, soft natural light, photorealistic, natural motion",
+  "style_tail": ", static camera, soft natural light, photorealistic, one slow continuous movement, calm steady tempo",
   "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, extra limbs, deformed hands",
   "colormatch": {
     "method": "mkl",
@@ -16,21 +14,28 @@
   "scenes": [
     {
       "name": "sit_down",
+      "boundary": 3,
+      "motion": 0.8,
       "beats": [
         {
-          "prompt": "she shifts her weight and bends her knees slightly, one hand reaching down toward the floor, preparing to sit"
+          "length": 65,
+          "prompt": "she shifts her weight and bends her knees, one hand reaching down toward the floor, and ends crouched, ready to sit"
         },
         {
-          "prompt": "she lowers herself slowly to the floor, one hand touching the ground for balance, knees folding under her"
+          "length": 81,
+          "prompt": "she lowers herself slowly to the floor, one hand on the ground for balance, and ends sitting with her legs folded to one side"
         },
         {
-          "prompt": "she is sitting on the floor with her legs folded to one side, both hands resting on the ground, posture relaxed"
+          "length": 81,
+          "prompt": "sitting on the floor with legs folded to one side, she settles her hands on the ground and relaxes her posture, then holds still"
         },
         {
-          "prompt": "she leans her head back, closes her eyes and breathes slowly, chest rising and falling, hair falling behind her shoulders"
+          "length": 81,
+          "prompt": "she leans her head back, closes her eyes and breathes slowly, chest rising and falling, hair falling behind her shoulders, and stays there"
         },
         {
-          "prompt": "she opens her eyes, lifts her head and looks at the camera with a soft smile, sitting still"
+          "length": 65,
+          "prompt": "she opens her eyes, lifts her head and looks at the camera, a soft smile forming, and ends sitting still"
         }
       ]
     }

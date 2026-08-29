@@ -2,12 +2,10 @@
   "id": "wind_hair",
   "label": "Vlasy ve větru",
   "desc": "Lehký vánek zvedne vlasy, zastrčí si pramen za ucho, ohlédne se přes rameno.",
-  "label_en": "Hair in the wind",
-  "desc_en": "A light breeze lifts the hair, tucks a strand behind the ear, a glance back over the shoulder.",
   "length": 81,
   "fps": 16,
   "crf": 18,
-  "style_tail": ", static camera, soft natural light, photorealistic, natural motion",
+  "style_tail": ", static camera, soft natural light, photorealistic, one slow continuous movement, calm steady tempo",
   "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, extra limbs, deformed hands",
   "colormatch": {
     "method": "mkl",
@@ -16,15 +14,19 @@
   "scenes": [
     {
       "name": "wind_hair",
+      "shift": 7,
       "beats": [
         {
-          "prompt": "a light breeze lifts her hair and it drifts gently across her face and shoulders, she blinks softly, body still"
+          "length": 81,
+          "prompt": "a light breeze slowly lifts her hair and lets it drift across her face and shoulders, she blinks softly, and the hair settles again as the breeze fades"
         },
         {
-          "prompt": "she raises one hand and tucks a loose strand of hair behind her ear, then lowers the hand back to her side"
+          "length": 65,
+          "prompt": "she raises one hand, tucks a loose strand of hair behind her ear, then lowers the hand back to her side and stands still"
         },
         {
-          "prompt": "she turns her head to look over her shoulder, hair swinging, then turns back to the camera with a soft smile"
+          "length": 81,
+          "prompt": "she turns her head to look over her shoulder, hair swinging with the turn, then turns back to the camera and ends with a soft smile"
         }
       ]
     }

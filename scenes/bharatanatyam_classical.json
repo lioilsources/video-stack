@@ -2,12 +2,10 @@
   "id": "bharatanatyam_classical",
   "label": "Tanec · Bharatanátjam",
   "desc": "Půldřep, mudry u hrudi, dupání se zvonky, výpad na patu, namaste s úsměvem.",
-  "label_en": "Dance · Bharatanatyam",
-  "desc_en": "Half-squat, mudras at the chest, stamping with ankle bells, a lunge onto the heel, namaste with a smile.",
   "length": 81,
   "fps": 16,
   "crf": 18,
-  "style_tail": ", static camera, cinematic studio lighting, photorealistic, graceful and dynamic motion, highly detailed",
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
   "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
   "colormatch": {
     "method": "mkl",
@@ -16,21 +14,28 @@
   "scenes": [
     {
       "name": "bharatanatyam_classical",
+      "boundary": 3,
+      "motion": 0.8,
       "beats": [
         {
-          "prompt": "an Indian classical dancer in traditional temple attire assumes a deep half-squat pose with knees bent outward"
+          "length": 65,
+          "prompt": "she sinks into a deep half-squat with knees bent outward and arms held level, and holds the pose"
         },
         {
-          "prompt": "she forms precise mudra hand gestures near her chest while moving her head rhythmically side to side"
+          "length": 81,
+          "prompt": "she forms precise mudra hand gestures near her chest as her head moves rhythmically side to side, and ends with hands joined at the chest"
         },
         {
-          "prompt": "she sharply stamps her feet, causing her ghungroo anklet bells to chime loudly on the floor"
+          "length": 49,
+          "prompt": "she stamps her feet sharply three times, ankle bells ringing, and ends with feet together"
         },
         {
-          "prompt": "she extends one leg forward onto her heel, shifting her gaze sharply along her fingertips"
+          "length": 65,
+          "prompt": "she extends one leg forward onto its heel, gaze following her outstretched fingertips, and holds the line"
         },
         {
-          "prompt": "she brings her palms together in front of her chest in a namaste gesture, smiling peacefully at the camera"
+          "length": 81,
+          "prompt": "she brings her palms together in front of her chest in a namaste gesture, smiles peacefully at the camera, and holds"
         }
       ]
     }

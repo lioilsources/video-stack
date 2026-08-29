@@ -2,12 +2,10 @@
   "id": "blink_smile",
   "label": "Mrknutí a úsměv",
   "desc": "Dýchá, pomalu mrkne, usměje se a podívá se do kamery. Nejjistější volba.",
-  "label_en": "Blink and smile",
-  "desc_en": "Breathes, blinks slowly, smiles and looks into the camera. The safest choice.",
   "length": 81,
   "fps": 16,
   "crf": 18,
-  "style_tail": ", static camera, soft natural light, photorealistic, natural motion",
+  "style_tail": ", static camera, soft natural light, photorealistic, one slow continuous movement, calm steady tempo",
   "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, extra limbs, deformed hands",
   "colormatch": {
     "method": "mkl",
@@ -16,15 +14,19 @@
   "scenes": [
     {
       "name": "blink_smile",
+      "shift": 7,
       "beats": [
         {
-          "prompt": "she breathes gently, chest rising, and blinks slowly, loose strands of hair sway near her cheek, body otherwise still"
+          "length": 81,
+          "prompt": "she breathes gently, chest rising once, then blinks slowly and opens her eyes again, loose strands of hair settling near her cheek, and ends perfectly still"
         },
         {
-          "prompt": "a warm smile slowly spreads across her face, lips parting slightly, a small tilt of the head, then she holds the smile"
+          "length": 81,
+          "prompt": "a warm smile slowly spreads across her face over the whole shot, lips parting slightly with a small tilt of the head, and she ends holding the smile"
         },
         {
-          "prompt": "she glances to the side and back to the camera, chin lifting a little, eyes bright, then settles into a calm gaze"
+          "length": 65,
+          "prompt": "she glances to the side, then back to the camera, chin lifting a little, and ends resting in a calm direct gaze"
         }
       ]
     }

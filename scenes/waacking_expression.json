@@ -2,12 +2,10 @@
   "id": "waacking_expression",
   "label": "Tanec · Waacking",
   "desc": "Teatrální pohled, švihy paží nad hlavou, dramatická póza, rolování trupu, freeze.",
-  "label_en": "Dance · Waacking",
-  "desc_en": "A theatrical gaze, arm whips overhead, a dramatic pose, a torso roll, a freeze.",
   "length": 81,
   "fps": 16,
   "crf": 18,
-  "style_tail": ", static camera, cinematic studio lighting, photorealistic, graceful and dynamic motion, highly detailed",
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
   "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
   "colormatch": {
     "method": "mkl",
@@ -16,21 +14,28 @@
   "scenes": [
     {
       "name": "waacking_expression",
+      "boundary": 3,
+      "motion": 0.8,
       "beats": [
         {
-          "prompt": "a dancer in a 1970s disco outfit stands tall, staring with an intense theatrical gaze into the camera"
+          "length": 65,
+          "prompt": "she stands tall and fixes an intense theatrical gaze on the camera, chin lifting slowly, and holds"
         },
         {
-          "prompt": "they whip their arms in fast, sharp overhead circles, moving wrist-over-wrist around their shoulders"
+          "length": 65,
+          "prompt": "she whips her arms in sharp overhead circles, wrist over wrist around her shoulders, and ends with one arm extended high"
         },
         {
-          "prompt": "they strike a dramatic pose, pressing one hand to their chest while thrusting the other arm outward"
+          "length": 49,
+          "prompt": "she strikes a dramatic pose, one hand pressed to her chest and the other arm thrust outward, and holds"
         },
         {
-          "prompt": "they roll their torso fluidly, moving their arms in intricate framing patterns around their neck"
+          "length": 81,
+          "prompt": "she rolls her torso fluidly while her arms trace framing patterns around her neck and face, and ends with hands at her collarbone"
         },
         {
-          "prompt": "they end with a sudden freeze, holding a fierce head-tilt pose with one arm pointing at the viewer"
+          "length": 49,
+          "prompt": "she snaps into a sudden freeze, head tilted and one arm pointing at the viewer, and stays frozen"
         }
       ]
     }

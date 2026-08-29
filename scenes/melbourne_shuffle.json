@@ -2,12 +2,10 @@
   "id": "melbourne_shuffle",
   "label": "Tanec · Shuffle",
   "desc": "Running man, T-step, otočka na patách, rychlé kopy, dupnutí do širokého postoje.",
-  "label_en": "Dance · Shuffle",
-  "desc_en": "Running man, T-step, a spin on the heels, quick kicks, a stomp into a wide stance.",
   "length": 81,
   "fps": 16,
   "crf": 18,
-  "style_tail": ", static camera, cinematic studio lighting, photorealistic, graceful and dynamic motion, highly detailed",
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
   "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
   "colormatch": {
     "method": "mkl",
@@ -16,21 +14,28 @@
   "scenes": [
     {
       "name": "melbourne_shuffle",
+      "boundary": 3,
+      "motion": 0.8,
       "beats": [
         {
-          "prompt": "a shuffle dancer in loose streetwear starts running in place using rapid running-man footwork"
+          "length": 49,
+          "prompt": "she starts a running-man footwork in place for a short burst, then stops with feet together"
         },
         {
-          "prompt": "they slide their feet laterally in a fast T-step pattern, pivoting heels and toes to the rhythm"
+          "length": 49,
+          "prompt": "she slides her feet laterally in a T-step to one side, pivoting on heels and toes, and ends there"
         },
         {
-          "prompt": "they execute a fast 360-degree spin on their heels while keeping their legs shifting constantly"
+          "length": 65,
+          "prompt": "she spins once on her heels while her feet keep shifting, and ends facing the camera"
         },
         {
-          "prompt": "they perform a series of fast forward kicks, lightly tapping their soles against the ground"
+          "length": 49,
+          "prompt": "she throws three quick forward kicks, tapping her soles lightly on the floor, and ends with feet planted"
         },
         {
-          "prompt": "they stomp hard on the floor to hit the final beat, landing in a wide low stance with arms open"
+          "length": 65,
+          "prompt": "she stomps hard on the floor to hit the final beat and lands in a wide low stance with arms open, holding it"
         }
       ]
     }

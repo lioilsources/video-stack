@@ -2,12 +2,10 @@
   "id": "irish_stepdance",
   "label": "Tanec · Irský step",
   "desc": "Ruce podél těla, rychlé nohy, vysoký výskok s kopem, klapání pat, strnulý postoj.",
-  "label_en": "Dance · Irish stepdance",
-  "desc_en": "Arms at the sides, fast feet, a high jump with a kick, heel clicks, a rigid stance.",
   "length": 81,
   "fps": 16,
   "crf": 18,
-  "style_tail": ", static camera, cinematic studio lighting, photorealistic, graceful and dynamic motion, highly detailed",
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
   "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
   "colormatch": {
     "method": "mkl",
@@ -16,21 +14,28 @@
   "scenes": [
     {
       "name": "irish_stepdance",
+      "boundary": 3,
+      "motion": 0.8,
       "beats": [
         {
-          "prompt": "an Irish dancer holds their arms completely rigid at their sides while standing perfectly tall"
+          "length": 49,
+          "prompt": "she pulls her arms rigid to her sides, straightens tall and lifts her chin, and holds that posture"
         },
         {
-          "prompt": "their feet move at intense speed, tapping hard shoes rhythmically in precise crossover patterns"
+          "length": 65,
+          "prompt": "her feet move quickly in precise crossover steps while her torso stays perfectly still, and she ends with feet crossed"
         },
         {
-          "prompt": "they leap high into the air, kicking one leg straight up while keeping their torso perfectly still"
+          "length": 49,
+          "prompt": "she leaps high, kicking one leg straight up while her torso stays still, and lands lightly on pointed toes"
         },
         {
-          "prompt": "they land on pointed toes, executing a rapid series of hard heel clicks on the floor"
+          "length": 49,
+          "prompt": "she clicks her heels on the floor in a short rapid series, arms still rigid, and stops with feet together"
         },
         {
-          "prompt": "they snap instantly back into a proud, perfectly stationary posture staring at the camera"
+          "length": 65,
+          "prompt": "she snaps back into a proud, perfectly stationary posture staring at the camera, and holds it"
         }
       ]
     }

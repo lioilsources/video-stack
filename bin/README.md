@@ -108,24 +108,42 @@ scénami se interpolují taky a snímků vyjde stejně jako při jednom průchod
 
 ### Prompty
 
-`prompt` + `style_tail` se slepí dohromady. Dvě věci, které dělají práci:
+`prompt` + `style_tail` se slepí dohromady. Beat je nezávislých N snímků: Wan
+popsanou akci roztáhne nebo stlačí tak, aby vyplnila celý beat, a co nemá konec,
+to opakuje. Z toho plynou pravidla:
 
 - **`static camera`** ve `style_tail` — bez toho si Wan rád začne najíždět a odjíždět.
-- **Popisuj oblouk, ne stav.** „raises one hand… **then lowers it**" je důvod,
-  proč se ruka na konci vrátí dolů a další segment nezačíná uprostřed gesta.
+- **Oblouk s koncovou pózou, ne stav.** „raises one hand, **then lowers it and
+  stands still**" — každý beat končí pózou, na kterou navazuje další. Cyklická
+  slovesa bez konce („shimmy", „taps rhythmically", „running-man") model smyčkuje,
+  dokud beat neskončí; dej jim počet („stomps three times") nebo „then stops".
+- **Jedno tempo na scénu.** Do `style_tail` scény („one continuous movement at a
+  steady moderate tempo"), do beatu explicitní pacing („slowly over the whole shot",
+  „quick, then holds"). Tři slovesa v jednom beatu = rychlý beat, jedno = pomalý.
+- **Délka podle akce** — `length` per beat (4n+1, ≤ 81): úderná akce 49 (3 s),
+  střední 65 (4 s), pomalá 81 (5 s). Krátký beat nedává modelu čas smyčkovat.
 
 Negativní prompt je při `cfg 1.0` **neúčinný** — na množství pohybu se sahá jinde.
 
 ### Když je pohybu málo nebo moc
 
-Množství pohybu řídí *high-noise expert*. Volitelné klíče v manifestu (platí
-pro celý řetěz, ne po scénách):
+Množství pohybu řídí *high-noise expert*. Volitelné klíče, dědí se
+**beat ← scéna ← kořen manifestu**, takže taneční scéna může mít jiné než klidná:
 
 | klíč | default | co dělá |
 |---|---|---|
+| `length` | 81 | snímků v beatu (4n+1, max 81 = 5.06 s) |
 | `motion` | 1.0 | síla Lightning LoRA na high-noise expertu. **Níž (0.8) = víc pohybu.** |
 | `boundary` | 2 | hranice mezi experty ze 4 kroků. **Na 3 = víc pohybu.** |
 | `shift` | 5.0 | **Výš (6–8) = klidnější**, míň deformací obličeje. |
+| `sharpen` | 0 | doostření navazovacího snímku (0–1). Navazovací snímek je VAE-dekódovaný, tedy měkčí, a další beat z něj startuje — měkkost se sčítá. |
+
+Presety v `scenes/` mají taneční scény `boundary 3` + `motion 0.8`, klidné `shift 7`.
+
+Identita tváře: `tools/face_drift.py <jméno>` změří ArcFace podobnost každého
+navazovacího snímku k originálu (1.0 = táž tvář, < 0.4 = jiný člověk); u 3 klidných
+beatů bez oprav klesá 0.63 → 0.42. Měřicí sada je `chains/bench_identity.json`,
+výsledky iterací v `reports/phase4_identity.md`.
 
 ## Ostatní
 

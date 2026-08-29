@@ -2,12 +2,10 @@
   "id": "flamenco_passion",
   "label": "Tanec · Flamenco",
   "desc": "Dupání podpatků, kroužení zápěstí, tlesknutí, otočka se sukní, hrdý postoj.",
-  "label_en": "Dance · Flamenco",
-  "desc_en": "Heel stamping, circling wrists, a clap, a spin with the skirt, a proud stance.",
   "length": 81,
   "fps": 16,
   "crf": 18,
-  "style_tail": ", static camera, cinematic studio lighting, photorealistic, graceful and dynamic motion, highly detailed",
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
   "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
   "colormatch": {
     "method": "mkl",
@@ -16,21 +14,28 @@
   "scenes": [
     {
       "name": "flamenco_passion",
+      "boundary": 3,
+      "motion": 0.8,
       "beats": [
         {
-          "prompt": "a female dancer in a red ruffled dress fiercely stomps her heels on the wooden floor, arching her back"
+          "length": 49,
+          "prompt": "she stomps her heels on the wooden floor three times, arching her back with each stomp, and ends with her chin raised"
         },
         {
-          "prompt": "she slowly raises both arms overhead, her wrists twisting smoothly in circular flamenco wrist-work"
+          "length": 81,
+          "prompt": "she slowly raises both arms overhead over the whole shot, wrists twisting in circular flamenco wrist-work, and ends with arms high"
         },
         {
-          "prompt": "she sharply claps her hands above her head, snapping her face toward the camera with an intense gaze"
+          "length": 49,
+          "prompt": "she claps her hands sharply above her head once and snaps her face toward the camera with an intense gaze, then holds"
         },
         {
-          "prompt": "she spins rapidly, her red skirt flaring out in a wide dynamic arc around her legs"
+          "length": 81,
+          "prompt": "she spins once, her skirt flaring out in a wide arc around her legs, and ends facing the camera as the skirt settles"
         },
         {
-          "prompt": "she abruptly stops the spin, striking a proud final stance with one hand on her hip and head tilted back"
+          "length": 65,
+          "prompt": "she strikes a proud final stance, one hand on her hip and head tilted back, and holds it perfectly still"
         }
       ]
     }
