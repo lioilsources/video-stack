@@ -86,7 +86,7 @@ def load(path):
             b.setdefault("style_tail", s.get("style_tail", m["style_tail"]))
             b.setdefault("negative", s.get("negative", m["negative"]))
             # tempo se ladí po beatech: délka a knoby pohybu dědí beat ← scéna ← kořen
-            for k in ("length", "motion", "boundary", "shift", "sharpen", "identity"):
+            for k in ("length", "motion", "boundary", "shift", "sharpen", "identity", "face_denoise"):
                 if k in s or k in m:
                     b.setdefault(k, s.get(k, m.get(k)))
             b.setdefault("length", 81)
@@ -232,7 +232,8 @@ def build(m, beat, idx, seed_img, orig_img, w, h):
     # dál — tvář driftuje. Oživení přemaluje jen obličej navazovacího snímku
     # s identitou z ORIGINÁLU (node 30), tělo a pozadí zůstanou.
     if beat.get("identity") == "face":
-        handoff = face_refresh(g, handoff, ["30", 0], beat["seed"])
+        handoff = face_refresh(g, handoff, ["30", 0], beat["seed"],
+                               denoise=beat.get("face_denoise") or FACE["denoise"])
     # Navazovací snímek je VAE-dekódovaný, tedy měkčí než originál, a další beat
     # z něj startuje — měkkost se sčítá. Doostření je levná protiváha.
     if beat.get("sharpen"):
@@ -260,7 +261,7 @@ FACE = {
 }
 
 
-def face_refresh(g, image, ref, seed, base=40):
+def face_refresh(g, image, ref, seed, base=40, denoise=None):
     """Přidá do grafu nody 40–46: obličej v `image` přemaluje FaceDetailer
     s identitou z `ref`. Vrací odkaz na výsledný obrázek."""
     n = lambda k: str(base + k)
@@ -282,7 +283,7 @@ def face_refresh(g, image, ref, seed, base=40):
                           "seed": seed, "steps": FACE["steps"], "cfg": FACE["cfg"],
                           "sampler_name": FACE["sampler"], "scheduler": FACE["scheduler"],
                           "positive": [n(3), 0], "negative": [n(4), 0],
-                          "denoise": FACE["denoise"], "feather": 5, "noise_mask": True,
+                          "denoise": denoise or FACE["denoise"], "feather": 5, "noise_mask": True,
                           "force_inpaint": True, "bbox_threshold": 0.5, "bbox_dilation": 10,
                           "bbox_crop_factor": 3.0, "sam_detection_hint": "center-1",
                           "sam_dilation": 0, "sam_threshold": 0.93, "sam_bbox_expansion": 0,
@@ -333,7 +334,7 @@ def beat_hash(m, b, w, h):
     """Otisk všeho, co ovlivní segment i navazovací snímek. Změna = přegenerovat."""
     key = (b["prompt"], b["style_tail"], b["negative"], b["seed"], w, h, b["length"],
            m["base"], b.get("motion"), b.get("boundary"), b.get("shift"), b.get("sharpen"),
-           b.get("identity"), m["colormatch"])
+           b.get("identity"), b.get("face_denoise"), m["colormatch"])
     return hashlib.sha1(json.dumps(key, sort_keys=True).encode()).hexdigest()[:12]
 
 
