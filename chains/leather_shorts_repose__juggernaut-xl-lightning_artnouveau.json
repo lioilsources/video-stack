@@ -1,0 +1,22 @@
+{
+  "name": "leather_shorts_repose__juggernaut-xl-lightning_artnouveau",
+  "source": "leather_shorts_repose__juggernaut-xl-lightning_artnouveau_src.png",
+  "base": "i2v_final_14b_lightning_portrait",
+  "length": 81,
+  "fps": 16,
+  "crf": 18,
+  "style_tail": ", static camera, soft natural window light, photorealistic, subtle motion",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers",
+  "colormatch": { "method": "mkl", "strength": 0.6 },
+
+  "_dialy": "motion = síla LoRA na high-noise expertu (níž = víc pohybu, zkus 0.8); boundary = hranice expertů, default 2 (na 3 = víc pohybu); shift = default 5.0 (výš = klidnější)",
+  "_delka": "jeden beat = 81 snímků = 5.06 s. Přidej beat = o 5 s delší klip.",
+
+  "beats": [
+    { "id": "01", "seed": 150, "prompt": "she stands facing the camera in a t-shirt and shorts, blinking softly, a slight playful smile on her lips as she looks directly at the camera" },
+    { "id": "02", "seed": 153, "prompt": "she hooks her thumbs into the waistband of her shorts, slides them down over her hips and thighs, then steps out of them one foot at a time" },
+    { "id": "03", "seed": 151, "prompt": "she reaches down, grabs the hem of her t-shirt with both hands and slowly pulls it up over her head, arms rising, the fabric sliding off her torso" },
+    { "id": "04", "seed": 152, "prompt": "she finishes removing the t-shirt, holds it briefly in one hand, then lets it drop onto the floor in front of her while looking at the camera with a soft smile" },
+    { "id": "05", "seed": 154, "prompt": "she lets the shorts fall onto the floor in front of her next to the t-shirt, stands fully undressed, blinks slowly and offers a calm, direct smile to the camera" }
+  ]
+}

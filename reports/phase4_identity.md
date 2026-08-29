@@ -169,3 +169,26 @@ poslední dobré kostry. `icon_robot` = setup → control → power down → pow
 Pravidla pro nahrávky z Mixama: zepředu (stejný úhel jako fotka — fun_control
 kopíruje i úhel, z boku se postava otočí a odejde ze záběru), kamera v úrovni
 pasu, postava 70–80 % výšky, jeden průchod smyčky (`--loop` doplní zbytek).
+
+## Tempo řídicího klipu (2026-08-29 12:30)
+
+„Ghosty" nejsou z RIFE: rozmazané končetiny jsou vidět už v 16 fps segmentu
+přímo z Wanu — při velkém posunu mezi snímky model končetinu namaluje jako
+šmouhu a RIFE ji jen zdvojí. `drive.py --speed` proto kostru zpomalí
+(`setpts`, `--loop` doplní zbytek beatu).
+
+Gangnam, stejné místo beatu, seg02:
+
+| tempo | posun na snímek | ostrost | tvář (seed02) |
+|---|---|---|---|
+| 1.0× | 9.72 | 7.14 | 0.533 |
+| 0.65× | 6.90 | **7.40** | 0.591 |
+| 0.5× | 5.63 | 7.28 | **0.660** |
+
+Posun na snímek klesá podle očekávání, ostrost je nejvyšší na 0.65× (na 0.5×
+už mírně klesá — pomalý pohyb dá Wanu prostor drobně driftovat) a identita
+monotónně roste. Vizuálně: 1.0× šmouhy přes celou paži, 0.65× čitelné končetiny,
+0.5× ostré, ale tanec působí zpomaleně.
+
+**Default pro kostry: 0.65×** (moonwalk 0.8× — klouzání je samo o sobě pomalé).
+Kostry v repu překresleny; `_s05`/`_s065` testovací a `moonwalk_side` smazány.
