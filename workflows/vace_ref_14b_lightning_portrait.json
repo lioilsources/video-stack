@@ -116,11 +116,11 @@
    "batch_size": 1,
    "strength": 1.0,
    "control_video": [
-    "17",
+    "51",
     0
    ],
    "control_masks": [
-    "19",
+    "55",
     0
    ],
    "reference_image": [
@@ -193,7 +193,7 @@
   "class_type": "VAEDecode",
   "inputs": {
    "samples": [
-    "24",
+    "56",
     0
    ],
    "vae": [
@@ -215,7 +215,7 @@
    "crf": 32.0
   }
  },
- "18": {
+ "50": {
   "class_type": "EmptyImage",
   "inputs": {
    "width": 480,
@@ -224,7 +224,7 @@
    "color": 8355711
   }
  },
- "17": {
+ "51": {
   "class_type": "ImageBatch",
   "inputs": {
    "image1": [
@@ -232,12 +232,12 @@
     0
    ],
    "image2": [
-    "18",
+    "50",
     0
    ]
   }
  },
- "20": {
+ "52": {
   "class_type": "EmptyImage",
   "inputs": {
    "width": 480,
@@ -246,7 +246,7 @@
    "color": 0
   }
  },
- "21": {
+ "53": {
   "class_type": "EmptyImage",
   "inputs": {
    "width": 480,
@@ -255,30 +255,30 @@
    "color": 16777215
   }
  },
- "25": {
+ "54": {
   "class_type": "ImageBatch",
   "inputs": {
    "image1": [
-    "20",
+    "52",
     0
    ],
    "image2": [
-    "21",
+    "53",
     0
    ]
   }
  },
- "19": {
+ "55": {
   "class_type": "ImageToMask",
   "inputs": {
    "image": [
-    "25",
+    "54",
     0
    ],
    "channel": "red"
   }
  },
- "24": {
+ "56": {
   "class_type": "TrimVideoLatent",
   "inputs": {
    "samples": [

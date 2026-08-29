@@ -202,9 +202,9 @@ def build(m, beat, idx, seed_img, orig_img, w, h):
     if g["12"]["class_type"] == "WanVaceToVideo":
         # VACE báze: control_video = [navazovací snímek, šedé×(L−1)], masky [0, 1×(L−1)];
         # reference_image = originál (node 30 níže) — identita v každém snímku
-        for n in ("18", "20", "21"):
+        for n in ("50", "52", "53"):
             g[n]["inputs"].update(width=w, height=h)
-        g["18"]["inputs"]["batch_size"] = g["21"]["inputs"]["batch_size"] = L - 1
+        g["50"]["inputs"]["batch_size"] = g["53"]["inputs"]["batch_size"] = L - 1
     for n in ("13", "14"):
         g[n]["inputs"]["noise_seed"] = beat["seed"]
     if beat.get("boundary") is not None:  # víc kroků v high-noise expertu = víc pohybu
