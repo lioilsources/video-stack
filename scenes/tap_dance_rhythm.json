@@ -5,6 +5,8 @@
   "length": 81,
   "fps": 16,
   "crf": 18,
+  "identity": "face",
+  "crossfade": 4,
   "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
   "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
   "colormatch": {

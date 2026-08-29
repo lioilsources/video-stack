@@ -13,6 +13,8 @@ podobnost navazovacího snímku `seedNN.png` k originálu `seed00.png`.
 |---|---|---|---|---|---|---|---|---|---|
 | baseline (I2V, bez oprav) | 0.554 | 0.456 | 0.372 | 0.312 | 0.221 | 0.147 | 0.344 | 0.147 | 105–185 |
 | `identity: "face"` (oživení navazovacího snímku) | 0.585 | 0.646 | 0.621 | 0.658 | 0.623 | 0.649 | **0.630** | **0.585** | 110–125 |
+| face + `sharpen 0.3` + `shift 6` | 0.648 | 0.616 | 0.668 | 0.608 | 0.479 | 0.495 | 0.586 | 0.479 | 115–120 |
+| VACE s `reference_image` = originál (T2V Lightning, bez oživení) | 0.780 | 0.597 | 0.552 | 0.414 | 0.514 | 0.440 | 0.550 | 0.414 | 135 |
 
 Baseline potvrzuje diagnózu: podobnost klesá monotónně s každou generací,
 na 6. beatu (30 s) je to podle metriky jiný člověk. Klidné beaty ztrácejí
@@ -30,7 +32,44 @@ IPAdapter FaceID PlusV2 s referencí = originál) na `30deb5e8_seed03`:
 0.418 → **0.661**, vizuálně tvar obličeje a oči zpět u originálu, vlasy a tělo
 beze změny.
 
+**Doostření a shift 6 nepomohly** (0.586 < 0.630, beaty 5–6 padají) — vyřazeno.
+
+**VACE s referencí** injektuje identitu silně do prvního beatu (0.78, nejlepší
+jednotlivé číslo), ale pak drží jen jako I2V a hlavně **tlumí pohyb**:
+v kontaktním archu taneční beaty skoro stojí, otočka je náznak. T2V Lightning
+LoRA na fun_vace funguje (4 kroky, žádný rozpad), beat 135 s. Jako default ne;
+kandidát na „klidný režim" (portrét, mluvící hlava), kde je malý pohyb
+žádoucí — a v kombinaci s oživením by identita byla nejvyšší.
+
+## Skok na střihu (`tools/seam_pop.py`)
+
+Rozdíl pixelů přes střih / medián rozdílů sousedů (1 = nerozeznatelné, > 2
+viditelné), horní třetina obrazu, klip 16 fps před RIFE:
+
+| varianta | 1→2 | 2→3 | 3→4 | 4→5 | 5→6 | průměr | max |
+|---|---|---|---|---|---|---|---|
+| baseline, tvrdý střih | 1.89 | 6.35 | 2.22 | 4.97 | 2.28 | 3.54 | 6.35 |
+| face, tvrdý střih | 1.85 | 4.28 | 2.67 | 5.47 | 1.60 | 3.17 | 5.47 |
+| face, `crossfade: 4` | 1.72 | 0.94 | 1.41 | 1.32 | 1.06 | **1.29** | **1.72** |
+| face, `crossfade: 8` | 1.42 | 1.60 | 0.98 | 1.53 | 1.08 | 1.32 | 1.60 |
+
+Skok na střihu má **i baseline** — není to oživení tváře (to ho nezhoršuje),
+ale re-encode navazovacího snímku (colormatch + VAE) a reset rychlosti pohybu
+na začátku beatu. Prolínačka 4 snímků (0.25 s) ho srovná na úroveň běžného
+pohybu; 8 snímků už nic nepřidá. Cena: 3 snímky na střih.
+
+**Rozhodnutí pro presety: `identity: "face"` + `crossfade: 4`** ve všech.
+
 ## Poznámky k tempu a smyčkám
+
+Kontaktní archy (1 fps) přepsaných `tap_dance_rhythm` a `melbourne_shuffle`
+po iteraci 1: pohyb postupuje beat od beatu (zvednutí nohy, ruka ke klobouku,
+kopy; T-step, otočka, široký postoj), žádný beat nevypadá jako smyčka téže
+akce. Tempo je v rámci scény vyrovnané — kratší beaty (49) pro úderné akce
+sedí. Vedlejší jevy I2V: postava se během 5 beatů posune od zdi do místnosti
+a u stepu zmizí boty a objeví se klobouk (prompt „tips an imaginary hat brim"
+si klobouk vyrobil) — prompty pro rekvizity psát bez rekvizit.
+
 
 (doplní se po renderu přepsaných scén — `tap_dance_rhythm`, `melbourne_shuffle`)
 

@@ -1,0 +1,89 @@
+{
+  "length": 81,
+  "fps": 16,
+  "crf": 18,
+  "identity": "face",
+  "crossfade": 4,
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "scenes": [
+    {
+      "name": "intro",
+      "style_tail": ", static camera, soft natural light, photorealistic, one slow continuous movement, calm steady tempo",
+      "shift": 7,
+      "beats": [
+        {
+          "length": 81,
+          "prompt": "she breathes gently, chest rising once, then blinks slowly and opens her eyes again, and ends perfectly still"
+        },
+        {
+          "length": 65,
+          "prompt": "a warm smile slowly spreads across her face with a small tilt of the head, and she ends holding the smile"
+        },
+        {
+          "length": 81,
+          "prompt": "she starts to sway her hips gently side to side, arms loose and relaxed, feet in place, and ends mid-sway with weight centered"
+        }
+      ]
+    },
+    {
+      "name": "main",
+      "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
+      "boundary": 3,
+      "motion": 0.8,
+      "beats": [
+        {
+          "length": 65,
+          "prompt": "she steps to one side and shifts her weight onto that leg while both arms rise to shoulder height, and ends there"
+        },
+        {
+          "length": 81,
+          "prompt": "she turns halfway away from the camera and back again in one smooth motion, hair swinging with the turn, and ends facing the camera"
+        },
+        {
+          "length": 65,
+          "prompt": "she raises both arms above her head as her hips sway, head tilting once to each side, and ends with arms up"
+        },
+        {
+          "length": 81,
+          "prompt": "she lowers her arms slowly while rolling her shoulders back, hips still swaying, and ends with hands on her hips"
+        },
+        {
+          "length": 65,
+          "prompt": "she steps to the other side, weight shifting, one arm sweeping across her body, and ends with that arm extended"
+        },
+        {
+          "length": 81,
+          "prompt": "she spins once on the spot, hair swinging, and ends facing the camera with arms relaxed at her sides"
+        }
+      ]
+    },
+    {
+      "name": "finale",
+      "style_tail": ", static camera, soft natural light, photorealistic, one slow continuous movement, calm steady tempo",
+      "shift": 7,
+      "beats": [
+        {
+          "length": 81,
+          "prompt": "the sway slows to a stop, she exhales and lets her shoulders drop, and ends standing still"
+        },
+        {
+          "length": 65,
+          "prompt": "she tucks a loose strand of hair behind her ear and looks at the camera, a smile forming, and holds"
+        },
+        {
+          "length": 81,
+          "prompt": "she laughs softly, eyes creasing, then settles into a warm steady gaze at the camera and stays still"
+        }
+      ]
+    }
+  ],
+  "name": "eval_dance_long",
+  "source": "leather_shorts_src.png",
+  "seed": 42,
+  "_ucel": "minutový preset end-to-end (fáze 4, iterace 4)"
+}

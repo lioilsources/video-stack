@@ -1,0 +1,90 @@
+{
+  "id": "belly_long",
+  "label": "Tanec · Břišní minutový",
+  "desc": "Vlny trupu, shimmy, hip dropy, kroužení hrudníku, otočky se závojem. Nohy stojí, pohyb v trupu. 12 beatů ≈ 55 s.",
+  "length": 81,
+  "fps": 16,
+  "crf": 18,
+  "identity": "face",
+  "crossfade": 4,
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "scenes": [
+    {
+      "name": "intro",
+      "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
+      "boundary": 3,
+      "motion": 0.8,
+      "beats": [
+        {
+          "length": 81,
+          "prompt": "she lifts both arms slowly overhead as one wave travels up through her torso, and ends with arms high"
+        },
+        {
+          "length": 65,
+          "prompt": "she lowers her arms to shoulder height with a slow sway of the hips, and ends with arms out to the sides"
+        },
+        {
+          "length": 49,
+          "prompt": "she begins a fast isolated hip shimmy, then lets it fade and ends with hips still"
+        }
+      ]
+    },
+    {
+      "name": "main",
+      "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
+      "boundary": 3,
+      "motion": 0.8,
+      "beats": [
+        {
+          "length": 65,
+          "prompt": "she drops one hip sharply to the side twice, accenting the beat, and ends with weight on that hip"
+        },
+        {
+          "length": 65,
+          "prompt": "she performs one slow chest circle while keeping her hips still, and ends centered"
+        },
+        {
+          "length": 81,
+          "prompt": "she turns slowly on the spot, arms flowing like a veil around her shoulders, and ends facing the camera"
+        },
+        {
+          "length": 65,
+          "prompt": "she traces a figure eight with her hips, hands framing her face, and ends with hands at her collarbone"
+        },
+        {
+          "length": 49,
+          "prompt": "she shimmies again for a short burst with arms overhead, then stops with hips still"
+        },
+        {
+          "length": 81,
+          "prompt": "one slow undulation travels down her torso from chest to hips, and ends with her weight settled"
+        }
+      ]
+    },
+    {
+      "name": "finale",
+      "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
+      "boundary": 3,
+      "motion": 0.8,
+      "beats": [
+        {
+          "length": 81,
+          "prompt": "she turns slowly once more, gathering an imaginary silk veil around her shoulders, and ends facing the camera"
+        },
+        {
+          "length": 65,
+          "prompt": "she lowers her arms slowly and crosses her hands over her heart, and holds"
+        },
+        {
+          "length": 81,
+          "prompt": "she bows her head slightly, then lifts it with a soft smile at the camera, and ends still"
+        }
+      ]
+    }
+  ]
+}
