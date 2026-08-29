@@ -48,7 +48,7 @@ def pose(a):
         a.start = 0.0
     else:
         shutil.copy(src, os.path.join(chain.IN, staged))
-    def graph(bbox, cap, save):
+    def load(cap):
         return {
             "1": {"class_type": "VHS_LoadVideo",
                   "inputs": {"video": staged, "force_rate": 16, "custom_width": 0, "custom_height": 0,
@@ -56,33 +56,57 @@ def pose(a):
                              "select_every_nth": 1}},
             "2": {"class_type": "ImageScale",
                   "inputs": {"image": ["1", 0], "upscale_method": "lanczos", "width": W, "height": H,
-                             "crop": "center"}},
-            "3": {"class_type": "DWPreprocessor",
+                             "crop": "center"}}}
+
+    def dwpose(cap, bbox):
+        g = load(cap)
+        g["3"] = {"class_type": "DWPreprocessor",
                   "inputs": {"image": ["2", 0], "detect_hand": "enable", "detect_body": "enable",
                              "detect_face": "disable", "resolution": 512,
-                             "bbox_detector": bbox, "pose_estimator": "dw-ll_ucoco_384.onnx"}},
-            "4": save,
-        }
-    # Detektor osob (yolox) nevidí Mixamo panáčky ani jiné stylizované postavy —
-    # kostra vyjde černá. Sonda na 3 snímcích: když je prázdná, DWPose jede bez
-    # detektoru přes celý snímek (jedna postava uprostřed, což řídicí klip je).
-    bbox = "yolox_l.onnx"
-    probe = chain.outfile(chain.submit(graph(bbox, 3, {"class_type": "SaveImage", "inputs": {
-        "images": ["3", 0], "filename_prefix": "drive/%s_probe" % a.id}}), "pose probe %s" % a.id), "4", ".png")
-    if not skeleton_visible(probe):
-        print("  yolox postavu nenašel (stylizovaná?) → DWPose bez bbox detektoru")
-        bbox = "None"
-    out = chain.outfile(chain.submit(graph(bbox, a.length, {"class_type": "SaveWEBM", "inputs": {
-        "images": ["3", 0], "filename_prefix": "drive/%s_pose" % a.id, "codec": "vp9", "fps": 16.0,
-        "crf": 10.0}}), "pose %s" % a.id), "4", ".webm")
+                             "bbox_detector": bbox, "pose_estimator": "dw-ll_ucoco_384.onnx"}}
+        return g
+
+    def sapiens(cap):
+        # Sapiens2 (Meta) čte i stylizované postavy (Mixamo panáčci), kde yolox/DWPose
+        # nevidí člověka; výstup kreslí v OpenPose barvách, které fun_control zná
+        g = load(cap)
+        g["9"] = {"class_type": "Sapiens2Loader", "inputs": {"checkpoint": "sapiens2_1b_pose.safetensors"}}
+        g["8"] = {"class_type": "Sapiens2Pose",
+                  "inputs": {"image": ["2", 0], "sapiens2_model": ["9", 0], "output_format": "openpose",
+                             "include_face": False, "frames_per_batch": 4}}
+        g["3"] = {"class_type": "Sapiens2DrawPose",
+                  "inputs": {"keypoints": ["8", 0], "draw_skeleton": True, "draw_points": True,
+                             "draw_face": False, "point_radius": 3, "stick_width": 3,
+                             "score_threshold": 0.3}}
+        return g
+
+    def with_save(g, save):
+        g["4"] = save
+        return g
+
+    probe_save = {"class_type": "SaveImage", "inputs": {"images": ["3", 0], "filename_prefix": "drive/%s_probe" % a.id}}
+    final_save = {"class_type": "SaveWEBM", "inputs": {"images": ["3", 0], "filename_prefix": "drive/%s_pose" % a.id,
+                                                       "codec": "vp9", "fps": 16.0, "crf": 10.0}}
+    if a.dwpose:
+        # DWPose: detektor osob nevidí stylizované postavy → sonda, případně bez bbox
+        bbox = "yolox_l.onnx"
+        probe = chain.outfile(chain.submit(with_save(dwpose(3, bbox), probe_save), "pose probe %s" % a.id), "4", ".png")
+        if not skeleton_visible(probe):
+            print("  yolox postavu nenašel → DWPose bez bbox detektoru")
+            bbox = "None"
+        g = dwpose(a.length, bbox)
+    else:
+        g = sapiens(a.length)
+    out = chain.outfile(chain.submit(with_save(g, final_save), "pose %s" % a.id), "4", ".webm")
     dst = os.path.join(DRIVE, a.id + "_pose.webm")
     shutil.copy(out, dst)
     n = nframes(dst)
     print("  %s  (%d snímků @ 16 fps%s)" % (os.path.relpath(dst, HERE), n,
                                             "" if n >= a.length else " — MÉNĚ než %d, klip je krátký" % a.length))
     if os.path.getsize(dst) < 100_000:
-        print("  ! kostra je skoro prázdná (%d kB) — DWPose postavu nečte; u Mixama vyber lidsky "
-              "vypadající postavu (Remy, Michelle, Ty…), ne stylizovaného panáčka" % (os.path.getsize(dst) // 1000))
+        print("  ! kostra je skoro prázdná (%d kB) — odhad pózy postavu nečte; zkus %s, nebo lidsky "
+              "vypadající postavu a postavu přes 70 %% výšky záběru"
+              % (os.path.getsize(dst) // 1000, "Sapiens2 (bez --dwpose)" if a.dwpose else "--dwpose"))
 
 
 def skeleton_visible(png):
@@ -108,5 +132,6 @@ if __name__ == "__main__":
     p.add_argument("--start", type=float, default=0.0, help="odkud v sekundách")
     p.add_argument("--length", type=int, default=81)
     p.add_argument("--loop", action="store_true", help="klip opakovat, dokud nevyplní --length (Mixamo smyčky)")
+    p.add_argument("--dwpose", action="store_true", help="DWPose místo Sapiens2 (rychlejší, ale stylizované postavy nečte)")
     a = ap.parse_args()
     {"t2v": t2v, "pose": pose}[a.cmd](a)

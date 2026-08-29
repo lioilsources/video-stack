@@ -185,6 +185,7 @@ cmd_drive() {
     case "$1" in
       --start) start="${2:-0}"; shift ;;
       --loop) loop="--loop" ;;
+      --dwpose) loop="$loop --dwpose" ;;
       *) die "neznámý přepínač $1 (drive umí --start s, --loop)" ;;
     esac; shift
   done
