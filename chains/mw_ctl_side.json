@@ -1,0 +1,28 @@
+{
+  "name": "mw_ctl_side",
+  "source": "leather_shorts_src.png",
+  "seed": 42,
+  "length": 81,
+  "boundary": 3,
+  "motion": 0.8,
+  "identity": "face",
+  "transition": "slices",
+  "crossfade": 6,
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "_ucel": "control beat z boční Mixamo nahrávky — postava se otočí bokem podle kostry?",
+  "beats": [
+    {
+      "length": 65,
+      "prompt": "the dancer lets go of the door frame, takes two steps away from the wall toward the center of the room and stops with feet together and flat on the floor, arms hanging loose, facing the camera"
+    },
+    {
+      "control": "moonwalk_side",
+      "prompt": "the dancer performs the moonwalk, gliding smoothly backwards across the floor, relaxed shoulders, photorealistic, same clothes and room"
+    }
+  ]
+}
