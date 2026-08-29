@@ -245,8 +245,8 @@ def build(m, beat, idx, seed_img, orig_img, w, h):
     # se v každém klipu vrátí k originálu; střih je stejně záměrný)
     g["10"]["inputs"]["image"] = orig_img if (control and beat.get("control_ref") == "original") else seed_img
     g["12"]["inputs"].update(width=w, height=h, length=L)
-    if g["12"]["class_type"] == "WanVaceToVideo":
-        # VACE báze: control_video = [navazovací snímek, šedé×(L−1)], masky [0, 1×(L−1)];
+    if g["12"]["class_type"] == "WanVaceToVideo" and "50" in g:
+        # VACE I2V báze: control_video = [navazovací snímek, šedé×(L−1)], masky [0, 1×(L−1)];
         # reference_image = originál (node 30 níže) — identita v každém snímku
         for n in ("50", "52", "53"):
             g[n]["inputs"].update(width=w, height=h)
