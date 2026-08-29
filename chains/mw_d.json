@@ -1,0 +1,26 @@
+{
+  "name": "mw_d",
+  "source": "leather_shorts_src.png",
+  "seed": 42,
+  "length": 81,
+  "boundary": 3,
+  "motion": 0.8,
+  "identity": "face",
+  "transition": "slices",
+  "crossfade": 6,
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "_ucel": "hypotéza: záleží na výchozí póze — beat 1 přivede postavu do neutrálního postoje (od zdi, nohy u sebe, ruce volné), beat 2 = moonwalk s mechanikou",
+  "beats": [
+    {
+      "prompt": "the dancer lets go of the door frame, takes two steps away from the wall toward the center of the room and stops with feet together and flat on the floor, arms hanging loose, facing the camera"
+    },
+    {
+      "prompt": "the dancer performs the moonwalk: one foot stays flat and slides straight backwards along the floor while the other foot rests on its toes with the heel raised, then they swap, so the body drifts backwards although the legs look like they are walking forward; arms swing loosely, and it ends with feet together"
+    }
+  ]
+}
