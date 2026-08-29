@@ -2,8 +2,8 @@
   "id": "icon_moonwalk",
   "label": "Ikony · Moonwalk (MJ)",
   "label_en": "Icons · Moonwalk (MJ)",
-  "desc": "Klouzání dozadu, zatímco nohy jdou dopředu, rychlá otočka, stoj na špičkách, švih boků, freeze v náklonu.",
-  "desc_en": "Gliding backwards while the feet walk forward, a quick spin, up on the toes, a hip snap, a freeze in a lean.",
+  "desc": "Přípravný krok doprostřed, klouzání dozadu, rychlá otočka, stoj na špičkách, švih boků, freeze v náklonu.",
+  "desc_en": "A setup step to the center, gliding backwards, a quick spin, up on the toes, a hip snap, a freeze in a lean.",
   "length": 81,
   "fps": 16,
   "crf": 18,
@@ -25,15 +25,19 @@
       "beats": [
         {
           "length": 65,
+          "prompt": "the dancer lets go of anything they are holding, takes two steps away from the wall toward the center of the room and stops with feet together and flat on the floor, arms hanging loose, facing the camera"
+        },
+        {
+          "length": 65,
           "prompt": "the dancer stands with knees loose and feet close together, weight rocking onto the toes, one shoulder dropping, and holds a cool relaxed stance"
         },
         {
           "length": 81,
-          "prompt": "the dancer glides smoothly backwards across the floor while the feet appear to walk forward, one heel lifting as the other foot slides back, and ends with feet together"
+          "prompt": "the dancer performs the moonwalk: one foot stays flat and slides straight backwards along the floor while the other foot rests on its toes with the heel raised, then they swap, so the body drifts backwards although the legs look like they are walking forward; arms swing loosely, and it ends with feet together"
         },
         {
-          "length": 49,
-          "prompt": "the dancer spins a full turn on one foot in one quick motion, arms tucked in, and stops facing the camera"
+          "length": 65,
+          "prompt": "the dancer spins one full turn on the spot in one quick motion, arms tucked in, and comes all the way back around to face the camera again, stopping there"
         },
         {
           "length": 49,

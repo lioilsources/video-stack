@@ -24,6 +24,10 @@
       "motion": 0.8,
       "beats": [
         {
+          "length": 65,
+          "prompt": "the dancer lets go of anything they are holding, takes two steps away from the wall toward the center of the room and stops with feet together and flat on the floor, arms hanging loose, facing the camera"
+        },
+        {
           "length": 49,
           "prompt": "the dancer stands with knees together and pivots both feet so the toes swing outward and then inward in quick rhythm, and ends with feet parallel"
         },

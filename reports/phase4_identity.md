@@ -97,3 +97,33 @@ hlásí ~15 GB volno i s vypnutými LLM kontejnery. Restart ComfyUI pomůže
 `input/`, `output/` — page cache 84 → 34 GB, `vram_free` 7.3 → **52.9 GB**
 za 2 s. `chain.drop_page_cache()` běží před každým promptem (beat i RIFE)
 a `serve.py` před kontrolou `vram_free`.
+
+## Moonwalk: proč není podobný (2026-08-29, referenční obrázek)
+
+Sedm renderů na `leather_shorts_src.png` (ruka opřená o zárubeň, rozkročené
+nohy, podpatky), vždy seed 42, `boundary 3`, `motion 0.8`:
+
+| test | výchozí póza | prompt | výsledek |
+|---|---|---|---|
+| a | reference | preset („glides backwards while the feet appear to walk forward") | zvedne koleno a položí, ruka na zárubni, nohy na místě |
+| b | reference | mechanika (flat foot slides back, other on toes, swap…) | pustí zárubeň, přešlápne na místě |
+| c | reference | pojmenování („does the moonwalk dance move") | stojí, přenáší váhu |
+| d | **přípravný beat** (pustí zárubeň, doprostřed, nohy u sebe) → b | **jde prostorem** — kroky, přenášení váhy, posun po místnosti; ne klouzání |
+| e | přípravný beat → klouzání do strany | stojí uprostřed, minimální posun |
+| f | reference → klouzání do strany | pustí zárubeň, houpá se, mírný posun vpravo |
+| preset celý | reference | 6 beatů | beat 2 nic; otočka skončila zády ke kameře; stoj na špičkách = sepnuté ruce + výskok; ruka k čelu ✓; náklon = předklon v pase |
+
+Závěr: **oba faktory, ale póza je silnější.** Z opřené, rozkročené pózy
+nevznikne lokomoce žádným promptem — ruka na zárubni a nohy v rozkroku jsou
+pro I2V kotvy, které model ctí víc než text. Přípravný beat je odemkne.
+Samotný moonwalk (iluze klouzání) ale Wan 2.2 I2V (Lightning, cfg 1) z textu
+neumí ani z neutrální pózy — udělá obyčejné kroky. Totéž platí pro „klouzání
+do strany". Ikonické pohyby s lokomocí (moonwalk, cval, kroky Thrilleru)
+potřebují jiný nástroj než text: **řídicí video** (fun_control /
+`v2v_control_14b_lightning_portrait.json`, v benchi „pohyb 1:1 dle control
+videa") — jeden krátký driving klip na preset. To je další iterace.
+
+Opatření teď: `icon_moonwalk`, `icon_thriller`, `icon_gangnam`,
+`icon_charleston` začínají přípravným beatem (pustit, doprostřed, nohy u sebe);
+moonwalk beat používá mechanický popis (jediný, který dává pohyb prostorem);
+otočka výslovně „comes all the way back around to face the camera".
