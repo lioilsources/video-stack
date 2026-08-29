@@ -80,13 +80,16 @@ def pose(a):
     n = nframes(dst)
     print("  %s  (%d snímků @ 16 fps%s)" % (os.path.relpath(dst, HERE), n,
                                             "" if n >= a.length else " — MÉNĚ než %d, klip je krátký" % a.length))
+    if os.path.getsize(dst) < 100_000:
+        print("  ! kostra je skoro prázdná (%d kB) — DWPose postavu nečte; u Mixama vyber lidsky "
+              "vypadající postavu (Remy, Michelle, Ty…), ne stylizovaného panáčka" % (os.path.getsize(dst) // 1000))
 
 
 def skeleton_visible(png):
     from PIL import Image
     import numpy as np
     a = np.asarray(Image.open(png).convert("L"))
-    return (a > 20).mean() > 0.002
+    return (a > 20).mean() > 0.01          # čistá kostra má ~3 %, pár bodů rukou < 0.5 %
 
 
 def nframes(path):
