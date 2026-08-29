@@ -26,6 +26,11 @@ def main():
                 print("  x %s: chybí %s" % (name, k)); bad += 1
         if t.get("id") != os.path.splitext(name)[0]:
             print("  x %s: id %r nesedí na jméno souboru" % (name, t.get("id"))); bad += 1
+        for sc in t.get("scenes", []):
+            for b in sc.get("beats", []):
+                c = b.get("control")
+                if c and not os.path.exists(os.path.join(HERE, "drive", "%s_pose.webm" % c)):
+                    print("  x %s: control %r — chybí drive/%s_pose.webm" % (name, c, c)); bad += 1
         # projde stejnou cestou jako render: délky, prázdné prompty, knoby
         m = dict(t, name="check", source="x.png")
         try:

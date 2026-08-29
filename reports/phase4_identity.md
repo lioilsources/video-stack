@@ -127,3 +127,22 @@ Opatření teď: `icon_moonwalk`, `icon_thriller`, `icon_gangnam`,
 `icon_charleston` začínají přípravným beatem (pustit, doprostřed, nohy u sebe);
 moonwalk beat používá mechanický popis (jediný, který dává pohyb prostorem);
 otočka výslovně „comes all the way back around to face the camera".
+
+## Control beat: pohyb z kostry (2026-08-29)
+
+`"control": "<id>"` v beatu = Wan 2.2 fun_control + T2V Lightning, `ref_image`
+= navazovací snímek, `control_video` = DWPose kostra `drive/<id>_pose.webm`.
+Test `chains/mw_ctl.json` (přípravný beat I2V → control beat) na referenci:
+postava **kopíruje kostru snímek po snímku** (paže, závěrečné zvednutí rukou),
+vzhled a místnost z reference, tvář 0.53–0.69 (oživení funguje i tady),
+beat 170 s (I2V 105–130 s). Mechanismus drží.
+
+Bootstrap kostra z Wan T2V („a dancer performs the moonwalk…") ale moonwalk
+**není** — T2V tancuje na místě a zvedne ruce; klouzání z textu neumí ani
+T2V. Kostra pro moonwalk musí přijít z Mixamo (má Moonwalk) nebo z vlastního
+natočení: `spark-video drive moonwalk klip.mp4` → `drive/moonwalk_pose.webm`.
+
+**RIFE přes pásovou přejížďku dělá rozmazané bloky** (riziko z plánu se
+potvrdilo). Proto RIFE jede po beatech (segment 81 → 161 snímků, sousední
+segmenty sdílejí hraniční snímek) a střih se dělá až na 32 fps s překryvem
+2k−1 snímků = stejná doba. `_full.mp4` (16 fps) zůstává jako dřív.

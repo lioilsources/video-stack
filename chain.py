@@ -627,36 +627,30 @@ def cmd_assemble(m, upto):
 
 
 def cmd_smooth(m, upto):
-    """RIFE po scénách s překryvem jednoho snímku, pak concat.
+    """RIFE po beatech, střih až potom.
 
-    Celý klip naráz by u dlouhé scény neprošel pamětí — VHS_LoadVideo drží
-    všechny snímky v RAM a RIFE k tomu dvojnásobek. Chunk končí snímkem, kterým
-    další začíná, takže dvojice přes hranici scén se interpoluje taky. RIFE ×2
-    vrací 2F−1 snímků (poslední originál jednou), po zahození prvního snímku
-    každého dalšího chunku vyjde 2N−1 — totéž co jednorázový průchod."""
-    full = full_path(m)
-    if not os.path.exists(full):
-        die("nejdřív --assemble")
-    fps = m["fps"]
-    staged = "%s_full.mp4" % m["name"]
-    shutil.copy(full, os.path.join(IN, staged))
+    RIFE přes slepený klip by interpoloval i snímky střihu — u pásové
+    přejížďky z toho jsou rozmazané bloky (ověřeno). Proto se každý segment
+    zdvojí zvlášť (81 → 161 snímků; sousední segmenty sdílejí hraniční snímek
+    a RIFE ×2 vrací 2F−1, takže ho nic nezdvojí) a přechod se udělá až na
+    32 fps: překryv 2k−1 snímků = stejná doba jako k snímků na 16 fps.
+    Vedlejší zisk: chunky jsou malé, paměť neroste s délkou klipu."""
+    segs, fps = segments(m, upto), m["fps"]
+    beats = m["beats"][:upto]
     chunks = []
-    for s in m["scenes"]:
-        a, b = s["first"], min(s["last"], upto - 1)
-        if a > b:
-            break                                   # scéna celá za --until
-        # chunk začíná posledním snímkem předchozího beatu (sdílený) a končí
-        # posledním snímkem beatu b
-        skip = 0 if a == 0 else frames_upto(m, a) - 1
-        cap = frames_upto(m, b + 1) - skip
+    for b, seg in zip(beats, segs):
+        staged = "%s_seg%s.webm" % (m["name"], b["id"])
+        shutil.copy(seg, os.path.join(IN, staged))
         g = json.load(open(os.path.join(HERE, "workflows", "upscale_interp.json")))
-        g["1"]["inputs"].update(video=staged, skip_first_frames=skip, frame_load_cap=cap)
+        g["1"]["inputs"].update(video=staged, skip_first_frames=0, frame_load_cap=0)
         g["2"]["inputs"]["scale_by"] = float(m.get("upscale", 1.0))
-        g["4"]["inputs"].update(filename_prefix="%s/rife_%s" % (m["name"], s["name"] or "all"),
+        g["4"]["inputs"].update(filename_prefix="%s/rife_%s" % (m["name"], b["id"]),
                                 fps=float(fps * 2), crf=20.0)
-        label = "RIFE %d→%d fps%s" % (fps, fps * 2, " " + s["name"] if s["name"] else "")
-        chunks.append(outfile(submit(g, label), "4", ".webm"))
-    dst = concat(chunks, fps * 2, os.path.join(OUT, m["name"], "%s_%dfps.mp4" % (m["name"], fps * 2)))
+        chunks.append(outfile(submit(g, "RIFE %d→%d fps beat %s" % (fps, fps * 2, b["id"])), "4", ".webm"))
+    k = m["crossfade"]
+    dst = concat(chunks, fps * 2, os.path.join(OUT, m["name"], "%s_%dfps.mp4" % (m["name"], fps * 2)),
+                 xfade=(2 * k - 1) if k > 1 else 1, lengths=[2 * b["length"] - 1 for b in beats],
+                 transition=m["transition"], bands=m["bands"])
     n = nframes(dst)
     print("  %s  %d snímků = %.2f s @ %d fps" % (dst, n, n / (fps * 2), fps * 2))
     return dst

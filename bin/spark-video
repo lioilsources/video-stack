@@ -7,11 +7,14 @@
 #   spark-video run  <jméno> [--hd] [--from X] [--until X] [--resume]
 #                                                    # render + slepení + RIFE, stáhne výsledek
 #   spark-video ls                                   # co už je hotové
+#   spark-video drive <id> <klip.mp4> [--start s]    # kostra z řídicího klipu → drive/<id>_pose.webm
 #
 # --scenes N   kostra N scén × 5 beatů s prázdnými prompty (bez toho 3-beatová ukázka)
 # --from X     od beatu / scény X dál (vše za ní se přegeneruje)
 # --until X    skonči po beatu / scéně X — náhled první části
 # --resume     pokračuj od prvního nehotového beatu (po pádu, nebo po --until)
+# drive        klip (Mixamo render, vlastní natočení, stock) nahraje na SPARK, DWPose
+#              udělá kostru a stáhne ji do drive/; v manifestu pak beat s "control": "<id>"
 #
 # Manifesty:  <repo>/chains/<jméno>.json      — verzované, čte je i chain.py
 # Výsledky:   <repo>/out/<jméno>_{16,32}fps.mp4  — v .gitignore
@@ -36,7 +39,7 @@ CHAINS="$DIR/chains"; OUT="$DIR/out"
 mkdir -p "$CHAINS" "$OUT"
 
 die() { echo "spark-video: $*" >&2; exit 1; }
-usage() { sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+usage() { sed -n '2,21p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
 manifest() { echo "$CHAINS/$1.json"; }
 need() { [ -f "$(manifest "$1")" ] || die "manifest $1 neexistuje — založ ho: spark-video new $1 <obrázek>"; }
 # jméno beatu/scény jde do ssh příkazu, tak ať v něm není nic, co by shell četl
@@ -126,7 +129,11 @@ JSON
 
 cmd_edit() { need "$1"; "${EDITOR:-vi}" "$(manifest "$1")"; }
 
-push() { scp -q "$(manifest "$1")" "$HOST:$STACK/chains/$1.json"; }
+push() {
+  scp -q "$(manifest "$1")" "$HOST:$STACK/chains/$1.json"
+  # kostry řídicích klipů pro control beaty (malé, jdou i mimo git pull)
+  ls "$DIR"/drive/*_pose.webm >/dev/null 2>&1 && scp -q "$DIR"/drive/*_pose.webm "$HOST:$STACK/drive/" || true
+}
 
 cmd_plan() {
   need "$1"; push "$1"
@@ -168,6 +175,24 @@ cmd_run() {
   [ -t 1 ] && command -v open >/dev/null && open "$OUT/${name}_$((fps*2))fps.mp4" || true
 }
 
+cmd_drive() {
+  local id="${1:-}" clip="${2:-}" start="0"
+  [ -n "$id" ] && [ -n "$clip" ] || die "použití: spark-video drive <id> <klip.mp4> [--start s]"
+  [[ "$id" =~ ^[A-Za-z0-9_-]+$ ]] || die "id smí být jen [A-Za-z0-9_-]"
+  [ -f "$clip" ] || die "klip $clip neexistuje"
+  [ "${3:-}" = "--start" ] && start="${4:-0}"
+  local ext="${clip##*.}"
+  mkdir -p "$DIR/drive/src"
+  echo "  nahrávám $clip -> $HOST:$STACK/drive/src/$id.$ext"
+  ssh "$HOST" "mkdir -p $STACK/drive/src"
+  scp -q "$clip" "$HOST:$STACK/drive/src/$id.$ext"
+  echo "  DWPose na $HOST…"
+  ssh "$HOST" "cd $STACK && ~/Code/ComfyUI/.venv/bin/python tools/drive.py pose $id --src drive/src/$id.$ext --start $start" \
+    || die "kostra se nepovedla"
+  scp -q "$HOST:$STACK/drive/${id}_pose.webm" "$DIR/drive/${id}_pose.webm"
+  echo "  drive/${id}_pose.webm — commitni ji; v beatu pak \"control\": \"$id\""
+}
+
 cmd_ls() {
   echo "manifesty  $CHAINS"
   ls -1 "$CHAINS" 2>/dev/null | sed 's/\.json$//' | sed 's/^/  /' || true
@@ -181,6 +206,7 @@ case "${1:-}" in
   plan) shift; cmd_plan "${1:?chybí jméno}" ;;
   run)  shift; cmd_run "${1:?chybí jméno}" "${@:2}" ;;
   ls)   cmd_ls ;;
+  drive) shift; cmd_drive "$@" ;;
   ""|-h|--help) usage ;;
   *) die "neznámý příkaz ${1} (zkus spark-video --help)" ;;
 esac

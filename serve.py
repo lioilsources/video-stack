@@ -45,6 +45,10 @@ def beat_lengths(t):
             for s in t["scenes"] for b in s["beats"]]
 
 
+def beat_controls(t):
+    return [bool(b.get("control")) for s in t["scenes"] for b in s["beats"]]
+
+
 def load_scenes():
     """scenes/<id>.json = kus manifestu (style_tail, negative, scenes[]) + id/label/desc.
 
@@ -63,7 +67,9 @@ def load_scenes():
             "label_en": t.get("label_en", t["label"]),
             "desc_en": t.get("desc_en", t.get("desc", "")),
             "beats": len(lens), "seconds": round(frames / fps, 1),
-            "minutes_est": round(sum(SEC_PER_BEAT * L / 81 for L in lens) / 60),
+            # control beat (fun_control) je ~1.3× I2V (bench: 170 s / 33 sn vs 105–135 s / 81 sn I2V)
+            "minutes_est": round(sum(SEC_PER_BEAT * L / 81 * (1.3 if c else 1.0)
+                                     for L, c in zip(lens, beat_controls(t))) / 60),
             "_tpl": t,
         }
     return out
