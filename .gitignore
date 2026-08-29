@@ -2,3 +2,14 @@
 __pycache__/
 /jobs/
 /drive/src/
+.DS_Store
+
+# osobní manifesty (zdroje z vlastních fotek) — do veřejného repa nepatří
+/chains/*
+!/chains/demo.json
+!/chains/idle01.json
+!/chains/bench_*.json
+!/chains/eval_*.json
+!/chains/mw_*.json
+!/chains/robot_ctl.json
+!/chains/gangnam_ctl.json
