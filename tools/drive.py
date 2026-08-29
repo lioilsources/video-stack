@@ -48,28 +48,45 @@ def pose(a):
         a.start = 0.0
     else:
         shutil.copy(src, os.path.join(chain.IN, staged))
-    g = {
-        "1": {"class_type": "VHS_LoadVideo",
-              "inputs": {"video": staged, "force_rate": 16, "custom_width": 0, "custom_height": 0,
-                         "frame_load_cap": a.length, "skip_first_frames": int(a.start * 16),
-                         "select_every_nth": 1}},
-        "2": {"class_type": "ImageScale",
-              "inputs": {"image": ["1", 0], "upscale_method": "lanczos", "width": W, "height": H,
-                         "crop": "center"}},
-        "3": {"class_type": "DWPreprocessor",
-              "inputs": {"image": ["2", 0], "detect_hand": "enable", "detect_body": "enable",
-                         "detect_face": "disable", "resolution": 512,
-                         "bbox_detector": "yolox_l.onnx", "pose_estimator": "dw-ll_ucoco_384.onnx"}},
-        "4": {"class_type": "SaveWEBM",
-              "inputs": {"images": ["3", 0], "filename_prefix": "drive/%s_pose" % a.id,
-                         "codec": "vp9", "fps": 16.0, "crf": 10.0}},
-    }
-    out = chain.outfile(chain.submit(g, "pose %s" % a.id), "4", ".webm")
+    def graph(bbox, cap, save):
+        return {
+            "1": {"class_type": "VHS_LoadVideo",
+                  "inputs": {"video": staged, "force_rate": 16, "custom_width": 0, "custom_height": 0,
+                             "frame_load_cap": cap, "skip_first_frames": int(a.start * 16),
+                             "select_every_nth": 1}},
+            "2": {"class_type": "ImageScale",
+                  "inputs": {"image": ["1", 0], "upscale_method": "lanczos", "width": W, "height": H,
+                             "crop": "center"}},
+            "3": {"class_type": "DWPreprocessor",
+                  "inputs": {"image": ["2", 0], "detect_hand": "enable", "detect_body": "enable",
+                             "detect_face": "disable", "resolution": 512,
+                             "bbox_detector": bbox, "pose_estimator": "dw-ll_ucoco_384.onnx"}},
+            "4": save,
+        }
+    # Detektor osob (yolox) nevidí Mixamo panáčky ani jiné stylizované postavy —
+    # kostra vyjde černá. Sonda na 3 snímcích: když je prázdná, DWPose jede bez
+    # detektoru přes celý snímek (jedna postava uprostřed, což řídicí klip je).
+    bbox = "yolox_l.onnx"
+    probe = chain.outfile(chain.submit(graph(bbox, 3, {"class_type": "SaveImage", "inputs": {
+        "images": ["3", 0], "filename_prefix": "drive/%s_probe" % a.id}}), "pose probe %s" % a.id), "4", ".png")
+    if not skeleton_visible(probe):
+        print("  yolox postavu nenašel (stylizovaná?) → DWPose bez bbox detektoru")
+        bbox = "None"
+    out = chain.outfile(chain.submit(graph(bbox, a.length, {"class_type": "SaveWEBM", "inputs": {
+        "images": ["3", 0], "filename_prefix": "drive/%s_pose" % a.id, "codec": "vp9", "fps": 16.0,
+        "crf": 10.0}}), "pose %s" % a.id), "4", ".webm")
     dst = os.path.join(DRIVE, a.id + "_pose.webm")
     shutil.copy(out, dst)
     n = nframes(dst)
     print("  %s  (%d snímků @ 16 fps%s)" % (os.path.relpath(dst, HERE), n,
                                             "" if n >= a.length else " — MÉNĚ než %d, klip je krátký" % a.length))
+
+
+def skeleton_visible(png):
+    from PIL import Image
+    import numpy as np
+    a = np.asarray(Image.open(png).convert("L"))
+    return (a > 20).mean() > 0.002
 
 
 def nframes(path):
