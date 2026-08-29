@@ -43,6 +43,16 @@ IN, OUT = os.path.join(COMFY, "input"), os.path.join(COMFY, "output")
 BUDGET = {"draft": 442368, "hd": 995328}
 SEC_PER_MPX = 333  # naměřeno 26. 8.: 140–155 s @ 0.445 Mpx / 81 snímků
 
+# Control beat: pohyb z kostry řídicího klipu (drive/<id>_pose.webm), vzhled z
+# navazovacího snímku — pro pohyby, které Wan z textu neumí (moonwalk…).
+CONTROL_BASE = "control_beat_14b_lightning_portrait"
+DRIVE = os.path.join(HERE, "drive")
+
+
+def pose_path(cid):
+    return os.path.join(DRIVE, "%s_pose.webm" % cid)
+
+
 # Trénované pásmo poměru stran Wan 2.2 I2V: 9:16 až 16:9. Mimo něj model kreslí,
 # ale kompozice ujíždí (zdvojené končetiny, protažený obličej).
 ASPECT_BAND = (9 / 16, 16 / 9)
@@ -108,6 +118,10 @@ def load_dict(m):
                     b.setdefault(k, s.get(k, m.get(k)))
             b.setdefault("length", 81)
             check_length(b["length"], "beat %s" % b["id"])
+            if b.get("control"):
+                if not os.path.exists(pose_path(b["control"])):
+                    die("beat %s: control %r — chybí %s (tools/drive.py pose)"
+                        % (b["id"], b["control"], os.path.relpath(pose_path(b["control"]), HERE)))
             b["scene"] = name
             if not (b.get("prompt") or "").strip():
                 die("beat %s%s nemá prompt" % (b["id"], " (%s)" % name if name else ""))
@@ -210,9 +224,14 @@ def resolution(m, src, tier):
 
 def build(m, beat, idx, seed_img, orig_img, w, h):
     """Základní I2V workflow + tři nody navíc pro předání snímku dál."""
-    g = json.load(open(os.path.join(HERE, "workflows", m["base"] + ".json")))
+    control = beat.get("control")
+    g = json.load(open(os.path.join(HERE, "workflows", (CONTROL_BASE if control else m["base"]) + ".json")))
     L, name = beat["length"], m["name"]
     cm = m["colormatch"]
+    if control:
+        # kostra do input/ kopíruje cmd_render; tady jen jméno, délka a měřítko
+        g["60"]["inputs"].update(video=os.path.basename(pose_path(control)), frame_load_cap=L)
+        g["61"]["inputs"].update(width=w, height=h)
 
     g["8"]["inputs"]["text"] = beat["prompt"] + beat["style_tail"]
     g["9"]["inputs"]["text"] = beat["negative"]
@@ -229,7 +248,7 @@ def build(m, beat, idx, seed_img, orig_img, w, h):
     if beat.get("boundary") is not None:  # víc kroků v high-noise expertu = víc pohybu
         g["13"]["inputs"]["end_at_step"] = beat["boundary"]
         g["14"]["inputs"]["start_at_step"] = beat["boundary"]
-    if beat.get("motion") is not None:  # síla Lightning LoRA na high-noise expertu
+    if beat.get("motion") is not None and not control:  # u control beatu pohyb určuje kostra
         g["2"]["inputs"]["strength_model"] = beat["motion"]
     if beat.get("shift") is not None:
         for n in ("3", "6"):
@@ -375,7 +394,8 @@ def beat_hash(m, b, w, h):
     """Otisk všeho, co ovlivní segment i navazovací snímek. Změna = přegenerovat."""
     key = (b["prompt"], b["style_tail"], b["negative"], b["seed"], w, h, b["length"],
            m["base"], b.get("motion"), b.get("boundary"), b.get("shift"), b.get("sharpen"),
-           b.get("identity"), b.get("face_denoise"), m["colormatch"])
+           b.get("identity"), b.get("face_denoise"), m["colormatch"], b.get("control"),
+           os.path.getmtime(pose_path(b["control"])) if b.get("control") else None)
     return hashlib.sha1(json.dumps(key, sort_keys=True).encode()).hexdigest()[:12]
 
 
@@ -424,9 +444,10 @@ def cmd_plan(m, src, w, h):
         for i in range(s["first"], s["last"] + 1):
             b = m["beats"][i]
             start = frames_upto(m, i) / fps
-            print("  beat %-4s %6.2f–%5.2f s  %2d sn  seed%02d → seed%02d  %s"
+            print("  beat %-4s %6.2f–%5.2f s  %2d sn  seed%02d → seed%02d  %s%s"
                   % (b["id"], start, frames_upto(m, i + 1) / fps, b["length"],
-                     i, i + 1, b["prompt"][:52]))
+                     i, i + 1, "[control %s] " % b["control"] if b.get("control") else "",
+                     b["prompt"][:52]))
     n = len(m["beats"])
     frames = frames_upto(m, n)
     print("\ncelkem     %d snímků = %.2f s @ %d fps" % (frames, frames / fps, fps))
@@ -497,6 +518,8 @@ def cmd_render(m, src, w, h, start, stop, hd):
     for i in range(start, stop):
         b = beats[i]
         seed_img = "%s_seed%02d.png" % (name, i)
+        if b.get("control"):
+            shutil.copy(pose_path(b["control"]), os.path.join(IN, os.path.basename(pose_path(b["control"]))))
         path = beat_path(m, b)
         if os.path.exists(path) and not hd:
             g = json.load(open(path))       # ručně doladěná verze má přednost
