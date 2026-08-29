@@ -67,8 +67,8 @@ def load_scenes():
             "label_en": t.get("label_en", t["label"]),
             "desc_en": t.get("desc_en", t.get("desc", "")),
             "beats": len(lens), "seconds": round(frames / fps, 1),
-            # control beat (fun_control) je ~1.3× I2V (bench: 170 s / 33 sn vs 105–135 s / 81 sn I2V)
-            "minutes_est": round(sum(SEC_PER_BEAT * L / 81 * (1.3 if c else 1.0)
+            # control beat (VACE + reference) je ~1.5× I2V (190–205 s vs 130 s)
+            "minutes_est": round(sum(SEC_PER_BEAT * L / 81 * (1.5 if c else 1.0)
                                      for L, c in zip(lens, beat_controls(t))) / 60),
             "_tpl": t,
         }

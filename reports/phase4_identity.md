@@ -192,3 +192,21 @@ monotónně roste. Vizuálně: 1.0× šmouhy přes celou paži, 0.65× čitelné
 
 **Default pro kostry: 0.65×** (moonwalk 0.8× — klouzání je samo o sobě pomalé).
 Kostry v repu překresleny; `_s05`/`_s065` testovací a `moonwalk_side` smazány.
+
+## Vzhled control beatů: kotva na originál (2026-08-29 14:30)
+
+Postava se mezi klipy měnila (boty, oblečení, proporce, místnost) — control
+beat bral vzhled z navazovacího snímku, který nese drift, a tělo stavěl podle
+kostry. Depth mapa z fotky to nespraví (statická póza proti pohybu). Správná
+kotva je **reference vzhledu = úvodní fotka v každém klipu**. Gangnam, seg02:
+
+| model / reference | tvář (seed02) | vizuálně |
+|---|---|---|
+| fun_control / handoff (dosud) | 0.533 | bosá, generické oblečení, ploché světlo, rozmazané končetiny |
+| fun_control / originál | 0.627 | podpatky zpět, oblečení blíž, tělo širší |
+| **VACE / originál** | **0.658** | boty, lesk kraťasů, proporce nejblíž fotce, světlo místnosti, nejostřejší |
+| VACE / handoff | 0.627 | ostré, boty, o něco méně věrné |
+
+Default control beatů: `control_model: vace`, `control_ref: original`
+(190–205 s/beat proti 150 s u fun_control). Střih před control beatem je
+záměrný (slices), takže návrat k originálu není poznat jako skok.

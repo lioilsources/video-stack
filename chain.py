@@ -227,7 +227,7 @@ def resolution(m, src, tier):
 def build(m, beat, idx, seed_img, orig_img, w, h):
     """Základní I2V workflow + tři nody navíc pro předání snímku dál."""
     control = beat.get("control")
-    cmodel = beat.get("control_model") or "fun"
+    cmodel = beat.get("control_model") or "vace"
     if cmodel not in CONTROL_BASE:
         die("control_model %r: čekám fun nebo vace" % cmodel)
     g = json.load(open(os.path.join(HERE, "workflows", (CONTROL_BASE[cmodel] if control else m["base"]) + ".json")))
@@ -240,10 +240,11 @@ def build(m, beat, idx, seed_img, orig_img, w, h):
 
     g["8"]["inputs"]["text"] = beat["prompt"] + beat["style_tail"]
     g["9"]["inputs"]["text"] = beat["negative"]
-    # Vzhled control beatu: "handoff" = navazovací snímek (kontinuita, ale každý
-    # klip zdědí drift), "original" = úvodní fotka (postava, oblečení a místnost
-    # se v každém klipu vrátí k originálu; střih je stejně záměrný)
-    g["10"]["inputs"]["image"] = orig_img if (control and beat.get("control_ref") == "original") else seed_img
+    # Vzhled control beatu: "original" (default) = úvodní fotka — postava, oblečení,
+    # boty i místnost se v každém klipu vrátí k originálu (A/B na gangnamu: VACE
+    # + originál tvář 0.66 a nejvěrnější tělo; fun_control + handoff 0.53 a bosá).
+    # "handoff" = navazovací snímek: kontinuita, ale každý klip zdědí drift.
+    g["10"]["inputs"]["image"] = orig_img if (control and (beat.get("control_ref") or "original") == "original") else seed_img
     g["12"]["inputs"].update(width=w, height=h, length=L)
     if g["12"]["class_type"] == "WanVaceToVideo" and "50" in g:
         # VACE I2V báze: control_video = [navazovací snímek, šedé×(L−1)], masky [0, 1×(L−1)];

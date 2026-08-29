@@ -140,7 +140,7 @@ Množství pohybu řídí *high-noise expert*. Volitelné klíče, dědí se
 | `transition` | `fade` | střih mezi beaty: `cut` (tvrdý), `fade` (prolínačka), `slices` (pásová přejížďka — liché pásy nový obraz zleva, sudé zprava; krátký, čitelný střih jako záměr). |
 | `crossfade` | 1 | délka střihu ve snímcích (1 = tvrdý). Presety: `slices` + 6 (0,375 s). Skok na střihu má i tvrdý střih bez oživení — je to re-encode navazovacího snímku a reset pohybu (`tools/seam_pop.py`). |
 | `bands` | 12 | počet pásů u `slices`. |
-| `control` | – | per beat: `"<id>"` = pohyb z kostry `drive/<id>_pose.webm` (Wan fun_control), vzhled z navazovacího snímku. Pro pohyby, které Wan z textu neumí (moonwalk). Kostru vyrobí `tools/drive.py pose <id> --src klip.mp4` (DWPose); zdroj klipu: Mixamo render, vlastní natočení, stock — jen kostra jde do repa. |
+| `control` | – | per beat: `"<id>"` = pohyb z kostry `drive/<id>_pose.webm` (Wan VACE), vzhled z **úvodní fotky** (`control_ref: original`; `handoff` = navazovací snímek). `control_model: fun` přepne na fun_control (rychlejší, slabší kotva vzhledu). Pro pohyby, které Wan z textu neumí (moonwalk). Kostru vyrobí `tools/drive.py pose <id> --src klip.mp4` (DWPose); zdroj klipu: Mixamo render, vlastní natočení, stock — jen kostra jde do repa. |
 | `sharpen` | 0 | doostření navazovacího snímku (0–1). Navazovací snímek je VAE-dekódovaný, tedy měkčí, a další beat z něj startuje — měkkost se sčítá. |
 
 Presety v `scenes/` mají taneční scény `boundary 3` + `motion 0.8`, klidné `shift 7`.
