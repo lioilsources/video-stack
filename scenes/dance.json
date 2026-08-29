@@ -1,7 +1,9 @@
 {
   "id": "dance",
   "label": "Tanec",
+  "label_en": "Dance",
   "desc": "Pohupuje se do rytmu, krok stranou, ruce nahoru, otočka a zklidnění.",
+  "desc_en": "Sways to the beat, a step to the side, arms up, a spin and a settle.",
   "length": 81,
   "fps": 16,
   "crf": 18,

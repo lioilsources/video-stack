@@ -1,7 +1,9 @@
 {
   "id": "wind_hair",
   "label": "Vlasy ve větru",
+  "label_en": "Hair in the wind",
   "desc": "Lehký vánek zvedne vlasy, zastrčí si pramen za ucho, ohlédne se přes rameno.",
+  "desc_en": "A light breeze lifts the hair, tucks a strand behind the ear, a glance back over the shoulder.",
   "length": 81,
   "fps": 16,
   "crf": 18,

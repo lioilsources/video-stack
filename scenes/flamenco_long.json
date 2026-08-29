@@ -1,7 +1,9 @@
 {
   "id": "flamenco_long",
   "label": "Tanec · Flamenco minutový",
+  "label_en": "Dance · Flamenco, one minute",
   "desc": "Pomalý nástup, dupání, kroužení zápěstí, tleskání, otočky se sukní, hrdý závěr. 12 beatů ≈ 52 s.",
+  "desc_en": "A slow entrance, heel stamping, circling wrists, claps, spins with the skirt, a proud finish. 12 beats, about 52 s.",
   "length": 81,
   "fps": 16,
   "crf": 18,

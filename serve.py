@@ -46,7 +46,11 @@ def beat_lengths(t):
 
 
 def load_scenes():
-    """scenes/<id>.json = kus manifestu (style_tail, negative, scenes[]) + id/label/desc."""
+    """scenes/<id>.json = kus manifestu (style_tail, negative, scenes[]) + id/label/desc.
+
+    label/desc jsou česky (Ol1nLLM), label_en/desc_en anglicky (TsumikiBot pro
+    globální trh). Klient si vybere; kdo _en nezná, dostane češtinu jako dřív —
+    proto se _en posílá vždycky, i když je to jen kopie češtiny."""
     out = {}
     for p in sorted(glob.glob(os.path.join(SCENES, "*.json"))):
         t = json.load(open(p))
@@ -56,6 +60,8 @@ def load_scenes():
         frames = lens[0] + sum(L - k for L in lens[1:])
         out[t["id"]] = {
             "id": t["id"], "label": t["label"], "desc": t.get("desc", ""),
+            "label_en": t.get("label_en", t["label"]),
+            "desc_en": t.get("desc_en", t.get("desc", "")),
             "beats": len(lens), "seconds": round(frames / fps, 1),
             "minutes_est": round(sum(SEC_PER_BEAT * L / 81 for L in lens) / 60),
             "_tpl": t,

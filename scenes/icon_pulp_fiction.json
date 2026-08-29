@@ -1,7 +1,9 @@
 {
   "id": "icon_pulp_fiction",
   "label": "Ikony · Pulp Fiction twist",
+  "label_en": "Icons · Pulp Fiction twist",
   "desc": "Líný twist, ‚V‘ přes oči, plavání se stisknutým nosem, stopařské palce, podřep a zpět, ukázání na kameru.",
+  "desc_en": "A lazy twist, the V across the eyes, the swim with a pinched nose, hitchhiker thumbs, down into a squat and back, a point at the camera.",
   "length": 81,
   "fps": 16,
   "crf": 18,

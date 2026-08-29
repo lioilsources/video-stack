@@ -1,7 +1,9 @@
 {
   "id": "belly_long",
   "label": "Tanec · Břišní minutový",
+  "label_en": "Dance · Belly, one minute",
   "desc": "Vlny trupu, shimmy, hip dropy, kroužení hrudníku, otočky se závojem. Nohy stojí, pohyb v trupu. 12 beatů ≈ 55 s.",
+  "desc_en": "Torso waves, shimmies, hip drops, chest circles, turns with the veil. The feet stay put, the motion is in the torso. 12 beats, about 55 s.",
   "length": 81,
   "fps": 16,
   "crf": 18,

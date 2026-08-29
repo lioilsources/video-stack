@@ -1,7 +1,9 @@
 {
   "id": "icon_twist",
   "label": "Ikony · Twist",
+  "label_en": "Icons · The Twist",
   "desc": "Kroucení boků na patách, ruce jako při sušení ručníku, dolů do podřepu a zpět.",
+  "desc_en": "Hips twisting on the balls of the feet, arms like drying off with a towel, down into a squat and back up.",
   "length": 81,
   "fps": 16,
   "crf": 18,

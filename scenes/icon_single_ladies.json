@@ -1,7 +1,9 @@
 {
   "id": "icon_single_ladies",
   "label": "Ikony · Single Ladies",
+  "label_en": "Icons · Single Ladies",
   "desc": "Švih zápěstí před obličejem, vysunuté boky, ukázání na prsten, kývání kolen, otočka, freeze.",
+  "desc_en": "A wrist flick in front of the face, hips pushed out, pointing at the ring, knees rocking, a spin, a freeze.",
   "length": 81,
   "fps": 16,
   "crf": 18,

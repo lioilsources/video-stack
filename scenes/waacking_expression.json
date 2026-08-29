@@ -1,7 +1,9 @@
 {
   "id": "waacking_expression",
   "label": "Tanec · Waacking",
+  "label_en": "Dance · Waacking",
   "desc": "Teatrální pohled, švihy paží nad hlavou, dramatická póza, rolování trupu, freeze.",
+  "desc_en": "A theatrical gaze, arm whips overhead, a dramatic pose, a torso roll, a freeze.",
   "length": 81,
   "fps": 16,
   "crf": 18,

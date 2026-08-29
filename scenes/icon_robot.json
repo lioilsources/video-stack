@@ -1,7 +1,9 @@
 {
   "id": "icon_robot",
   "label": "Ikony · Robot",
+  "label_en": "Icons · The Robot",
   "desc": "Trhavé pohyby po segmentech, paže po kloubech nahoru, otočka trupu, vypnutí a zapnutí.",
+  "desc_en": "Jerky segmented moves, the arm rising joint by joint, the torso rotating, a power-down and a power-up.",
   "length": 81,
   "fps": 16,
   "crf": 18,

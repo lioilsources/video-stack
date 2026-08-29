@@ -1,7 +1,9 @@
 {
   "id": "icon_charleston",
   "label": "Ikony · Charleston",
+  "label_en": "Icons · Charleston",
   "desc": "Špičky ven a dovnitř, kopy dozadu, kroky vpřed a vzad, mávání rukama nahoře.",
+  "desc_en": "Toes swinging out and in, kicks behind, quick steps forward and back, hands waving overhead.",
   "length": 81,
   "fps": 16,
   "crf": 18,

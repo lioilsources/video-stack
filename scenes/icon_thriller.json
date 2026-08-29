@@ -1,7 +1,9 @@
 {
   "id": "icon_thriller",
   "label": "Ikony · Thriller",
+  "label_en": "Icons · Thriller",
   "desc": "Ztuhlý postoj, trhnutí hlavou, drápy, krok stranou s tlesknutím, prohnutí, kroky vpřed s vlnou rukou.",
+  "desc_en": "A stiff stance, the head snapping around, claws, a step to the side with a clap, an arched back, heavy steps with an arm wave.",
   "length": 81,
   "fps": 16,
   "crf": 18,

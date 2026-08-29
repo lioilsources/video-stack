@@ -1,7 +1,9 @@
 {
   "id": "dance_long",
   "label": "Tanec · minutový",
+  "label_en": "Dance · one minute",
   "desc": "Rozehřátí, pomalý tanec s otočkami a rukama nad hlavou, zklidnění a úsměv. 12 beatů ≈ 55 s.",
+  "desc_en": "A warm-up, a slow dance with turns and arms overhead, a settle and a smile. 12 beats, about 55 s.",
   "length": 81,
   "fps": 16,
   "crf": 18,

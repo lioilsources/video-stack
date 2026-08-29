@@ -1,7 +1,9 @@
 {
   "id": "icon_macarena",
   "label": "Ikony · Macarena",
+  "label_en": "Icons · Macarena",
   "desc": "Ruce dopředu, otočit dlaně, na ramena, za hlavu, na boky, kroužení boků, poskok s otočkou.",
+  "desc_en": "Arms out, palms flipped, hands to the shoulders, behind the head, onto the hips, hips circling, a hop with a quarter turn.",
   "length": 81,
   "fps": 16,
   "crf": 18,

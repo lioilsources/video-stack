@@ -1,7 +1,9 @@
 {
   "id": "icon_gangnam",
   "label": "Ikony · Gangnam Style",
+  "label_en": "Icons · Gangnam Style",
   "desc": "Zkřížená zápěstí, jízda na koni s poskoky, točení lasa, cval do strany a zpět.",
+  "desc_en": "Crossed wrists, the horse-riding bounce, twirling a lasso, a gallop to the side and back.",
   "length": 81,
   "fps": 16,
   "crf": 18,

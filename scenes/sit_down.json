@@ -1,7 +1,9 @@
 {
   "id": "sit_down",
   "label": "Sedne si na zem",
+  "label_en": "Sits down on the floor",
   "desc": "Pomalu se sníží k zemi, sedne si, zakloní hlavu se zavřenýma očima, pak úsměv do kamery.",
+  "desc_en": "Lowers slowly to the floor, sits down, head tipped back with eyes closed, then a smile into the camera.",
   "length": 81,
   "fps": 16,
   "crf": 18,

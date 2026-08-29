@@ -1,7 +1,9 @@
 {
   "id": "wink",
   "label": "Mrknutí na kameru",
+  "label_en": "Wink at the camera",
   "desc": "Pohled do kamery, hravé mrknutí jedním okem, tichý smích.",
+  "desc_en": "A look into the camera, a playful wink with one eye, a silent laugh.",
   "length": 81,
   "fps": 16,
   "crf": 18,

@@ -55,7 +55,13 @@ def die(msg):
 # ---------------------------------------------------------------- manifest
 
 def load(path):
-    m = json.load(open(path))
+    return load_dict(json.load(open(path)))
+
+
+def load_dict(m):
+    """Manifest už načtený z JSONu → doplněné defaulty a zploštěné scény.
+    Oddělené od load(), ať jde katalog scén zkontrolovat bez souboru
+    (tools/check_scenes.py)."""
     m.setdefault("fps", 16)
     m.setdefault("length", 81)
     m.setdefault("seed", 42)

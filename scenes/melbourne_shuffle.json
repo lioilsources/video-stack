@@ -1,7 +1,9 @@
 {
   "id": "melbourne_shuffle",
   "label": "Tanec · Shuffle",
+  "label_en": "Dance · Shuffle",
   "desc": "Running man, T-step, otočka na patách, rychlé kopy, dupnutí do širokého postoje.",
+  "desc_en": "Running man, T-step, a spin on the heels, quick kicks, a stomp into a wide stance.",
   "length": 81,
   "fps": 16,
   "crf": 18,

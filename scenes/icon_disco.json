@@ -1,7 +1,9 @@
 {
   "id": "icon_disco",
   "label": "Ikony · Disco (70s)",
+  "label_en": "Icons · Disco (70s)",
   "desc": "Prst ukazuje nahoru do rohu, diagonální švih k boku, houpání boků, otočka, finální ukázání.",
+  "desc_en": "A finger pointing up to the corner, a diagonal sweep to the hip, swaying hips, a spin, a closing point.",
   "length": 81,
   "fps": 16,
   "crf": 18,

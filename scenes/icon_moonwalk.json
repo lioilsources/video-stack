@@ -1,7 +1,9 @@
 {
   "id": "icon_moonwalk",
   "label": "Ikony · Moonwalk (MJ)",
+  "label_en": "Icons · Moonwalk (MJ)",
   "desc": "Klouzání dozadu, zatímco nohy jdou dopředu, rychlá otočka, stoj na špičkách, švih boků, freeze v náklonu.",
+  "desc_en": "Gliding backwards while the feet walk forward, a quick spin, up on the toes, a hip snap, a freeze in a lean.",
   "length": 81,
   "fps": 16,
   "crf": 18,

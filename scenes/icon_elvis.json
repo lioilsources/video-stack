@@ -1,7 +1,9 @@
 {
   "id": "icon_elvis",
   "label": "Ikony · Elvis",
+  "label_en": "Icons · Elvis",
   "desc": "Rozkročený postoj, kolena dovnitř a ven, kroužení boků, třesoucí se noha, švih ruky nad hlavu.",
+  "desc_en": "A wide stance, knees swinging in and out, circling hips, a shaking leg, an arm swung overhead.",
   "length": 81,
   "fps": 16,
   "crf": 18,
