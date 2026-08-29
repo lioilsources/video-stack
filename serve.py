@@ -76,6 +76,7 @@ class Jobs:
         self.lock = threading.Lock()
         self.jobs = {}
         self.queue = []                       # ids ve stavu queued, v pořadí
+        self.resume = set()                   # ids, které se mají spustit s --resume (navázat na state.json)
         self.wake = threading.Event()
         os.makedirs(JOBS, exist_ok=True)
         requeue = []
@@ -89,10 +90,13 @@ class Jobs:
                 if pid:
                     log("job", j["id"], "běží dál (pid %d), připojuji se" % pid)
                     threading.Thread(target=self._watch, args=(j["id"], pid), daemon=True).start()
+                elif os.path.exists(self.result_path(j["id"])):
+                    j.update(status="done", phase=None, finished=time.time()); self._write(j)
                 else:
-                    j.update(status="error", finished=time.time(),
-                             error="server restartován během renderu — zadej znovu")
-                    self._write(j)
+                    # chain.py umřel (typicky s rourou na stdout starého serveru);
+                    # state.json a navazovací snímky jsou na disku → --resume
+                    self.resume.add(j["id"]); requeue.insert(0, j["id"])
+                    j.update(status="queued", phase=None); self._write(j)
             elif j["status"] == "queued":
                 requeue.append(j["id"])                # manifest i obrázek jsou na disku
             self.jobs[j["id"]] = j
@@ -101,6 +105,16 @@ class Jobs:
             log("znovu ve frontě:", ", ".join(requeue))
             self.wake.set()
         threading.Thread(target=self._worker, daemon=True).start()
+
+    def _resume_later(self, jid):
+        """Utržený job (chain.py umřel bez výsledku) dopředu fronty s --resume."""
+        with self.lock:
+            self.resume.add(jid)
+            if jid not in self.queue:
+                self.queue.insert(0, jid)
+            self.jobs[jid].update(status="queued", phase=None, error=None)
+            self._write(self.jobs[jid])
+        self.wake.set()
 
     def _watch(self, jid, pid):
         """Osiřelý chain.py po restartu serveru: postup podle souborů, konec podle pid."""
@@ -117,9 +131,8 @@ class Jobs:
             log("job", jid, "hotovo (po restartu serveru)")
             self.update(jid, status="done", phase=None, finished=time.time())
         else:
-            log("job", jid, "chain.py skončil bez výsledku")
-            self.update(jid, status="error", error="render skončil bez výsledku — zadej znovu",
-                        finished=time.time())
+            log("job", jid, "chain.py skončil bez výsledku → --resume")
+            self._resume_later(jid)
 
     def _write(self, j):
         tmp = os.path.join(JOBS, j["id"] + ".json.tmp")
@@ -153,6 +166,8 @@ class Jobs:
             j = self.jobs.get(jid)
             if not j:
                 return None
+            if j["status"] != "done" and os.path.exists(self.result_path(jid)):
+                j.update(status="done", phase=None, error=None, finished=time.time()); self._write(j)
             v = {k: j[k] for k in ("id", "scene", "status", "beat", "beats", "phase", "error")}
             if j["status"] == "queued":
                 v["position"] = self.queue.index(jid)
@@ -187,27 +202,35 @@ class Jobs:
                               % (free, MIN_FREE_GB))
             return
         self.update(jid, status="running", phase="render", started=time.time())
-        # chain.py pouští drop_page_cache před každým promptem; tady jen kvůli
-        # kontrole vram_free výš, aby neodmítla job kvůli page cache
-
+        resume = jid in self.resume
+        self.resume.discard(jid)
         cmd = [sys.executable, os.path.join(HERE, "chain.py"),
-               os.path.join("chains", jid + ".json"), "--all"]
+               os.path.join("chains", jid + ".json"), "--all"] + (["--resume"] if resume else [])
         log("job", jid, "start:", " ".join(cmd[1:]))
-        p = subprocess.Popen(cmd, cwd=HERE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                             text=True, bufsize=1)
-        tail = []
-        for line in p.stdout:
-            line = line.rstrip()
-            if line:
-                tail = (tail + [line])[-20:]
-            m = re.match(r"\s*ok beat (\d+)", line)
-            if m:
-                self.update(jid, beat=int(m.group(1)))
-            elif "hotovo — slep" in line or "nic k renderu" in line:
-                self.update(jid, phase="assemble")
-            elif "_full.mp4" in line:
-                self.update(jid, phase="rife")
-        rc = p.wait()
+        # stdout do souboru, ne do roury: chain.py musí přežít restart serveru
+        # (s rourou umře na BrokenPipe při prvním printu po smrti čtenáře)
+        logpath = os.path.join(JOBS, jid + ".log")
+        with open(logpath, "a") as fh:
+            p = subprocess.Popen(cmd, cwd=HERE, stdout=fh, stderr=subprocess.STDOUT, text=True)
+        tail, pos = [], 0
+        while True:
+            rc = p.poll()
+            with open(logpath) as fh:
+                fh.seek(pos); chunk = fh.read(); pos = fh.tell()
+            for line in chunk.splitlines():
+                line = line.rstrip()
+                if line:
+                    tail = (tail + [line])[-20:]
+                m = re.match(r"\s*ok beat (\d+)", line)
+                if m:
+                    self.update(jid, beat=int(m.group(1)))
+                elif "hotovo — slep" in line or "nic k renderu" in line:
+                    self.update(jid, phase="assemble")
+                elif "_full.mp4" in line:
+                    self.update(jid, phase="rife")
+            if rc is not None:
+                break
+            time.sleep(5)
         if rc == 0 and os.path.exists(self.result_path(jid)):
             log("job", jid, "hotovo")
             self.update(jid, status="done", phase=None, finished=time.time())
