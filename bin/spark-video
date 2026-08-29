@@ -7,7 +7,7 @@
 #   spark-video run  <jméno> [--hd] [--from X] [--until X] [--resume]
 #                                                    # render + slepení + RIFE, stáhne výsledek
 #   spark-video ls                                   # co už je hotové
-#   spark-video drive <id> <klip.mp4> [--start s]    # kostra z řídicího klipu → drive/<id>_pose.webm
+#   spark-video drive <id> <klip.mp4> [--start s] [--loop]  # kostra z klipu → drive/<id>_pose.webm
 #
 # --scenes N   kostra N scén × 5 beatů s prázdnými prompty (bez toho 3-beatová ukázka)
 # --from X     od beatu / scény X dál (vše za ní se přegeneruje)
@@ -176,18 +176,25 @@ cmd_run() {
 }
 
 cmd_drive() {
-  local id="${1:-}" clip="${2:-}" start="0"
-  [ -n "$id" ] && [ -n "$clip" ] || die "použití: spark-video drive <id> <klip.mp4> [--start s]"
+  local id="${1:-}" clip="${2:-}" start="0" loop=""
+  [ -n "$id" ] && [ -n "$clip" ] || die "použití: spark-video drive <id> <klip.mp4> [--start s] [--loop]"
   [[ "$id" =~ ^[A-Za-z0-9_-]+$ ]] || die "id smí být jen [A-Za-z0-9_-]"
   [ -f "$clip" ] || die "klip $clip neexistuje"
-  [ "${3:-}" = "--start" ] && start="${4:-0}"
+  shift 2
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --start) start="${2:-0}"; shift ;;
+      --loop) loop="--loop" ;;
+      *) die "neznámý přepínač $1 (drive umí --start s, --loop)" ;;
+    esac; shift
+  done
   local ext="${clip##*.}"
   mkdir -p "$DIR/drive/src"
   echo "  nahrávám $clip -> $HOST:$STACK/drive/src/$id.$ext"
   ssh "$HOST" "mkdir -p $STACK/drive/src"
   scp -q "$clip" "$HOST:$STACK/drive/src/$id.$ext"
   echo "  DWPose na $HOST…"
-  ssh "$HOST" "cd $STACK && ~/Code/ComfyUI/.venv/bin/python tools/drive.py pose $id --src drive/src/$id.$ext --start $start" \
+  ssh "$HOST" "cd $STACK && ~/Code/ComfyUI/.venv/bin/python tools/drive.py pose $id --src drive/src/$id.$ext --start $start $loop" \
     || die "kostra se nepovedla"
   scp -q "$HOST:$STACK/drive/${id}_pose.webm" "$DIR/drive/${id}_pose.webm"
   echo "  drive/${id}_pose.webm — commitni ji; v beatu pak \"control\": \"$id\""

@@ -39,7 +39,15 @@ def pose(a):
     if not os.path.exists(src):
         chain.die("zdroj %s neexistuje (t2v, Mixamo render, vlastní natočení…)" % src)
     staged = "drive_%s%s" % (a.id, os.path.splitext(src)[1])
-    shutil.copy(src, os.path.join(chain.IN, staged))
+    if a.loop:
+        # Mixamo animace jsou smyčky: krátký klip zopakovat, ať vyplní celý beat
+        staged = "drive_%s_loop.mp4" % a.id
+        subprocess.run(["ffmpeg", "-y", "-v", "error", "-stream_loop", "-1", "-ss", str(a.start), "-i", src,
+                        "-t", "%.3f" % (a.length / 16 + 0.5), "-an", "-r", "16", "-pix_fmt", "yuv420p",
+                        os.path.join(chain.IN, staged)], check=True)
+        a.start = 0.0
+    else:
+        shutil.copy(src, os.path.join(chain.IN, staged))
     g = {
         "1": {"class_type": "VHS_LoadVideo",
               "inputs": {"video": staged, "force_rate": 16, "custom_width": 0, "custom_height": 0,
@@ -79,5 +87,6 @@ if __name__ == "__main__":
     p = sub.add_parser("pose"); p.add_argument("id"); p.add_argument("--src")
     p.add_argument("--start", type=float, default=0.0, help="odkud v sekundách")
     p.add_argument("--length", type=int, default=81)
+    p.add_argument("--loop", action="store_true", help="klip opakovat, dokud nevyplní --length (Mixamo smyčky)")
     a = ap.parse_args()
     {"t2v": t2v, "pose": pose}[a.cmd](a)
