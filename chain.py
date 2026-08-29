@@ -64,9 +64,17 @@ def load(path):
     m.setdefault("colormatch", {"method": "mkl", "strength": 0.6})
     m.setdefault("base", "i2v_final_14b_lightning_portrait")
     m.setdefault("crossfade", 1)
+    m.setdefault("transition", "fade")
+    m.setdefault("bands", 12)
     check_length(m["length"], "manifest")
     if not isinstance(m["crossfade"], int) or not 1 <= m["crossfade"] <= 16:
         die("crossfade %r: čekám 1–16 snímků (1 = tvrdý střih)" % m["crossfade"])
+    if m["transition"] not in ("cut", "fade", "slices"):
+        die("transition %r: čekám cut, fade nebo slices" % m["transition"])
+    if m["transition"] == "cut":
+        m["crossfade"] = 1
+    elif m["crossfade"] < 2:
+        m["transition"] = "cut"                      # 1 snímek se prolnout nedá
 
     # Scény se zploští do m["beats"]; plochý manifest je jedna bezejmenná scéna,
     # takže dál jede všechno jednou cestou. Co beat nemá, zdědí ze scény, pak
@@ -515,24 +523,41 @@ def segments(m, upto):
     return out
 
 
-def concat(files, fps, dst, xfade=1, lengths=None):
+def slices_expr(bands):
+    """xfade custom: obraz ve vodorovných pásech, liché pásy nový obraz vtlačí
+    zleva (starý vytlačí doprava), sudé zrcadlově zprava. Střih jako záměr —
+    krátký a čitelný, ne neznatelná prolínačka. P jde v xfade od 1 (starý) k 0
+    (nový); a0..a3/b0..b3 jsou pixely vstupů per plane, pás se počítá z Y/H
+    plane, takže sedí i pro chroma v yuv420p."""
+    def px(src, dx):
+        return ("if(eq(PLANE,0),{s}0({x},Y),if(eq(PLANE,1),{s}1({x},Y),"
+                "if(eq(PLANE,2),{s}2({x},Y),{s}3({x},Y))))").format(s=src, x=dx)
+    s = "(W*(1-P))"
+    odd = "if(lt(X,%s),%s,%s)" % (s, px("b", "X+W-%s" % s), px("a", "X-%s" % s))
+    even = "if(gte(X,W-%s),%s,%s)" % (s, px("b", "X-W+%s" % s), px("a", "X+%s" % s))
+    return "if(eq(mod(floor(Y*%d/H),2),0),%s,%s)" % (bands, odd, even)
+
+
+def concat(files, fps, dst, xfade=1, lengths=None, transition="fade", bands=12):
     """ffmpeg spojení vstupů, které sdílejí hraniční snímek.
 
     Vstup N+1 začíná přesně tím snímkem, kterým vstup N končí (sdílený
     navazovací snímek). xfade=1: tvrdý střih, první snímek každého dalšího
     vstupu se zahodí (select=gte(n,1)), jinak by spoj zadrhl o zdvojený
     snímek. xfade>1: posledních k snímků N se prolne s prvními k snímky N+1
-    (ffmpeg xfade) — skok z re-encode navazovacího snímku a resetu pohybu se
+    (ffmpeg xfade; `transition` fade = prolínačka, slices = pásová
+    přejížďka) — skok z re-encode navazovacího snímku a resetu pohybu se
     rozloží do k snímků; `lengths` = počty snímků vstupů, kvůli offsetům.
     Platí pro segmenty i pro RIFE chunky."""
     if xfade > 1:
         assert lengths and len(lengths) == len(files)
+        kind = "custom:expr='%s'" % slices_expr(bands) if transition == "slices" else "fade"
         parts = ["[%d:v]setpts=PTS-STARTPTS,fps=%d[v%d];" % (i, fps, i) for i in range(len(files))]
         prev, out_frames = "[v0]", lengths[0]
         for i in range(1, len(files)):
             off = (out_frames - xfade) / fps
-            parts.append("%s[v%d]xfade=transition=fade:duration=%.4f:offset=%.4f[x%d];"
-                         % (prev, i, xfade / fps, off, i))
+            parts.append("%s[v%d]xfade=transition=%s:duration=%.4f:offset=%.4f[x%d];"
+                         % (prev, i, kind, xfade / fps, off, i))
             prev, out_frames = "[x%d]" % i, out_frames + lengths[i] - xfade
         fc = "".join(parts)[:-1].replace("[x%d]" % (len(files) - 1), "[out]") \
             if len(files) > 1 else "[0:v]setpts=PTS-STARTPTS[out]"
@@ -565,7 +590,8 @@ def full_path(m):
 def cmd_assemble(m, upto):
     segs, fps = segments(m, upto), m["fps"]
     dst = concat(segs, fps, full_path(m), xfade=m["crossfade"],
-                 lengths=[b["length"] for b in m["beats"][:upto]])
+                 lengths=[b["length"] for b in m["beats"][:upto]],
+                 transition=m["transition"], bands=m["bands"])
     n = nframes(dst)
     print("  %s  %d snímků = %.2f s @ %d fps" % (dst, n, n / fps, fps))
     return dst

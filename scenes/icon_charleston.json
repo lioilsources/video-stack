@@ -1,0 +1,47 @@
+{
+  "id": "icon_charleston",
+  "label": "Ikony · Charleston",
+  "desc": "Špičky ven a dovnitř, kopy dozadu, kroky vpřed a vzad, mávání rukama nahoře.",
+  "length": 81,
+  "fps": 16,
+  "crf": 18,
+  "identity": "face",
+  "transition": "slices",
+  "crossfade": 6,
+  "bands": 12,
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "scenes": [
+    {
+      "name": "icon_charleston",
+      "boundary": 3,
+      "motion": 0.8,
+      "beats": [
+        {
+          "length": 49,
+          "prompt": "the dancer stands with knees together and pivots both feet so the toes swing outward and then inward in quick rhythm, and ends with feet parallel"
+        },
+        {
+          "length": 65,
+          "prompt": "the dancer kicks one foot backward and then the other, alternating, while the hands cross and uncross over the knees, and ends with both feet down"
+        },
+        {
+          "length": 65,
+          "prompt": "the dancer takes quick small steps forward and back with knees bent and toes turned out, arms swinging, and ends with feet together"
+        },
+        {
+          "length": 49,
+          "prompt": "both arms wave high in the air with open palms while the knees bounce, and end raised"
+        },
+        {
+          "length": 65,
+          "prompt": "the dancer strikes a pose with one leg stretched straight back, toe pointed, arms out to the sides, and holds it"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "id": "icon_elvis",
+  "label": "Ikony · Elvis",
+  "desc": "Rozkročený postoj, kolena dovnitř a ven, kroužení boků, třesoucí se noha, švih ruky nad hlavu.",
+  "length": 81,
+  "fps": 16,
+  "crf": 18,
+  "identity": "face",
+  "transition": "slices",
+  "crossfade": 6,
+  "bands": 12,
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "scenes": [
+    {
+      "name": "icon_elvis",
+      "boundary": 3,
+      "motion": 0.8,
+      "beats": [
+        {
+          "length": 65,
+          "prompt": "the dancer stands with feet wide apart and knees bent, knees swinging inward and outward in rhythm, hands loosely holding an imaginary microphone stand, and ends with knees together"
+        },
+        {
+          "length": 81,
+          "prompt": "the hips circle and snap from side to side while the arms swing loosely away from the body, one shoulder dipping with each snap, and end mid-swing with hips pushed to one side"
+        },
+        {
+          "length": 49,
+          "prompt": "one leg shakes rapidly on the ball of the foot, the knee vibrating fast while the rest of the body stays still, then the shaking stops"
+        },
+        {
+          "length": 65,
+          "prompt": "one arm swings up high over the head and sweeps down with a deep lunge to one side, the other arm pointing out, and ends low in the lunge"
+        },
+        {
+          "length": 65,
+          "prompt": "the dancer rises from the lunge into a still pose with the head tilted, one corner of the mouth lifted in a half smile, and holds it"
+        }
+      ]
+    }
+  ]
+}

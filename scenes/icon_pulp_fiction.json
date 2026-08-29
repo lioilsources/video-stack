@@ -1,0 +1,51 @@
+{
+  "id": "icon_pulp_fiction",
+  "label": "Ikony · Pulp Fiction twist",
+  "desc": "Líný twist, ‚V‘ přes oči, plavání se stisknutým nosem, stopařské palce, podřep a zpět, ukázání na kameru.",
+  "length": 81,
+  "fps": 16,
+  "crf": 18,
+  "identity": "face",
+  "transition": "slices",
+  "crossfade": 6,
+  "bands": 12,
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "scenes": [
+    {
+      "name": "icon_pulp_fiction",
+      "boundary": 3,
+      "motion": 0.8,
+      "beats": [
+        {
+          "length": 65,
+          "prompt": "the dancer does a lazy slow twist with knees bent, arms hanging loose at the waist, a sleepy half-lidded expression, and keeps twisting gently"
+        },
+        {
+          "length": 49,
+          "prompt": "two fingers in a V shape sweep horizontally across the eyes from one side to the other while the head follows them, and end beside the face"
+        },
+        {
+          "length": 65,
+          "prompt": "the arms stroke alternately in front of the body like swimming, then one hand pinches the nose as the body dips down as if under water, and comes back up"
+        },
+        {
+          "length": 49,
+          "prompt": "both thumbs jerk over the shoulders like a hitchhiker, alternating left and right in rhythm, and end with one thumb up"
+        },
+        {
+          "length": 65,
+          "prompt": "the twisting sinks into a deep squat and slowly rises back up, arms swinging, and ends standing"
+        },
+        {
+          "length": 49,
+          "prompt": "the dancer stops and points one finger straight at the camera with a lazy smirk, and holds"
+        }
+      ]
+    }
+  ]
+}

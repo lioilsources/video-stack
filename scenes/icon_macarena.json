@@ -1,0 +1,47 @@
+{
+  "id": "icon_macarena",
+  "label": "Ikony · Macarena",
+  "desc": "Ruce dopředu, otočit dlaně, na ramena, za hlavu, na boky, kroužení boků, poskok s otočkou.",
+  "length": 81,
+  "fps": 16,
+  "crf": 18,
+  "identity": "face",
+  "transition": "slices",
+  "crossfade": 6,
+  "bands": 12,
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "scenes": [
+    {
+      "name": "icon_macarena",
+      "boundary": 3,
+      "motion": 0.8,
+      "beats": [
+        {
+          "length": 49,
+          "prompt": "the dancer extends one arm straight forward palm down, then the other, then flips both palms up one after the other, and ends with both arms extended"
+        },
+        {
+          "length": 49,
+          "prompt": "one hand moves to the opposite shoulder, then the other hand, then one hand behind the head, then the other, and ends with both hands behind the head"
+        },
+        {
+          "length": 65,
+          "prompt": "both hands move to the hips one after the other and the hips circle in a wide slow loop, and end with hands still on the hips"
+        },
+        {
+          "length": 49,
+          "prompt": "the dancer does a small hop with a quarter turn to one side, and lands with feet together"
+        },
+        {
+          "length": 81,
+          "prompt": "the whole sequence repeats with bigger hip movement and a broad smile, ending with the hands on the hips"
+        }
+      ]
+    }
+  ]
+}

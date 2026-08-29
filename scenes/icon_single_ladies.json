@@ -1,0 +1,47 @@
+{
+  "id": "icon_single_ladies",
+  "label": "Ikony · Single Ladies",
+  "desc": "Švih zápěstí před obličejem, vysunuté boky, ukázání na prsten, kývání kolen, otočka, freeze.",
+  "length": 81,
+  "fps": 16,
+  "crf": 18,
+  "identity": "face",
+  "transition": "slices",
+  "crossfade": 6,
+  "bands": 12,
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "scenes": [
+    {
+      "name": "icon_single_ladies",
+      "boundary": 3,
+      "motion": 0.8,
+      "beats": [
+        {
+          "length": 49,
+          "prompt": "one hand flicks at the wrist in front of the face while the other hand rests on the hip, hips pushed to one side, and ends with the hand held up"
+        },
+        {
+          "length": 65,
+          "prompt": "the dancer pushes the hips out and points to the ring finger of the raised hand with the other hand, head tilting, and ends with the hand still up"
+        },
+        {
+          "length": 65,
+          "prompt": "the feet spread wide and the knees rock in and out while both hands slide down along the thighs, and end with hands on the knees"
+        },
+        {
+          "length": 65,
+          "prompt": "the dancer rises and spins a full turn with one hand raised, and ends facing the camera"
+        },
+        {
+          "length": 49,
+          "prompt": "the dancer freezes with one hand raised and turned in front of the face, the other on the hip, and holds the pose"
+        }
+      ]
+    }
+  ]
+}

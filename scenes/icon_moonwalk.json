@@ -1,0 +1,51 @@
+{
+  "id": "icon_moonwalk",
+  "label": "Ikony · Moonwalk (MJ)",
+  "desc": "Klouzání dozadu, zatímco nohy jdou dopředu, rychlá otočka, stoj na špičkách, švih boků, freeze v náklonu.",
+  "length": 81,
+  "fps": 16,
+  "crf": 18,
+  "identity": "face",
+  "transition": "slices",
+  "crossfade": 6,
+  "bands": 12,
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "scenes": [
+    {
+      "name": "icon_moonwalk",
+      "boundary": 3,
+      "motion": 0.8,
+      "beats": [
+        {
+          "length": 65,
+          "prompt": "the dancer stands with knees loose and feet close together, weight rocking onto the toes, one shoulder dropping, and holds a cool relaxed stance"
+        },
+        {
+          "length": 81,
+          "prompt": "the dancer glides smoothly backwards across the floor while the feet appear to walk forward, one heel lifting as the other foot slides back, and ends with feet together"
+        },
+        {
+          "length": 49,
+          "prompt": "the dancer spins a full turn on one foot in one quick motion, arms tucked in, and stops facing the camera"
+        },
+        {
+          "length": 49,
+          "prompt": "the dancer rises onto the tips of both toes with knees pressed together and body perfectly straight, holds the balance, then drops flat onto the feet"
+        },
+        {
+          "length": 65,
+          "prompt": "one hand lifts to the forehead as if shading the eyes while the hips snap sharply to one side and back, and ends with the hand still raised"
+        },
+        {
+          "length": 65,
+          "prompt": "the dancer leans the whole body forward at a steep angle with feet planted, arms straight at the sides, and freezes in the lean"
+        }
+      ]
+    }
+  ]
+}

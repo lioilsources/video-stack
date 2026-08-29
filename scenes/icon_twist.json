@@ -1,0 +1,47 @@
+{
+  "id": "icon_twist",
+  "label": "Ikony · Twist",
+  "desc": "Kroucení boků na patách, ruce jako při sušení ručníku, dolů do podřepu a zpět.",
+  "length": 81,
+  "fps": 16,
+  "crf": 18,
+  "identity": "face",
+  "transition": "slices",
+  "crossfade": 6,
+  "bands": 12,
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "scenes": [
+    {
+      "name": "icon_twist",
+      "boundary": 3,
+      "motion": 0.8,
+      "beats": [
+        {
+          "length": 65,
+          "prompt": "the dancer puts weight on one foot and twists the hips from side to side on the ball of the foot, arms bent at the elbows swinging opposite to the hips, and ends with hips centered"
+        },
+        {
+          "length": 81,
+          "prompt": "the twisting continues while the arms move as if drying the back with a towel, the body sinking lower and lower toward a squat, and ends low"
+        },
+        {
+          "length": 65,
+          "prompt": "the dancer twists back up from the squat, faster now, arms pumping, and ends standing tall still twisting"
+        },
+        {
+          "length": 49,
+          "prompt": "one foot slides forward and the twisting shifts onto that heel, the other foot pivoting behind, and ends with the front foot planted"
+        },
+        {
+          "length": 49,
+          "prompt": "the twisting slows and stops, the dancer plants both feet and puts both hands on the hips with a grin, and holds"
+        }
+      ]
+    }
+  ]
+}

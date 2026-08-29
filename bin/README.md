@@ -136,6 +136,10 @@ Množství pohybu řídí *high-noise expert*. Volitelné klíče, dědí se
 | `motion` | 1.0 | síla Lightning LoRA na high-noise expertu. **Níž (0.8) = víc pohybu.** |
 | `boundary` | 2 | hranice mezi experty ze 4 kroků. **Na 3 = víc pohybu.** |
 | `shift` | 5.0 | **Výš (6–8) = klidnější**, míň deformací obličeje. |
+| `identity` | – | `"face"` = oživení tváře navazovacího snímku z originálu (FaceDetailer + FaceID). Drift identity zastaví (0.63 vs 0.15 na 6. beatu), beat trvá stejně. |
+| `transition` | `fade` | střih mezi beaty: `cut` (tvrdý), `fade` (prolínačka), `slices` (pásová přejížďka — liché pásy nový obraz zleva, sudé zprava; krátký, čitelný střih jako záměr). |
+| `crossfade` | 1 | délka střihu ve snímcích (1 = tvrdý). Presety: `slices` + 6 (0,375 s). Skok na střihu má i tvrdý střih bez oživení — je to re-encode navazovacího snímku a reset pohybu (`tools/seam_pop.py`). |
+| `bands` | 12 | počet pásů u `slices`. |
 | `sharpen` | 0 | doostření navazovacího snímku (0–1). Navazovací snímek je VAE-dekódovaný, tedy měkčí, a další beat z něj startuje — měkkost se sčítá. |
 
 Presety v `scenes/` mají taneční scény `boundary 3` + `motion 0.8`, klidné `shift 7`.

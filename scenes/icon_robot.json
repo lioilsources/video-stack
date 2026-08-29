@@ -1,0 +1,47 @@
+{
+  "id": "icon_robot",
+  "label": "Ikony · Robot",
+  "desc": "Trhavé pohyby po segmentech, paže po kloubech nahoru, otočka trupu, vypnutí a zapnutí.",
+  "length": 81,
+  "fps": 16,
+  "crf": 18,
+  "identity": "face",
+  "transition": "slices",
+  "crossfade": 6,
+  "bands": 12,
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "scenes": [
+    {
+      "name": "icon_robot",
+      "boundary": 3,
+      "motion": 0.8,
+      "beats": [
+        {
+          "length": 49,
+          "prompt": "the dancer stands perfectly rigid and turns the head in small jerky steps toward the camera, then stops"
+        },
+        {
+          "length": 65,
+          "prompt": "one arm lifts in jerky segments, first the shoulder, then the elbow, then the wrist, until the hand is level with the head, and locks there"
+        },
+        {
+          "length": 65,
+          "prompt": "the torso rotates in jerky steps to one side while the raised arm stays locked in place, and stops"
+        },
+        {
+          "length": 49,
+          "prompt": "the dancer powers down: the head drops forward and the arms fall loose as the body slumps, and stays slumped"
+        },
+        {
+          "length": 65,
+          "prompt": "the dancer powers back up in jerky steps, head lifting last, and locks into a rigid stare at the camera"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "id": "icon_thriller",
+  "label": "Ikony · Thriller",
+  "desc": "Ztuhlý postoj, trhnutí hlavou, drápy, krok stranou s tlesknutím, prohnutí, kroky vpřed s vlnou rukou.",
+  "length": 81,
+  "fps": 16,
+  "crf": 18,
+  "identity": "face",
+  "transition": "slices",
+  "crossfade": 6,
+  "bands": 12,
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "scenes": [
+    {
+      "name": "icon_thriller",
+      "boundary": 3,
+      "motion": 0.8,
+      "beats": [
+        {
+          "length": 49,
+          "prompt": "the dancer stands stiffly like a sleepwalker, then the head snaps around toward the camera in one jerk, and holds the stare"
+        },
+        {
+          "length": 65,
+          "prompt": "both hands come up in front of the chest curled like claws, shoulders lurching from side to side, and end with the claws raised"
+        },
+        {
+          "length": 65,
+          "prompt": "the dancer steps to one side with the feet turned out and claps the hands together once, then steps back, and ends with feet apart"
+        },
+        {
+          "length": 65,
+          "prompt": "the clawed hands rise above the head as the back arches and the head tilts back, and the pose holds"
+        },
+        {
+          "length": 81,
+          "prompt": "the dancer takes slow heavy steps toward the camera while the arms wave in a stiff wave from side to side, and stops close with the claws out"
+        },
+        {
+          "length": 49,
+          "prompt": "the dancer drops into a low crouch with the claws forward and the head cocked, and freezes"
+        }
+      ]
+    }
+  ]
+}
