@@ -610,8 +610,15 @@ def concat(files, fps, dst, xfade=1, lengths=None, transition="fade", bands=12):
     cmd = ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error"]
     for f in files:
         cmd += ["-i", f]
-    cmd += ["-filter_complex", fc, "-map", "[out]", "-r", str(fps),
-            "-c:v", "libx264", "-crf", "16", "-preset", "slow", "-pix_fmt", "yuv420p", dst]
+    # Fotky na iOS import odmítaly ("unsupported format"): mp4 bez zvuku, s moov
+    # atomem až za daty a bez barevných tagů. Tichá AAC stopa, +faststart a
+    # explicitní BT.709 z toho udělají soubor, který Photos přijme bez konverze.
+    cmd += ["-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=44100",
+            "-filter_complex", fc, "-map", "[out]", "-map", "%d:a" % len(files), "-shortest",
+            "-r", str(fps), "-c:v", "libx264", "-crf", "16", "-preset", "slow",
+            "-pix_fmt", "yuv420p", "-profile:v", "high", "-level", "4.0",
+            "-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709",
+            "-c:a", "aac", "-b:a", "64k", "-movflags", "+faststart", dst]
     subprocess.run(cmd, check=True)
     return dst
 
