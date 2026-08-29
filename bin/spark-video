@@ -7,7 +7,7 @@
 #   spark-video run  <jméno> [--hd] [--from X] [--until X] [--resume]
 #                                                    # render + slepení + RIFE, stáhne výsledek
 #   spark-video ls                                   # co už je hotové
-#   spark-video drive <id> <klip.mp4> [--start s] [--loop]  # kostra z klipu → drive/<id>_pose.webm
+#   spark-video drive <id> <klip.mp4> [--start s] [--loop] [--speed 0.5]  # kostra z klipu
 #
 # --scenes N   kostra N scén × 5 beatů s prázdnými prompty (bez toho 3-beatová ukázka)
 # --from X     od beatu / scény X dál (vše za ní se přegeneruje)
@@ -186,6 +186,7 @@ cmd_drive() {
       --start) start="${2:-0}"; shift ;;
       --loop) loop="--loop" ;;
       --dwpose) loop="$loop --dwpose" ;;
+      --speed) loop="$loop --speed ${2:-1}"; shift ;;
       *) die "neznámý přepínač $1 (drive umí --start s, --loop)" ;;
     esac; shift
   done

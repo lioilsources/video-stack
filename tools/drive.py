@@ -39,12 +39,20 @@ def pose(a):
     if not os.path.exists(src):
         chain.die("zdroj %s neexistuje (t2v, Mixamo render, vlastní natočení…)" % src)
     staged = "drive_%s%s" % (a.id, os.path.splitext(src)[1])
-    if a.loop:
-        # Mixamo animace jsou smyčky: krátký klip zopakovat, ať vyplní celý beat
-        staged = "drive_%s_loop.mp4" % a.id
-        subprocess.run(["ffmpeg", "-y", "-v", "error", "-stream_loop", "-1", "-ss", str(a.start), "-i", src,
-                        "-t", "%.3f" % (a.length / 16 + 0.5), "-an", "-r", "16", "-pix_fmt", "yuv420p",
-                        os.path.join(chain.IN, staged)], check=True)
+    if a.loop or a.speed != 1.0:
+        # Mixamo animace jsou smyčky: krátký klip zopakovat, ať vyplní celý beat.
+        # speed < 1 pohyb zpomalí: Wan při velkém posunu mezi snímky maluje
+        # rozmazané končetiny (vidět už v 16 fps segmentu, RIFE to pak zvýrazní),
+        # pomalejší kostra = menší posun na snímek = ostřejší obraz.
+        staged = "drive_%s_prep.mp4" % a.id
+        cmd = ["ffmpeg", "-y", "-v", "error"]
+        if a.loop:
+            cmd += ["-stream_loop", "-1"]
+        cmd += ["-ss", str(a.start), "-i", src,
+                "-vf", "setpts=%.4f*PTS,fps=16" % (1.0 / a.speed),
+                "-t", "%.3f" % (a.length / 16 + 0.5), "-an", "-pix_fmt", "yuv420p",
+                os.path.join(chain.IN, staged)]
+        subprocess.run(cmd, check=True)
         a.start = 0.0
     else:
         shutil.copy(src, os.path.join(chain.IN, staged))
@@ -128,10 +136,12 @@ if __name__ == "__main__":
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("t2v"); p.add_argument("id"); p.add_argument("prompt")
     p.add_argument("--seed", type=int, default=42); p.add_argument("--length", type=int, default=81)
-    p = sub.add_parser("pose"); p.add_argument("id"); p.add_argument("--src")
+    p = sub.add_parser("pose"); p.add_argument("id"); p.add_argument("--src")  # noqa: E702
     p.add_argument("--start", type=float, default=0.0, help="odkud v sekundách")
     p.add_argument("--length", type=int, default=81)
     p.add_argument("--loop", action="store_true", help="klip opakovat, dokud nevyplní --length (Mixamo smyčky)")
     p.add_argument("--dwpose", action="store_true", help="DWPose místo Sapiens2 (rychlejší, ale stylizované postavy nečte)")
+    p.add_argument("--speed", type=float, default=1.0,
+                   help="tempo pohybu: 0.5 = poloviční (míň rozmazání), 1 = původní")
     a = ap.parse_args()
     {"t2v": t2v, "pose": pose}[a.cmd](a)
