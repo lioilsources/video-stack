@@ -222,6 +222,11 @@ def build(m, beat, idx, seed_img, orig_img, w, h):
                           "method": cm["method"], "strength": cm["strength"],
                           "multithread": True}}
     handoff = ["21", 0]
+    # Identita: každý beat vidí jen svůj první snímek, který je už o generaci
+    # dál — tvář driftuje. Oživení přemaluje jen obličej navazovacího snímku
+    # s identitou z ORIGINÁLU (node 30), tělo a pozadí zůstanou.
+    if beat.get("identity") == "face":
+        handoff = face_refresh(g, handoff, ["30", 0], beat["seed"])
     # Navazovací snímek je VAE-dekódovaný, tedy měkčí než originál, a další beat
     # z něj startuje — měkkost se sčítá. Doostření je levná protiváha.
     if beat.get("sharpen"):
@@ -233,6 +238,51 @@ def build(m, beat, idx, seed_img, orig_img, w, h):
                "inputs": {"images": handoff,
                           "filename_prefix": "%s/seed%02d" % (name, idx + 1)}}
     return g
+
+
+# Oživení tváře: SDXL FaceDetailer s IPAdapter FaceID PlusV2 — stejný recept,
+# kterým Ol1nLLM repose drží tvář z předlohy (comfyui_service.dart). Lightning
+# checkpoint, ať to na beat stojí sekundy, ne minuty.
+FACE = {
+    "ckpt": "Juggernaut-XL-Lightning_4Steps.safetensors",
+    "bbox": "bbox/face_yolov8m.pt",
+    "steps": 6, "cfg": 1.5, "sampler": "euler", "scheduler": "sgm_uniform",
+    "denoise": 0.4, "lora": 0.6, "weight": 0.8, "weight_v2": 1.0,
+    "positive": "close-up of the same person's face, photorealistic, natural skin texture, "
+                "sharp detailed eyes, consistent identity",
+    "negative": "blurry, deformed face, cartoon, painting, extra eyes, text, watermark",
+}
+
+
+def face_refresh(g, image, ref, seed, base=40):
+    """Přidá do grafu nody 40–46: obličej v `image` přemaluje FaceDetailer
+    s identitou z `ref`. Vrací odkaz na výsledný obrázek."""
+    n = lambda k: str(base + k)
+    g[n(0)] = {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": FACE["ckpt"]}}
+    g[n(1)] = {"class_type": "IPAdapterUnifiedLoaderFaceID",
+               "inputs": {"model": [n(0), 0], "preset": "FACEID PLUS V2",
+                          "lora_strength": FACE["lora"], "provider": "CPU"}}
+    g[n(2)] = {"class_type": "IPAdapterFaceID",
+               "inputs": {"model": [n(1), 0], "ipadapter": [n(1), 1], "image": ref,
+                          "weight": FACE["weight"], "weight_faceidv2": FACE["weight_v2"],
+                          "weight_type": "linear", "combine_embeds": "concat",
+                          "start_at": 0.0, "end_at": 1.0, "embeds_scaling": "V only"}}
+    g[n(3)] = {"class_type": "CLIPTextEncode", "inputs": {"clip": [n(0), 1], "text": FACE["positive"]}}
+    g[n(4)] = {"class_type": "CLIPTextEncode", "inputs": {"clip": [n(0), 1], "text": FACE["negative"]}}
+    g[n(5)] = {"class_type": "UltralyticsDetectorProvider", "inputs": {"model_name": FACE["bbox"]}}
+    g[n(6)] = {"class_type": "FaceDetailer",
+               "inputs": {"image": image, "model": [n(2), 0], "clip": [n(0), 1], "vae": [n(0), 2],
+                          "guide_size": 512.0, "guide_size_for": True, "max_size": 1024.0,
+                          "seed": seed, "steps": FACE["steps"], "cfg": FACE["cfg"],
+                          "sampler_name": FACE["sampler"], "scheduler": FACE["scheduler"],
+                          "positive": [n(3), 0], "negative": [n(4), 0],
+                          "denoise": FACE["denoise"], "feather": 5, "noise_mask": True,
+                          "force_inpaint": True, "bbox_threshold": 0.5, "bbox_dilation": 10,
+                          "bbox_crop_factor": 3.0, "sam_detection_hint": "center-1",
+                          "sam_dilation": 0, "sam_threshold": 0.93, "sam_bbox_expansion": 0,
+                          "sam_mask_hint_threshold": 0.7, "sam_mask_hint_use_negative": "False",
+                          "drop_size": 10, "bbox_detector": [n(5), 0], "wildcard": "", "cycle": 1}}
+    return [n(6), 0]
 
 
 # ---------------------------------------------------------------- API
