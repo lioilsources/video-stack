@@ -1,0 +1,20 @@
+{
+  "source": "leather_shorts_src.png",
+  "seed": 42,
+  "length": 81,
+  "boundary": 3,
+  "motion": 0.8,
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "name": "mw_c",
+  "beats": [
+    {
+      "prompt": "the dancer does the moonwalk dance move, sliding backwards across the floor with smooth gliding steps like walking on the moon, and ends with feet together"
+    }
+  ],
+  "_ucel": "1 beat, varianta promptu pro moonwalk (a = preset, b = mechanika, c = pojmenování)"
+}

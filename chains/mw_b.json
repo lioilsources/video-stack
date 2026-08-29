@@ -1,0 +1,20 @@
+{
+  "source": "leather_shorts_src.png",
+  "seed": 42,
+  "length": 81,
+  "boundary": 3,
+  "motion": 0.8,
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "name": "mw_b",
+  "beats": [
+    {
+      "prompt": "the dancer performs the moonwalk: one foot stays flat and slides straight backwards along the floor while the other foot rests on its toes with the heel raised, then they swap, so the body drifts backwards although the legs look like they are walking forward; arms swing loosely, and it ends with feet together"
+    }
+  ],
+  "_ucel": "1 beat, varianta promptu pro moonwalk (a = preset, b = mechanika, c = pojmenování)"
+}
