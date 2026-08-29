@@ -62,7 +62,15 @@ ale re-encode navazovacího snímku (colormatch + VAE) a reset rychlosti pohybu
 na začátku beatu. Prolínačka 4 snímků (0.25 s) ho srovná na úroveň běžného
 pohybu; 8 snímků už nic nepřidá. Cena: 3 snímky na střih.
 
-**Rozhodnutí pro presety: `identity: "face"` + `crossfade: 4`** ve všech.
+Prolínačka byla měřitelně čistá, ale vizuálně „neznatelná, a proto matoucí".
+Nahrazena střihem jako záměrem: **`transition: "slices"`** — 12 vodorovných
+pásů, liché pásy nový obraz vtlačí zleva a starý vytlačí doprava, sudé
+zrcadlově, 6 snímků (0,375 s). ffmpeg `xfade=transition=custom` s vlastním
+výrazem (`chain.slices_expr`), ověřeno na syntetických klipech i na
+`bench_identity_face` (re-assemble bez GPU). Otevřené: chování RIFE přes
+pásy v pohybu — kdyby dělal duchy, přesune se střih až za RIFE.
+
+**Rozhodnutí pro presety: `identity: "face"` + `transition: "slices"`, `crossfade: 6`** ve všech (29 scén, z toho 11 ikonických tanců).
 
 ## Poznámky k tempu a smyčkám
 
