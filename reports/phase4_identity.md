@@ -146,3 +146,13 @@ natočení: `spark-video drive moonwalk klip.mp4` → `drive/moonwalk_pose.webm`
 potvrdilo). Proto RIFE jede po beatech (segment 81 → 161 snímků, sousední
 segmenty sdílejí hraniční snímek) a střih se dělá až na 32 fps s překryvem
 2k−1 snímků = stejná doba. `_full.mp4` (16 fps) zůstává jako dřív.
+
+**Mixamo kostra (2026-08-29 11:40):** nahrávka obrazovky z Mixamo prohlížeče
+(358×562, 4 s, smyčka na 81 snímků přes `--loop`). yolox detektor osob na
+červeném panáčkovi nenašel nic (kostra černá) — DWPose bez bbox detektoru
+přes celý snímek funguje; `drive.py` to sonduje automaticky. Control beat na
+referenci: nohy a váha kopírují kostru snímek po snímku (křížení, náklon),
+postava se pohybuje prostorem mimo zárubeň; tvář na handoffu 0.44 (postava je
+v control beatu menší). `icon_moonwalk` přepnut na `"control": "moonwalk"`.
+Otevřené: kostra z nahrávky má kameru mírně shora (Mixamo výchozí pohled) —
+render z Blenderu zepředu by byl přesnější.

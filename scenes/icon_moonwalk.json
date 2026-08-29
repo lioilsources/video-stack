@@ -2,8 +2,8 @@
   "id": "icon_moonwalk",
   "label": "Ikony · Moonwalk (MJ)",
   "label_en": "Icons · Moonwalk (MJ)",
-  "desc": "Přípravný krok doprostřed, klouzání dozadu, rychlá otočka, stoj na špičkách, švih boků, freeze v náklonu.",
-  "desc_en": "A setup step to the center, gliding backwards, a quick spin, up on the toes, a hip snap, a freeze in a lean.",
+  "desc": "Přípravný krok doprostřed, moonwalk podle kostry z Mixama, rychlá otočka, stoj na špičkách, švih boků, freeze v náklonu.",
+  "desc_en": "A setup step to the center, a moonwalk driven by a Mixamo skeleton, a quick spin, up on the toes, a hip snap, a freeze in a lean.",
   "length": 81,
   "fps": 16,
   "crf": 18,
@@ -33,7 +33,8 @@
         },
         {
           "length": 81,
-          "prompt": "the dancer performs the moonwalk: one foot stays flat and slides straight backwards along the floor while the other foot rests on its toes with the heel raised, then they swap, so the body drifts backwards although the legs look like they are walking forward; arms swing loosely, and it ends with feet together"
+          "control": "moonwalk",
+          "prompt": "the dancer performs the moonwalk, gliding smoothly backwards across the floor, relaxed shoulders, photorealistic, same clothes and room"
         },
         {
           "length": 65,
