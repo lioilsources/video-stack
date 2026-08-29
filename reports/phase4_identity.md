@@ -78,7 +78,10 @@ si klobouk vyrobil) — prompty pro rekvizity psát bez rekvizit.
 Baseline i první pokus o face variantu jely část času na CPU (`X MB usable,
 Y MB offloaded, lowvram patches`): po sérii renderů drží page cache ze
 safetensors ~80 GB a ComfyUI sám ~53 GB RSS offloadovaných modelů, takže CUDA
-hlásí ~15 GB volno i s vypnutými LLM kontejnery. Lék je restart ComfyUI
-(po něm 37 GB volno, beat 110 s, RIFE 25 s místo 125 s). `serve.py` kontroluje
-`vram_free` před jobem, ale příčinu neřeší — kandidát: periodický restart
-ComfyUI mimo frontu, nebo `drop_caches` (root).
+hlásí ~15 GB volno i s vypnutými LLM kontejnery. Restart ComfyUI pomůže
+(37 GB volno), ale po jednom beatu je cache zpátky (7 GB volno).
+
+**Řešení bez roota:** `posix_fadvise(DONTNEED)` na soubory v `models/`,
+`input/`, `output/` — page cache 84 → 34 GB, `vram_free` 7.3 → **52.9 GB**
+za 2 s. `chain.drop_page_cache()` běží před každým promptem (beat i RIFE)
+a `serve.py` před kontrolou `vram_free`.

@@ -146,6 +146,8 @@ class Jobs:
                 self.update(jid, status="error", error=str(e)[:300], finished=time.time())
 
     def _run(self, jid):
+        import chain
+        chain.drop_page_cache()
         free = vram_free_gb()
         if free is not None and free < MIN_FREE_GB:
             self.update(jid, status="error", finished=time.time(),
@@ -153,6 +155,9 @@ class Jobs:
                               % (free, MIN_FREE_GB))
             return
         self.update(jid, status="running", phase="render", started=time.time())
+        # chain.py pouští drop_page_cache před každým promptem; tady jen kvůli
+        # kontrole vram_free výš, aby neodmítla job kvůli page cache
+
         cmd = [sys.executable, os.path.join(HERE, "chain.py"),
                os.path.join("chains", jid + ".json"), "--all"]
         log("job", jid, "start:", " ".join(cmd[1:]))
