@@ -78,16 +78,48 @@ class Jobs:
         self.queue = []                       # ids ve stavu queued, v pořadí
         self.wake = threading.Event()
         os.makedirs(JOBS, exist_ok=True)
-        for p in glob.glob(os.path.join(JOBS, "*.json")):
+        requeue = []
+        for p in sorted(glob.glob(os.path.join(JOBS, "*.json")), key=os.path.getmtime):
             j = json.load(open(p))
-            if j["status"] in ("queued", "running"):
-                # subprocess umřel se serverem; navazovací snímky sice zůstaly,
-                # ale appka čeká na jasnou odpověď, ne na věčné "running"
-                j.update(status="error", error="server restartován během renderu — zadej znovu",
-                         finished=time.time())
-                self._write(j)
+            if j["status"] == "running":
+                # chain.py je samostatný proces — restart serveru ho nezabije.
+                # Když ještě běží, jen se k němu znovu připojíme a hlídáme ho;
+                # teprve když není, je to opravdu utržený job.
+                pid = chain_pid(j["id"])
+                if pid:
+                    log("job", j["id"], "běží dál (pid %d), připojuji se" % pid)
+                    threading.Thread(target=self._watch, args=(j["id"], pid), daemon=True).start()
+                else:
+                    j.update(status="error", finished=time.time(),
+                             error="server restartován během renderu — zadej znovu")
+                    self._write(j)
+            elif j["status"] == "queued":
+                requeue.append(j["id"])                # manifest i obrázek jsou na disku
             self.jobs[j["id"]] = j
+        self.queue.extend(requeue)
+        if requeue:
+            log("znovu ve frontě:", ", ".join(requeue))
+            self.wake.set()
         threading.Thread(target=self._worker, daemon=True).start()
+
+    def _watch(self, jid, pid):
+        """Osiřelý chain.py po restartu serveru: postup podle souborů, konec podle pid."""
+        while True:
+            segs = glob.glob(os.path.join(OUT, jid, "seg[0-9][0-9]_*.webm"))
+            done = os.path.exists(self.result_path(jid))
+            full = os.path.exists(os.path.join(OUT, jid, "%s_full.mp4" % jid))
+            self.update(jid, beat=len({os.path.basename(s)[:5] for s in segs}),
+                        phase="rife" if full else ("assemble" if len(segs) >= self.jobs[jid]["beats"] else "render"))
+            if not pid_alive(pid):
+                break
+            time.sleep(10)
+        if os.path.exists(self.result_path(jid)):
+            log("job", jid, "hotovo (po restartu serveru)")
+            self.update(jid, status="done", phase=None, finished=time.time())
+        else:
+            log("job", jid, "chain.py skončil bez výsledku")
+            self.update(jid, status="error", error="render skončil bez výsledku — zadej znovu",
+                        finished=time.time())
 
     def _write(self, j):
         tmp = os.path.join(JOBS, j["id"] + ".json.tmp")
@@ -184,6 +216,29 @@ class Jobs:
                 or (tail[-1] if tail else "chain.py skončil s kódem %d" % rc)
             log("job", jid, "chyba:", err)
             self.update(jid, status="error", error=err[:300], finished=time.time())
+
+
+def chain_pid(jid):
+    """PID běžícího chain.py pro tenhle job (podle manifestu v argv), nebo None."""
+    needle = "chains/%s.json" % jid
+    for d in os.listdir("/proc"):
+        if not d.isdigit():
+            continue
+        try:
+            argv = open("/proc/%s/cmdline" % d, "rb").read().split(b"\0")
+        except OSError:
+            continue
+        if any(a.endswith(b"chain.py") for a in argv) and needle.encode() in argv:
+            return int(d)
+    return None
+
+
+def pid_alive(pid):
+    try:
+        os.kill(pid, 0)
+        return os.path.exists("/proc/%d" % pid) and "zombie" not in open("/proc/%d/status" % pid).read().lower()
+    except OSError:
+        return False
 
 
 def vram_free_gb():
