@@ -199,12 +199,18 @@ def build(m, beat, idx, seed_img, orig_img, w, h):
     g["9"]["inputs"]["text"] = beat["negative"]
     g["10"]["inputs"]["image"] = seed_img
     g["12"]["inputs"].update(width=w, height=h, length=L)
+    if g["12"]["class_type"] == "WanVaceToVideo":
+        # VACE báze: control_video = [navazovací snímek, šedé×(L−1)], masky [0, 1×(L−1)];
+        # reference_image = originál (node 30 níže) — identita v každém snímku
+        for n in ("18", "20", "21"):
+            g[n]["inputs"].update(width=w, height=h)
+        g["18"]["inputs"]["batch_size"] = g["21"]["inputs"]["batch_size"] = L - 1
     for n in ("13", "14"):
         g[n]["inputs"]["noise_seed"] = beat["seed"]
     if beat.get("boundary") is not None:  # víc kroků v high-noise expertu = víc pohybu
         g["13"]["inputs"]["end_at_step"] = beat["boundary"]
         g["14"]["inputs"]["start_at_step"] = beat["boundary"]
-    if beat.get("motion") is not None:  # síla I2V Lightning LoRA na high-noise expertu
+    if beat.get("motion") is not None:  # síla Lightning LoRA na high-noise expertu
         g["2"]["inputs"]["strength_model"] = beat["motion"]
     if beat.get("shift") is not None:
         for n in ("3", "6"):
