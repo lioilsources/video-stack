@@ -13,6 +13,7 @@ podobnost navazovacího snímku `seedNN.png` k originálu `seed00.png`.
 |---|---|---|---|---|---|---|---|---|---|
 | baseline (I2V, bez oprav) | 0.554 | 0.456 | 0.372 | 0.312 | 0.221 | 0.147 | 0.344 | 0.147 | 105–185 |
 | `identity: "face"` (oživení navazovacího snímku) | 0.585 | 0.646 | 0.621 | 0.658 | 0.623 | 0.649 | **0.630** | **0.585** | 110–125 |
+| face s `face_denoise 0.3` (default 0.4) | 0.573 | 0.611 | 0.667 | 0.619 | 0.525 | 0.586 | 0.597 | 0.525 | 90–130 |
 | face + `sharpen 0.3` + `shift 6` | 0.648 | 0.616 | 0.668 | 0.608 | 0.479 | 0.495 | 0.586 | 0.479 | 115–120 |
 | VACE s `reference_image` = originál (T2V Lightning, bez oživení) | 0.780 | 0.597 | 0.552 | 0.414 | 0.514 | 0.440 | 0.550 | 0.414 | 135 |
 
@@ -31,6 +32,9 @@ Jednosnímkový test oživení (`identity: "face"`, FaceDetailer SDXL Lightning 
 IPAdapter FaceID PlusV2 s referencí = originál) na `30deb5e8_seed03`:
 0.418 → **0.661**, vizuálně tvar obličeje a oči zpět u originálu, vlasy a tělo
 beze změny.
+
+**Nižší denoise (0.3) identitu mírně oslabí** (0.60 < 0.63) a skok na střihu
+neřeší (3.4 — ten řeší crossfade); default zůstává 0.4.
 
 **Doostření a shift 6 nepomohly** (0.586 < 0.630, beaty 5–6 padají) — vyřazeno.
 
