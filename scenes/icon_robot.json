@@ -2,8 +2,8 @@
   "id": "icon_robot",
   "label": "Ikony · Robot",
   "label_en": "Icons · The Robot",
-  "desc": "Trhavé pohyby po segmentech, paže po kloubech nahoru, otočka trupu, vypnutí a zapnutí.",
-  "desc_en": "Jerky segmented moves, the arm rising joint by joint, the torso rotating, a power-down and a power-up.",
+  "desc": "Přípravný krok doprostřed, robot podle kostry z Mixama, vypnutí a zapnutí.",
+  "desc_en": "A setup step to the center, the robot driven by a Mixamo skeleton, a power-down and a power-up.",
   "length": 81,
   "fps": 16,
   "crf": 18,
@@ -24,16 +24,13 @@
       "motion": 0.8,
       "beats": [
         {
-          "length": 49,
-          "prompt": "the dancer stands perfectly rigid and turns the head in small jerky steps toward the camera, then stops"
+          "length": 65,
+          "prompt": "the dancer lets go of anything they are holding, takes two steps away from the wall toward the center of the room and stops with feet together and flat on the floor, arms hanging loose, facing the camera"
         },
         {
-          "length": 65,
-          "prompt": "one arm lifts in jerky segments, first the shoulder, then the elbow, then the wrist, until the hand is level with the head, and locks there"
-        },
-        {
-          "length": 65,
-          "prompt": "the torso rotates in jerky steps to one side while the raised arm stays locked in place, and stops"
+          "length": 81,
+          "control": "robot",
+          "prompt": "the dancer does the robot dance with stiff mechanical movements, photorealistic, same clothes and room"
         },
         {
           "length": 49,

@@ -156,3 +156,16 @@ postava se pohybuje prostorem mimo zárubeň; tvář na handoffu 0.44 (postava j
 v control beatu menší). `icon_moonwalk` přepnut na `"control": "moonwalk"`.
 Otevřené: kostra z nahrávky má kameru mírně shora (Mixamo výchozí pohled) —
 render z Blenderu zepředu by byl přesnější.
+
+**Robot (Mixamo, 2026-08-29 11:50):** nahrávka zepředu, kamera v úrovni,
+postava ~80 % výšky — ideální rámování. Stylizovaný hubený panáček ale
+DWPose nečte (s detektorem i bez něj prázdná kostra); **Sapiens2 1B** dá
+kompletní kostru, je teď default v `drive.py` (DWPose jako `--dwpose`).
+Control beat na referenci kopíruje kostru snímek po snímku (paže nahoře, do
+strany, široký postoj), tvář 0.55. Sapiens v pár snímcích s rychlým pohybem
+kostru ztratí (fragmenty) — model to překlene, kandidát na dočasné držení
+poslední dobré kostry. `icon_robot` = setup → control → power down → power up.
+
+Pravidla pro nahrávky z Mixama: zepředu (stejný úhel jako fotka — fun_control
+kopíruje i úhel, z boku se postava otočí a odejde ze záběru), kamera v úrovni
+pasu, postava 70–80 % výšky, jeden průchod smyčky (`--loop` doplní zbytek).
