@@ -613,9 +613,13 @@ def concat(files, fps, dst, xfade=1, lengths=None, transition="fade", bands=12):
     # Fotky na iOS import odmítaly ("unsupported format"): mp4 bez zvuku, s moov
     # atomem až za daty a bez barevných tagů. Tichá AAC stopa, +faststart a
     # explicitní BT.709 z toho udělají soubor, který Photos přijme bez konverze.
+    # iOS Fotky si u nestandardní snímkové frekvence vynutí konverzi, a ta padá
+    # („unsupported format" i na jinak korektním H.264+AAC). 32 fps z RIFE proto
+    # jde ven jako 30; rozdíl je 6 % snímků, na oko neznatelný.
+    out_fps = 30 if fps not in (24, 25, 30, 60) else fps
     cmd += ["-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=44100",
             "-filter_complex", fc, "-map", "[out]", "-map", "%d:a" % len(files), "-shortest",
-            "-r", str(fps), "-c:v", "libx264", "-crf", "16", "-preset", "slow",
+            "-r", str(out_fps), "-vsync", "cfr", "-c:v", "libx264", "-crf", "16", "-preset", "slow",
             "-pix_fmt", "yuv420p", "-profile:v", "high", "-level", "4.0",
             "-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709",
             "-c:a", "aac", "-b:a", "64k", "-movflags", "+faststart", dst]
@@ -669,7 +673,7 @@ def cmd_smooth(m, upto):
                  xfade=(2 * k - 1) if k > 1 else 1, lengths=[2 * b["length"] - 1 for b in beats],
                  transition=m["transition"], bands=m["bands"])
     n = nframes(dst)
-    print("  %s  %d snímků = %.2f s @ %d fps" % (dst, n, n / (fps * 2), fps * 2))
+    print("  %s  %d snímků = %.2f s" % (dst, n, n / 30.0))
     return dst
 
 
