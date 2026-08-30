@@ -294,70 +294,58 @@ def build(m, beat, idx, seed_img, orig_img, w, h):
     return g
 
 
-# Oživení tváře: SDXL FaceDetailer s IPAdapter FaceID PlusV2 — stejný recept,
-# kterým Ol1nLLM repose drží tvář z předlohy (comfyui_service.dart). Lightning
-# checkpoint, ať to na beat stojí sekundy, ne minuty.
+# Oživení tváře: FaceDetailer s PuLID na FLUX.1-dev — stejný recept, kterým
+# face inpaint v Ol1nLLM drží identitu z reference (flux_fill_inpaint_face
+# asset). Nahradil SDXL + IPAdapter FaceID: rovnováha identity přes beaty byla
+# ~0.63 ArcFace, PuLID na dev dává ~0.72 (viz reports/phase4_identity.md).
+# fp8, protože dev fp16 se vedle Wan neve­jde a lowvram režim shodí PuLID na
+# cuda/cpu mismatch; loadery PuLID/EVA/InsightFace jsou vlastní ze stejného
+# důvodu (sdílené končí po samplingu offloadnuté na CPU).
 FACE = {
-    "ckpt": "Juggernaut-XL-Lightning_4Steps.safetensors",
+    "unet": "flux1-dev.safetensors", "dtype": "fp8_e4m3fn",
+    "clip1": "t5xxl_fp16.safetensors", "clip2": "clip_l.safetensors",
+    "pulid": "pulid_flux_v0.9.1.safetensors",
     "bbox": "bbox/face_yolov8m.pt",
-    "steps": 6, "cfg": 1.5, "sampler": "euler", "scheduler": "sgm_uniform",
-    "denoise": 0.4, "lora": 0.6, "weight": 0.8, "weight_v2": 1.0,
+    "steps": 20, "guidance": 3.5, "denoise": 0.55, "weight": 1.2,
     "positive": "close-up of the same person's face, photorealistic, natural skin texture, "
                 "sharp detailed eyes, consistent identity",
-    "negative": "blurry, deformed face, cartoon, painting, extra eyes, text, watermark",
 }
 
 
-def face_refresh(g, image, ref, seed, base=40, denoise=None):
-    """Přidá do grafu nody 40–46: obličej v `image` přemaluje FaceDetailer
-    s identitou z `ref`. Vrací odkaz na výsledný obrázek."""
-    n = lambda k: str(base + k)
-    g[n(0)] = {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": FACE["ckpt"]}}
-    g[n(1)] = {"class_type": "IPAdapterUnifiedLoaderFaceID",
-               "inputs": {"model": [n(0), 0], "preset": "FACEID PLUS V2",
-                          "lora_strength": FACE["lora"], "provider": "CPU"}}
-    g[n(2)] = {"class_type": "IPAdapterFaceID",
-               "inputs": {"model": [n(1), 0], "ipadapter": [n(1), 1], "image": ref,
-                          "weight": FACE["weight"], "weight_faceidv2": FACE["weight_v2"],
-                          "weight_type": "linear", "combine_embeds": "concat",
-                          "start_at": 0.0, "end_at": 1.0, "embeds_scaling": "V only"}}
-    g[n(3)] = {"class_type": "CLIPTextEncode", "inputs": {"clip": [n(0), 1], "text": FACE["positive"]}}
-    g[n(4)] = {"class_type": "CLIPTextEncode", "inputs": {"clip": [n(0), 1], "text": FACE["negative"]}}
-    g[n(5)] = {"class_type": "UltralyticsDetectorProvider", "inputs": {"model_name": FACE["bbox"]}}
-    g[n(6)] = {"class_type": "FaceDetailer",
-               "inputs": {"image": image, "model": [n(2), 0], "clip": [n(0), 1], "vae": [n(0), 2],
-                          "guide_size": 512.0, "guide_size_for": True, "max_size": 1024.0,
-                          "seed": seed, "steps": FACE["steps"], "cfg": FACE["cfg"],
-                          "sampler_name": FACE["sampler"], "scheduler": FACE["scheduler"],
-                          "positive": [n(3), 0], "negative": [n(4), 0],
-                          "denoise": denoise or FACE["denoise"], "feather": 5, "noise_mask": True,
-                          "force_inpaint": True, "bbox_threshold": 0.5, "bbox_dilation": 10,
-                          "bbox_crop_factor": 3.0, "sam_detection_hint": "center-1",
+def face_refresh(g, image, ref, seed, denoise=None):
+    """Přidá do grafu nody 40–48 + 57/58: obličej v `image` přemaluje
+    FaceDetailer na FLUX dev s identitou z `ref` (PuLID). Vrací odkaz na
+    výsledný obrázek."""
+    g["40"] = {"class_type": "UNETLoader", "inputs": {"unet_name": FACE["unet"], "weight_dtype": FACE["dtype"]}}
+    g["41"] = {"class_type": "DualCLIPLoader",
+               "inputs": {"clip_name1": FACE["clip1"], "clip_name2": FACE["clip2"], "type": "flux"}}
+    g["42"] = {"class_type": "PulidFluxModelLoader", "inputs": {"pulid_file": FACE["pulid"]}}
+    g["43"] = {"class_type": "PulidFluxEvaClipLoader", "inputs": {}}
+    g["44"] = {"class_type": "PulidFluxInsightFaceLoader", "inputs": {"provider": "CPU"}}
+    g["45"] = {"class_type": "ApplyPulidFlux",
+               "inputs": {"model": ["40", 0], "pulid_flux": ["42", 0], "eva_clip": ["43", 0],
+                          "face_analysis": ["44", 0], "image": ref, "weight": FACE["weight"],
+                          "start_at": 0.0, "end_at": 1.0}}
+    g["46"] = {"class_type": "CLIPTextEncode", "inputs": {"clip": ["41", 0], "text": FACE["positive"]}}
+    g["47"] = {"class_type": "FluxGuidance", "inputs": {"conditioning": ["46", 0], "guidance": FACE["guidance"]}}
+    g["48"] = {"class_type": "CLIPTextEncode", "inputs": {"clip": ["41", 0], "text": ""}}
+    # FLUX má vlastní VAE — node 11 v Wan grafu je wan_2.1_vae a detailer by s ním
+    # dekódoval nesmysly
+    g["49"] = {"class_type": "VAELoader", "inputs": {"vae_name": "ae.safetensors"}}
+    g["57"] = {"class_type": "UltralyticsDetectorProvider", "inputs": {"model_name": FACE["bbox"]}}
+    g["58"] = {"class_type": "FaceDetailer",
+               "inputs": {"image": image, "model": ["45", 0], "clip": ["41", 0], "vae": ["49", 0],
+                          "guide_size": 1024.0, "guide_size_for": True, "max_size": 1024.0,
+                          "seed": seed, "steps": FACE["steps"], "cfg": 1.0,
+                          "sampler_name": "euler", "scheduler": "simple",
+                          "positive": ["47", 0], "negative": ["48", 0],
+                          "denoise": denoise or FACE["denoise"], "feather": 8, "noise_mask": True,
+                          "force_inpaint": True, "bbox_threshold": 0.5, "bbox_dilation": 24,
+                          "bbox_crop_factor": 2.0, "sam_detection_hint": "center-1",
                           "sam_dilation": 0, "sam_threshold": 0.93, "sam_bbox_expansion": 0,
                           "sam_mask_hint_threshold": 0.7, "sam_mask_hint_use_negative": "False",
-                          "drop_size": 10, "bbox_detector": [n(5), 0], "wildcard": "", "cycle": 1}}
-    return [n(6), 0]
-
-
-# ---------------------------------------------------------------- paměť
-
-def drop_page_cache():
-    """GB10 má unified paměť a CUDA hlásí jako volné jen RAM bez page cache.
-    Po pár rendrech drží cache ze safetensors desítky GB, ComfyUI vidí ~7 GB
-    volno, model offloaduje na CPU a beat trvá hodinu. posix_fadvise DONTNEED
-    cache pustí bez roota (naměřeno: 7 → 53 GB volno za 2 s)."""
-    n = 0
-    for root in (os.path.join(COMFY, "models"), OUT, IN):
-        for dp, _, fs in os.walk(root):
-            for f in fs:
-                try:
-                    fd = os.open(os.path.join(dp, f), os.O_RDONLY)
-                    os.posix_fadvise(fd, 0, 0, os.POSIX_FADV_DONTNEED)
-                    os.close(fd)
-                    n += 1
-                except OSError:
-                    pass
-    return n
+                          "drop_size": 10, "bbox_detector": ["57", 0], "wildcard": "", "cycle": 1}}
+    return ["58", 0]
 
 
 # ---------------------------------------------------------------- API
