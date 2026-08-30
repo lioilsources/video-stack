@@ -378,5 +378,17 @@ if __name__ == "__main__":
     if not SCENE_CATALOG:
         sys.exit("serve.py: žádné scény v %s" % SCENES)
     JOBSTORE = Jobs()
+    # Page cache ze safetensors vytlačuje CUDA "volnou" paměť i jobům, které jdou
+    # do ComfyUI mimo tenhle server (appka, bench). Pouštět ji periodicky je
+    # levné (~2 s) a drží GPU render na GPU pro všechny.
+    def _cache_janitor():
+        import chain
+        while True:
+            time.sleep(120)
+            try:
+                chain.drop_page_cache()
+            except Exception:                          # noqa: BLE001 — úklid nesmí shodit server
+                pass
+    threading.Thread(target=_cache_janitor, daemon=True).start()
     log("video-api :%d, scény: %s" % (PORT, ", ".join(SCENE_CATALOG)))
     ThreadingHTTPServer(("0.0.0.0", PORT), Handler).serve_forever()
