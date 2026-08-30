@@ -348,6 +348,27 @@ def face_refresh(g, image, ref, seed, denoise=None):
     return ["58", 0]
 
 
+# ---------------------------------------------------------------- paměť
+
+def drop_page_cache():
+    """GB10 má unified paměť a CUDA hlásí jako volné jen RAM bez page cache.
+    Po pár rendrech drží cache ze safetensors desítky GB, ComfyUI vidí ~7 GB
+    volno, model offloaduje na CPU a beat trvá hodinu. posix_fadvise DONTNEED
+    cache pustí bez roota (naměřeno: 7 → 53 GB volno za 2 s)."""
+    n = 0
+    for root in (os.path.join(COMFY, "models"), OUT, IN):
+        for dp, _, fs in os.walk(root):
+            for f in fs:
+                try:
+                    fd = os.open(os.path.join(dp, f), os.O_RDONLY)
+                    os.posix_fadvise(fd, 0, 0, os.POSIX_FADV_DONTNEED)
+                    os.close(fd)
+                    n += 1
+                except OSError:
+                    pass
+    return n
+
+
 # ---------------------------------------------------------------- API
 
 def submit(g, label):
