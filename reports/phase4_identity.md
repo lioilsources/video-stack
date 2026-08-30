@@ -210,3 +210,25 @@ kotva je **reference vzhledu = úvodní fotka v každém klipu**. Gangnam, seg02
 Default control beatů: `control_model: vace`, `control_ref: original`
 (190–205 s/beat proti 150 s u fun_control). Střih před control beatem je
 záměrný (slices), takže návrat k originálu není poznat jako skok.
+
+## Oživení tváře na FLUX dev + PuLID (2026-08-31)
+
+Pozorování z appky: beat 1 je velmi podobný fotce, beaty 2+ se liší, ale
+rozdíl s počtem beatů neroste. Přesně to říkají data: beat 1 startuje z
+reálných pixelů, beaty 2+ z Wanovy interpretace opravené oživením — oprava ≈
+drift za beat, takže se systém drží na stropu opravného mechanismu.
+
+Strop se zvedl výměnou receptu (SDXL Juggernaut + IPAdapter FaceID → FLUX.1-dev
+fp8 + PuLID, zrcadlo assetu flux_fill_inpaint_face z Ol1nLLM 1.13.0; vlastní
+loadery, FLUX ae VAE — ne wan VAE z nodu 11):
+
+| oživení | handoff sims (beat 1–6) | průměr | min |
+|---|---|---|---|
+| SDXL + FaceID (dosud) | 0.59 0.65 0.62 0.66 0.62 0.65 | 0.630 | 0.585 |
+| **FLUX dev + PuLID** | 0.78 0.81 0.80 0.81 0.79 0.75 | **0.790** | **0.749** |
+
+Cena: beat 225/150/136 s (první nese načtení FLUX dev fp8; dřív 105–125 s),
+tedy ~+25–40 s na beat v ustáleném stavu. Kdyby to bolelo, knob `face_every`.
+
+Pozn.: při přepisu se omylem smazala drop_page_cache (NameError v submit,
+serve by padal na AttributeError) — vrácena; commit 8652708.
