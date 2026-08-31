@@ -1,0 +1,29 @@
+{
+  "id": "ltx_belly_music",
+  "label": "Břišní tanec s hudbou · 10 s (LTX)",
+  "label_en": "Belly dance with music · 10 s (LTX)",
+  "desc": "Deset sekund břišního tance v jednom kuse, s vygenerovanou orientální hudbou. Bez střihů, takže nic neškube — ale čím delší klip, tím víc se mění tvář.",
+  "desc_en": "Ten seconds of belly dance in a single take, with generated middle-eastern music. No cuts, so nothing jerks — but the longer the clip, the more the face drifts.",
+  "engine": "ltx",
+  "length": 249,
+  "fps": 25,
+  "crf": 18,
+  "transition": "cut",
+  "style_tail": ", static camera, natural room lighting, photorealistic, highly detailed",
+  "negative": "worst quality, inconsistent motion, blurry, jittery, distorted",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "scenes": [
+    {
+      "name": "belly",
+      "beats": [
+        {
+          "length": 249,
+          "prompt": "she performs a belly dance in place: torso waves, hip shimmies and hip drops, arms flowing gracefully overhead, then a slow turn on the spot, ending facing the camera. Middle-eastern percussion music with a steady drum rhythm."
+        }
+      ]
+    }
+  ]
+}

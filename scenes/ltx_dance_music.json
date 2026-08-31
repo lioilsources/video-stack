@@ -1,0 +1,29 @@
+{
+  "id": "ltx_dance_music",
+  "label": "Tanec s hudbou · 5 s (LTX)",
+  "label_en": "Dance with music · 5 s (LTX)",
+  "desc": "Krátký tanec, ke kterému si model rovnou vymyslí i hudbu — obraz a zvuk vznikají naráz. Jeden klip bez střihu, vyšší rozlišení. Podoba tváře drží slaběji než u ostatních presetů.",
+  "desc_en": "A short dance with music the model invents along with it — picture and sound are generated together. One clip, no cuts, higher resolution. Facial likeness holds up less well than in the other presets.",
+  "engine": "ltx",
+  "length": 121,
+  "fps": 25,
+  "crf": 18,
+  "transition": "cut",
+  "style_tail": ", static camera, natural room lighting, photorealistic, highly detailed",
+  "negative": "worst quality, inconsistent motion, blurry, jittery, distorted",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "scenes": [
+    {
+      "name": "dance",
+      "beats": [
+        {
+          "length": 121,
+          "prompt": "she dances joyfully in place, hips swaying to the beat, arms flowing, feet stepping lightly, smiling at the camera. Upbeat pop dance music with a clear steady rhythm."
+        }
+      ]
+    }
+  ]
+}

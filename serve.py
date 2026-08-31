@@ -186,7 +186,14 @@ class Jobs:
             return v
 
     def result_path(self, jid):
-        return os.path.join(OUT, jid, "%s_32fps.mp4" % jid)
+        """Finální soubor jobu. Wan končí RIFE (`_32fps.mp4`), LTX je plynulé
+        nativně a končí slepením (`_full.mp4`) — vrací se ten, který existuje."""
+        d = os.path.join(OUT, jid)
+        rife = os.path.join(d, "%s_32fps.mp4" % jid)
+        if os.path.exists(rife):
+            return rife
+        full = os.path.join(d, "%s_full.mp4" % jid)
+        return full if os.path.exists(full) else rife
 
     # ---- worker
 

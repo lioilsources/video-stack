@@ -626,9 +626,13 @@ def cmd_render(m, src, w, h, start, stop, hd):
 
 
 def segments(m, upto):
+    """Soubory segmentů k montáži. U LTX to jsou `seg<id>_av_*.mp4` — nesou i
+    vygenerovaný zvuk, kvůli kterému se do LTX jde; němé `seg<id>_*.webm`
+    vznikají taky (sleduje je serve.py kvůli postupu), ale hudbu by zahodily."""
+    pat = "seg%s_av_*.mp4" if m["engine"] == "ltx" else "seg%s_*.webm"
     out = []
     for b in m["beats"][:upto]:
-        hits = sorted(glob.glob(os.path.join(OUT, m["name"], "seg%s_*.webm" % b["id"])))
+        hits = sorted(glob.glob(os.path.join(OUT, m["name"], pat % b["id"])))
         if not hits:
             die("chybí vyrenderovaný segment pro beat %s" % b["id"])
         out.append(max(hits, key=os.path.getmtime))
@@ -650,7 +654,8 @@ def slices_expr(bands):
     return "if(eq(mod(floor(Y*%d/H),2),0),%s,%s)" % (bands, odd, even)
 
 
-def concat(files, fps, dst, xfade=1, lengths=None, transition="fade", bands=12):
+def concat(files, fps, dst, xfade=1, lengths=None, transition="fade", bands=12,
+           with_audio=False):
     """ffmpeg spojení vstupů, které sdílejí hraniční snímek.
 
     Vstup N+1 začíná přesně tím snímkem, kterým vstup N končí (sdílený
@@ -680,6 +685,27 @@ def concat(files, fps, dst, xfade=1, lengths=None, transition="fade", bands=12):
             parts.append("[%d:v]%ssetpts=N/%d/TB[v%d];" % (i, sel, fps, i))
             labels.append("[v%d]" % i)
         fc = "".join(parts) + "".join(labels) + "concat=n=%d:v=1:a=0[out]" % len(files)
+    # Zvuk: `with_audio` = vstupy ho nesou (LTX), jinak se dolepí ticho. Prolínačka
+    # obrazu má svůj protějšek v acrossfade, aby hudba na střihu nelupla; u tvrdého
+    # střihu se stopy jen navážou.
+    afilter, amap = "", None
+    if with_audio:
+        if len(files) == 1:
+            amap = "0:a"
+        elif xfade > 1:
+            prev = "[0:a]"
+            for i in range(1, len(files)):
+                out = "[a%d]" % i
+                afilter += "%s[%d:a]acrossfade=d=%.4f:c1=tri:c2=tri%s;" % (prev, i, xfade / fps, out)
+                prev = out
+            afilter = afilter[:-1].replace("[a%d]" % (len(files) - 1), "[aout]") + ";"
+            amap = "[aout]"
+        else:
+            afilter = "".join("[%d:a]" % i for i in range(len(files))) \
+                      + "concat=n=%d:v=0:a=1[aout];" % len(files)
+            amap = "[aout]"
+        fc = afilter + fc
+
     cmd = ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error"]
     for f in files:
         cmd += ["-i", f]
@@ -690,8 +716,10 @@ def concat(files, fps, dst, xfade=1, lengths=None, transition="fade", bands=12):
     # („unsupported format" i na jinak korektním H.264+AAC). 32 fps z RIFE proto
     # jde ven jako 30; rozdíl je 6 % snímků, na oko neznatelný.
     out_fps = 30 if fps not in (24, 25, 30, 60) else fps
-    cmd += ["-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=44100",
-            "-filter_complex", fc, "-map", "[out]", "-map", "%d:a" % len(files), "-shortest",
+    if not with_audio:
+        cmd += ["-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=44100"]
+        amap = "%d:a" % len(files)
+    cmd += ["-filter_complex", fc, "-map", "[out]", "-map", amap, "-shortest",
             "-r", str(out_fps), "-vsync", "cfr", "-c:v", "libx264", "-crf", "16", "-preset", "slow",
             "-pix_fmt", "yuv420p", "-profile:v", "high", "-level", "4.0",
             "-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709",
@@ -714,7 +742,8 @@ def cmd_assemble(m, upto):
     segs, fps = segments(m, upto), m["fps"]
     dst = concat(segs, fps, full_path(m), xfade=m["crossfade"],
                  lengths=[b["length"] for b in m["beats"][:upto]],
-                 transition=m["transition"], bands=m["bands"])
+                 transition=m["transition"], bands=m["bands"],
+                 with_audio=m["engine"] == "ltx")
     n = nframes(dst)
     print("  %s  %d snímků = %.2f s @ %d fps" % (dst, n, n / fps, fps))
     return dst
@@ -730,8 +759,10 @@ def cmd_smooth(m, upto):
     32 fps: překryv 2k−1 snímků = stejná doba jako k snímků na 16 fps.
     Vedlejší zisk: chunky jsou malé, paměť neroste s délkou klipu."""
     if m["engine"] == "ltx":
-        print("  LTX je nativně plynulé (25 fps) — RIFE se přeskakuje, výstup = slepení")
-        return cmd_assemble(m, upto)
+        # 25 fps nativně; slepení proběhlo v cmd_assemble a druhý průchod by jen
+        # znovu překódoval hotový soubor (a zhoršil ho)
+        print("  LTX je nativně plynulé (25 fps) — RIFE se přeskakuje")
+        return full_path(m)
     segs, fps = segments(m, upto), m["fps"]
     beats = m["beats"][:upto]
     chunks = []
@@ -792,7 +823,9 @@ if __name__ == "__main__":
     if a.smooth:
         cmd_smooth(m, stop); sys.exit(0)
     src = source_path(m)
-    w, h = resolution(m, src, "hd" if a.hd else "draft")
+    # U LTX je vyšší rozlišení skoro zadarmo (naměřeno: 2,15x pixelů = 1,2x čas)
+    # a identitu znatelně zvedne (0.43 -> 0.61), takže hd je default.
+    w, h = resolution(m, src, "hd" if (a.hd or m["engine"] == "ltx") else "draft")
     if a.start and a.resume:
         die("--from a --resume se vylučují")
     start = 0
