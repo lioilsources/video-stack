@@ -190,3 +190,11 @@ stav a omezení viz `reports/phase5_ltx.md`.
 
 Licence: LTX-2 Community License — do $10M ročního obratu zdarma, výstupy
 patří nám, ale je nutné **označovat AI výstup**; zákaz deepfake/impersonace.
+
+**Stav po A/B (31. 8. 2026, celá čísla v `reports/phase5_ltx.md`):** LTX je
+~6× rychlejší než Wan na jednotku práce, umí zvuk a klipy do 19 s, obraz je
+ostřejší. **Identitu ale drží hůř** (0.61 hd / 0.43 draft proti Wan 0.70) a
+v dlouhém klipu se postava změní na jiného člověka. Control z kostry na
+ComfyUI 0.19.3 **nefunguje** (chybí `GetICLoRAParameters` — model kostru
+překreslí). Proto: LTX na krátké ozvučené klipy, Wan na vše, kde jde o
+identitu a na control beaty.
