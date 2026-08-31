@@ -99,6 +99,23 @@ se `vram_free` drží kolem 20–35 GB a model se načte `loaded completely`.
 Pozor: agresivní interval (3 s) zdražuje čtení modelů i **cizím** jobům ve
 frontě — pro měření ano, pro sdílený provoz nechat default.
 
+## Referenční čísla Wan (naměřeno 31. 8., stejný zdroj)
+
+Drift **uvnitř** prvního beatu (`bench_identity_face`, ArcFace proti
+`leather_shorts_src.png`, 5 snímků rovnoměrně po klipu):
+
+| snímek | 0 | 40 | 80 | 119 | 159 |
+|---|---|---|---|---|---|
+| podobnost | 0.901 | 0.783 | 0.760 | 0.551 | 0.518 |
+
+průměr **0.703**, min 0.518. Tohle je to, co uživatel popisuje jako „první
+beat sedí, dál to ujíždí" — identita se láme i uvnitř jednoho klipu, nejen
+na střizích. Oživení tváře drží handoffy na ~0.63 (phase4), ale samotný
+model během 5 s ztratí 0.38.
+
+Rychlost Wan pro srovnání (phase4, draft 464×944): 105–185 s na 81 snímků
+= 5 s videa, tedy **~35 s GPU na sekundu videa**.
+
 ## F3 — protokol A/B (až bude GPU volno, ~1 h)
 
 Vstup: `bench_src.png` v ComfyUI `input/` (portrétní fotka),
