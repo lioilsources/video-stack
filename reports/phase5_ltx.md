@@ -79,6 +79,26 @@ LTX beaty materializují, všechny class_type existují v 0.19.3, dosazení
 4. Gemma abliterated LoRA se aplikuje jen na text encoder
    (strength_model 0) — soubor je LoRA text encoderu, model side je no-op.
 
+## Paměťová past při načítání LTX (naměřeno 31. 8., opraveno)
+
+První dva pokusy o smoke skončily v lowvram: ComfyUI zalogoval
+`loaded partially … 10816 MB offloaded, lowvram patches: 1368`, podruhé
+u Gemma encoderu `2033 MB usable, 0.00 MB loaded, 11200 MB offloaded`.
+
+Příčina není v LLM kontejnerech (dohromady drží 0,7 GB) — je to unified
+paměť: **27GB checkpoint se při čtení uloží dvakrát**, jednou do page cache
+a jednou do vah. 27 + 27 = 54 GB proti 52 GB volným, takže ComfyUI si vah
+nenačte ani polovinu. Naměřeno `vram_free` během načítání: 67 → 9 GB.
+
+Jednorázové `drop_page_cache()` před promptem (dosavadní stav) nestačí —
+načítání trvá jednotky sekund a cache naroste až po něm. `submit()` proto
+pouští cache **i během běhu promptu** ve vlákně na pozadí
+(`CACHE_EVERY`, default 15 s, přes `CHAIN_CACHE_EVERY` laditelné). Při 3 s
+se `vram_free` drží kolem 20–35 GB a model se načte `loaded completely`.
+
+Pozor: agresivní interval (3 s) zdražuje čtení modelů i **cizím** jobům ve
+frontě — pro měření ano, pro sdílený provoz nechat default.
+
 ## F3 — protokol A/B (až bude GPU volno, ~1 h)
 
 Vstup: `bench_src.png` v ComfyUI `input/` (portrétní fotka),
