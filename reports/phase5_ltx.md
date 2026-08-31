@@ -150,6 +150,34 @@ LTX se pod hranici „jiný člověk" (0.4) dostane už kolem 3. sekundy, Wan ta
 nedojde ani na konci pětisekundového klipu. Delší klip tedy sám o sobě
 identitu nezachrání — jen posune problém z handoffů dovnitř klipu.
 
+### Rozlišení: identitu i rychlost zlepší
+
+Stejný prompt na 704×1408 (0,99 Mpx), 121 snímků = 4,84 s, model už v cache:
+
+| | draft 480×960 | hd 704×1408 | Wan draft 464×944 |
+|---|---|---|---|
+| identita průměr | 0.432 | **0.540** | 0.703 |
+| identita první sn. | 0.851 | **0.967** | 0.901 |
+| identita ~5 s | 0.382 (5,6 s) | **0.489** (4,8 s) | 0.518 (5 s) |
+| GPU čas | 98 s sampling + 58 s načtení | **90 s** | ~175 s |
+
+Přepočteno na jednotku práce (Mpx × snímky / s): LTX **1,2–1,3**, Wan **0,20**
+— tedy **~6× rychlejší**, a to na modelu, který má 22B parametrů proti 14B.
+Vyšší rozlišení stojí skoro nic (2,15× pixelů = 1,2× čas), což je opak Wan,
+kde `--hd` cenu zdvojnásobí.
+
+**Pozor na metriku:** minimum 0.183 v hd běhu není drift — na tom snímku má
+postava **ruku před obličejem**. ArcFace měří zakrytí, ne identitu. Bez toho
+outlieru je průměr hd běhu **0.611**, tedy blízko Wan 0.703, při dvojnásobném
+rozlišení. Vizuálně první snímek prakticky nerozeznatelný od předlohy, oblečení,
+boty a scéna drží celý klip.
+
+### Moonwalk z textu: neumí (stejně jako Wan)
+
+`bench_ltx_mw` (121 sn, 70 s): postava se místo klouzání vzad **otočí zády ke
+kameře** a přešlapuje. Žádná moonwalk technika. Větší text encoder (Gemma 12B)
+tedy nepomohl — **kostry z `drive/` zůstávají pro ikonické tance nutné.**
+
 ## F3 — zbývající testy
 
 Vstup: `bench_src.png` v ComfyUI `input/` (portrétní fotka),
