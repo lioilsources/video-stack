@@ -29,7 +29,11 @@ API = "http://localhost:8188"
 PORT = int(os.environ.get("VIDEO_API_PORT", "8096"))
 PREFIX = "/v1/video"
 MIN_FREE_GB = 12       # pod tím ComfyUI (reserve-vram 8) odloží model na CPU a jede hodinu
-SEC_PER_BEAT = 150     # draft 0.44 Mpx / 81 snímků, naměřeno
+SEC_PER_BEAT = 150     # Wan, draft 0.44 Mpx / 81 snímků, naměřeno
+# LTX-2.3 jede v hd (0.99 Mpx) a i tak je ~6x rychlejší na jednotku práce:
+# naměřeno 31. 8. 2026 — 121 snímků za 90 s, 249 za ~156 s, 481 za 215 s,
+# tedy ~0.55 s na snímek včetně amortizovaného načtení modelu.
+SEC_PER_FRAME_LTX = 0.55
 MAX_BODY = 32 << 20
 
 
@@ -68,8 +72,11 @@ def load_scenes():
             "desc_en": t.get("desc_en", t.get("desc", "")),
             "beats": len(lens), "seconds": round(frames / fps, 1),
             # control beat (VACE + reference) je ~1.5× I2V (190–205 s vs 130 s)
-            "minutes_est": round(sum(SEC_PER_BEAT * L / 81 * (1.5 if c else 1.0)
-                                     for L, c in zip(lens, beat_controls(t))) / 60),
+            "minutes_est": max(1, round(
+                sum(SEC_PER_FRAME_LTX * L for L in lens) / 60
+                if t.get("engine") == "ltx" else
+                sum(SEC_PER_BEAT * L / 81 * (1.5 if c else 1.0)
+                    for L, c in zip(lens, beat_controls(t))) / 60)),
             "_tpl": t,
         }
     return out
