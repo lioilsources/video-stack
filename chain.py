@@ -790,8 +790,11 @@ def cmd_all(m, src, w, h, start, stop, hd):
     full = cmd_assemble(m, stop)
     final = cmd_smooth(m, stop)
     print("\nHOTOVO")
-    print("  %d fps  %s" % (m["fps"], full))
-    print("  %d fps  %s" % (m["fps"] * 2, final))
+    if final == full:                       # LTX: RIFE se nekoná, je to týž soubor
+        print("  %d fps  %s" % (m["fps"], full))
+    else:
+        print("  %d fps  %s" % (m["fps"], full))
+        print("  %d fps  %s" % (m["fps"] * 2, final))
     return final
 
 
