@@ -434,6 +434,24 @@ def drop_page_cache():
 
 # ---------------------------------------------------------------- API
 
+def free_models(label=""):
+    """Řekni ComfyUI, ať pustí načtené modely z paměti.
+
+    Nutné, když se v jednom řetězu střídají dva velké modely — u LTX beatu
+    (27 GB) a oživení tváře na FLUXu (12 GB) si je ComfyUI s `--cache-lru 2`
+    drží oba, unified paměť dojde a při dalším přepnutí se model vystěhuje na
+    CPU (`0.00 MB usable … 23836 MB offloaded, lowvram patches: 1660`,
+    naměřeno 31. 8.) — beat pak trvá dvojnásobek. Uvolnění stojí jen znovu-
+    načtení z page cache, což je řádově levnější."""
+    try:
+        req = urllib.request.Request(
+            API + "/free", json.dumps({"unload_models": True, "free_memory": True}).encode(),
+            {"Content-Type": "application/json"})
+        urllib.request.urlopen(req, timeout=30).read()
+    except (urllib.error.URLError, OSError) as e:      # starší ComfyUI /free nemá
+        print("  ! uvolnění modelů %s neprošlo: %s" % (label, e))
+
+
 def submit(g, label):
     """Pošli graf a čekej na výsledek; po celou dobu drž page cache dole.
 
@@ -640,7 +658,9 @@ def cmd_render(m, src, w, h, start, stop, hd):
             staged = "%s_pre%02d.png" % (name, i + 1)
             shutil.copy(nxt, os.path.join(IN, staged))
             rg = refresh_prompt(b, staged, orig, "%s/face%02d" % (name, i + 1))
+            free_models("před oživením")     # ven s LTX, ať má FLUX kam
             shutil.copy(outfile(submit(rg, "oživení tváře %s" % b["id"]), "22", ".png"), nxt)
+            free_models("po oživení")        # ven s FLUXem, ať má LTX kam
             print("     tvář oživena z originálu  →  %s" % os.path.basename(nxt))
         st[b["id"]] = beat_hash(m, b, w, h)
         # co je za právě vyrenderovaným beatem, stojí na starém navazovacím

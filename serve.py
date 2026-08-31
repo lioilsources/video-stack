@@ -35,7 +35,11 @@ SEC_PER_BEAT = 150     # Wan, draft 0.44 Mpx / 81 snímků, naměřeno
 # 173 s ze studena — 27GB checkpoint se načítá ~70 s a u krátkého klipu je to
 # většina času, takže se počítá zvlášť. Radši nadhodnotit: uživatel čeká.
 SEC_LOAD_LTX = 70
-SEC_PER_FRAME_LTX = 0.8
+# 0.8 bylo podle izolovaných benchů; v minutové scéně, kde se střídá LTX
+# s FLUXem, vyšly beaty na 205–310 s / 185 snímků (31. 8., job 4c6b25aa) —
+# tedy ~1.0 a rostoucí, jak docházela paměť. Po explicitním uvolňování modelů
+# (chain.free_models) se to vrací k ~0.9; 1.0 je bezpečný kompromis.
+SEC_PER_FRAME_LTX = 1.0
 # Oživení tváře je u LTX samostatný prompt (FLUX+PuLID se do grafu s 27GB
 # checkpointem nevejde), takže na každém handoffu ComfyUI modely vymění.
 SEC_REFRESH_LTX = 75
