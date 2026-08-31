@@ -8,7 +8,9 @@ Pro každý input/<name>_seedNN.png spočítá ArcFace embedding (insightface �
 stejný balík, který používá InstantID/FaceID v ComfyUI) a vypíše kosinovou
 podobnost k seed00. 1.0 = tatáž tvář, ~0.6 = pořád ona, < 0.4 = jiný člověk.
 Jedno číslo na variantu (průměr) je to, čím se porovnávají iterace v
-reports/phase4_identity.md. Bez GPU (onnxruntime na CPU stačí, ~1 s/snímek).
+reports/phase4_identity.md. Bez GPU (onnxruntime na CPU stačí, ~1 s/snímek),
+ale insightface a numpy jsou jen ve venv ComfyUI — spouštět
+`~/Code/ComfyUI/.venv/bin/python tools/face_drift.py …`.
 
 Režim `--video` měří drift **uvnitř** klipu, ne mezi beaty: vytáhne
 rovnoměrně `--frames` snímků a porovná je s `--ref`. Navazovací snímek
