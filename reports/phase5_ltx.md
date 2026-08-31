@@ -190,21 +190,56 @@ trénovaných 0.5 a IC-LoRA se nechytne. **Control beaty na LTX vyžadují
 upgrade ComfyUI** — dokud k němu nedojde, ikonické tance musí zůstat na
 Wan (VACE/fun_control), které fungují.
 
-## F3 — zbývající testy
+### Maximální délka: 19 s v kuse jede, ale identita se rozpadne
 
-Vstup: `bench_src.png` v ComfyUI `input/` (portrétní fotka),
-`chains/bench_ltx.json` (2×249 sn belly dance, identity face, slices),
-`chains/bench_ltx_ctl.json` (gangnam kostra, 73 sn).
+`bench_ltx_long` (481 sn = 19,2 s, 480×960): **215 s GPU**, tedy 11,2 s na
+sekundu videa — nejlepší poměr ze všech běhů (načtení modelu se amortizuje).
+Minimum volné paměti ale kleslo na **2,8 GB** — delší klip už je na hraně.
 
-1. Smoke: `./chain.py chains/bench_ltx.json --until 01` → čas/VRAM špička,
-   zvuk v `seg01_av.mp4`. Cíl ≤ Wan ekvivalent (~300 s GPU na 10 s videa).
-2. Identita: `tools/face_drift.py` na snímcích klipu vs fotka; srovnat
-   s Wan beat 1 (~0.7+) a handoff beat 2 (≥0.7 s refresh).
-3. Tanec z textu: pohyb/blur vs Wan belly dance; navíc moonwalk z textu
-   (větší text encoder ho možná zná).
-4. Control: bench_ltx_ctl — kopíruje pohyb kostry? vs VACE/fun_control.
-5. Verdikt sem: co integrovat (minutové presety na LTX / control beaty /
-   počkat na 2.5 + upgrade ComfyUI).
+Identita: 0.906 → 0.201 (průměr 0.315, min 0.162), a **není to artefakt
+měření** — od poloviny klipu je to vizuálně jiná žena, mění se i boty a
+šperky. Scéna, oblečení a kvalita obrazu naopak drží celých 19 s.
+
+Závěr: delší klip identitu **nezachrání, zhorší** — v 249snímkovém běhu je
+ve 2,8 s ještě 0.350, v 481snímkovém už ve 2,7 s jen 0.234.
+
+## Verdikt F3
+
+| kritérium | LTX-2.3 | Wan 2.2 | vítěz |
+|---|---|---|---|
+| rychlost (Mpx·sn/s) | 1,0–1,3 | 0,20 | **LTX ~6×** |
+| cena vyššího rozlišení | 2,15× px = 1,2× čas | ~2× čas | **LTX** |
+| zvuk | v jednom průchodu | žádný | **LTX** |
+| délka klipu | 481 sn (19 s) | 81 sn (5 s) | **LTX** |
+| kvalita pohybu, ostrost | bez rozmazaných končetin | rozmazání při rychlém pohybu | **LTX** |
+| identita (srovnatelný úsek) | 0.61 hd / 0.43 draft | **0.70** | **Wan** |
+| identita v dlouhém klipu | 0.32 — jiná osoba | n/a (5 s max) | **Wan** |
+| tanec z textu (moonwalk) | ne | ne | remíza |
+| control z kostry | **nefunguje** (0.19.3) | funguje (VACE) | **Wan** |
+
+**Doporučení: neintegrovat zatím jako náhradu Wan, ale nasadit vedle něj.**
+
+1. **Kde LTX vyhrává hned:** krátké klipy (do ~5 s) na vyšším rozlišení,
+   kde je potřeba zvuk a rychlost. Šestinásobná rychlost znamená, že hd
+   render stojí míň než dnešní Wan draft.
+2. **Co brání nasazení na minutová videa:** identita. Slib „19 s v kuse =
+   míň seamů" se nekoná — drift se jen přesune z handoffů dovnitř klipu a
+   je rychlejší. LTX by potřeboval stejnou berličku jako Wan (oživení tváře
+   z originálu), ta se ale s 27GB checkpointem **nevejde do jednoho grafu**
+   (FLUX+PuLID ~10 GB navíc → `loaded partially`). Řešení pro F4: pustit
+   oživení jako **samostatný prompt** po LTX, ne ve stejném workflow.
+3. **Control beaty nechat na Wan** (VACE funguje) do upgradu ComfyUI.
+4. **Upgrade ComfyUI je pákový bod:** odemkl by `GetICLoRAParameters`
+   (control), ID-LoRA na identitu a rovnou LTX-2.5. Do té doby je LTX-2.3
+   u nás model pro krátké ozvučené klipy, ne pro dlouhé příběhy.
+
+## Co zbývá změřit (až bude čas)
+
+- Oživení tváře jako samostatný prompt po LTX — sníží drift na použitelnou
+  úroveň? To rozhodne, jestli LTX může na minutová videa.
+- Nativní 1080×1920 (2 Mpx) — trend „vyšší rozlišení = lepší identita"
+  naznačuje další zisk; cena podle měření ~1,2× za 2× pixelů.
+- Po upgradu ComfyUI: control přes IC-LoRA, ID-LoRA na identitu, LTX-2.5.
 
 ## Licence
 
