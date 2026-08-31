@@ -784,6 +784,70 @@ def full_path(m):
     return os.path.join(OUT, m["name"], "%s_full.mp4" % m["name"])
 
 
+def duration_s(path):
+    return float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                                 "-of", "csv=p=0", path], capture_output=True, text=True).stdout.strip())
+
+
+def soundtrack_track(m):
+    """Vyrenderuje (nebo vrátí z cache) hudební stopu manifestu: jeden 19s LTX
+    AV klip, jehož video se zahodí. Jedna generace = jedna skladba — na rozdíl
+    od per-beat audia, kde každý beat složí něco jiného."""
+    track = os.path.join(OUT, m["name"], "track.m4a")
+    key = hashlib.sha1(json.dumps([m["soundtrack"], m["seed"]]).encode()).hexdigest()[:12]
+    st = load_state(m)
+    if os.path.exists(track) and st.get("_track") == key:
+        return track
+    g = json.load(open(os.path.join(HERE, "workflows", LTX_BASE["i2v"] + ".json")))
+    g["8"]["inputs"]["text"] = m["soundtrack"]
+    g["10"]["inputs"]["image"] = "%s_seed00.png" % m["name"]
+    # malé rozlišení: video dárce nikdo neuvidí, jde jen o zvuk
+    g["12"]["inputs"].update(width=448, height=896, length=481)
+    g["13"]["inputs"]["seed"] = m["seed"]
+    g["63"]["inputs"].update(frames_number=481, frame_rate=25)
+    g["65"]["inputs"]["frame_rate"] = 25.0
+    g["68"]["inputs"]["fps"] = 25.0
+    g["16"]["inputs"].update(filename_prefix="%s/track_v" % m["name"], fps=25.0)
+    g["69"]["inputs"]["filename_prefix"] = "%s/track" % m["name"]
+    free_models("před hudebním dárcem")
+    submit(g, "hudební dárce (19 s LTX)")
+    free_models("po hudebním dárci")
+    hits = glob.glob(os.path.join(OUT, m["name"], "track_0*.mp4"))
+    if not hits:
+        die("hudební dárce nevrátil mp4 (%s/track_0*.mp4)" % m["name"])
+    subprocess.run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+                    "-i", max(hits, key=os.path.getmtime), "-vn", "-c:a", "aac", "-b:a", "192k",
+                    track], check=True)
+    st["_track"] = key
+    save_state(m, st)
+    return track
+
+
+def cmd_soundtrack(m, video):
+    """Jedna skladba přes celé video: stopa dárce se smyčkou (acrossfade na
+    švech) natáhne na délku videa a namuxuje místo dosavadní stopy. Video
+    stream se jen kopíruje — žádné překódování, žádné riziko iOS formátu."""
+    track = soundtrack_track(m)
+    dur, tdur = duration_s(video), duration_s(track)
+    xf = 1.0
+    n = max(1, math.ceil(1 + max(0.0, dur - tdur) / (tdur - xf)))
+    cmd = ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", video]
+    cmd += ["-i", track] * n
+    prev, parts = "[1:a]", []
+    for i in range(2, n + 1):
+        out = "[am%d]" % i
+        parts.append("%s[%d:a]acrossfade=d=%.2f%s;" % (prev, i, xf, out))
+        prev = out
+    fc = "".join(parts) + "%satrim=0:%.3f,afade=t=out:st=%.3f:d=0.8[aout]" % (prev, dur, max(0.0, dur - 0.8))
+    tmp = video[:-4] + ".snd.mp4"
+    cmd += ["-filter_complex", fc, "-map", "0:v", "-map", "[aout]", "-c:v", "copy",
+            "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", "-shortest", tmp]
+    subprocess.run(cmd, check=True)
+    os.replace(tmp, video)
+    print("  hudba: %s  (%.1f s ×%d → %.1f s)" % (os.path.basename(track), tdur, n, dur))
+    return video
+
+
 def cmd_assemble(m, upto):
     segs, fps = segments(m, upto), m["fps"]
     dst = concat(segs, fps, full_path(m), xfade=m["crossfade"],
@@ -792,6 +856,8 @@ def cmd_assemble(m, upto):
                  with_audio=m["engine"] == "ltx")
     n = nframes(dst)
     print("  %s  %d snímků = %.2f s @ %d fps" % (dst, n, n / fps, fps))
+    if m.get("soundtrack"):
+        cmd_soundtrack(m, dst)
     return dst
 
 
@@ -827,6 +893,8 @@ def cmd_smooth(m, upto):
                  transition=m["transition"], bands=m["bands"])
     n = nframes(dst)
     print("  %s  %d snímků = %.2f s" % (dst, n, n / 30.0))
+    if m.get("soundtrack"):
+        cmd_soundtrack(m, dst)
     return dst
 
 

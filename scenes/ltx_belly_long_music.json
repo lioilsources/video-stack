@@ -2,17 +2,18 @@
   "id": "ltx_belly_long_music",
   "label": "Tanec · Břišní minutový s hudbou (LTX)",
   "label_en": "Dance · Belly, one minute with music (LTX)",
-  "desc": "Minuta břišního tance s vygenerovanou hudbou. Osm delších klipů místo dvanácti krátkých, mezi nimi se tvář obnovuje z původní fotky. Rychlejší než klasická minutová scéna, ale podoba drží hůř.",
-  "desc_en": "A minute of belly dance with generated music. Eight longer clips instead of twelve short ones, with the face restored from the original photo between them. Faster than the classic minute preset, but the likeness holds up less well.",
+  "desc": "Rychlejší a ostřejší varianta minutového břišního tance s jednou souvislou skladbou. Podoba tváře se mezi střihy vlní — na střihu se vrací k fotce, uvnitř klipu ujíždí.",
+  "desc_en": "The faster, sharper take on the one-minute belly dance with one continuous piece of music. The facial likeness pulses — it returns to the photo at each cut and drifts within a clip.",
   "engine": "ltx",
   "order": 1,
-  "length": 185,
+  "length": 121,
   "fps": 25,
   "crf": 18,
   "identity": "face",
   "transition": "slices",
   "crossfade": 6,
   "bands": 12,
+  "soundtrack": "she performs a belly dance, hips swaying to the rhythm. Middle-eastern percussion music with a steady hypnotic drum rhythm and a melodic flute line.",
   "style_tail": ", static camera, natural room lighting, photorealistic, highly detailed",
   "negative": "worst quality, inconsistent motion, blurry, jittery, distorted",
   "colormatch": {
@@ -24,36 +25,52 @@
       "name": "main",
       "beats": [
         {
-          "length": 185,
-          "prompt": "she lifts both arms slowly overhead as one wave travels up through her torso, ending with arms high Middle-eastern percussion music with a steady drum rhythm, continuing without a break."
+          "length": 121,
+          "prompt": "she lifts both arms slowly overhead as one wave travels up through her torso, and ends with arms high"
         },
         {
-          "length": 185,
-          "prompt": "she lowers her arms to shoulder height with a slow sway of the hips, ending with arms out to the sides Middle-eastern percussion music with a steady drum rhythm, continuing without a break."
+          "length": 121,
+          "prompt": "she lowers her arms to shoulder height with a slow sway of the hips, and ends with arms out to the sides"
         },
         {
-          "length": 185,
-          "prompt": "she begins a fast isolated hip shimmy, then lets it fade and ends with hips still Middle-eastern percussion music with a steady drum rhythm, continuing without a break."
+          "length": 121,
+          "prompt": "she begins a fast isolated hip shimmy, then lets it fade and ends with hips still"
         },
         {
-          "length": 185,
-          "prompt": "she drops one hip sharply to the side twice, accenting the beat, ending with weight on that hip Middle-eastern percussion music with a steady drum rhythm, continuing without a break."
+          "length": 121,
+          "prompt": "she drops one hip sharply to the side twice, accenting the beat, and ends with weight on that hip"
         },
         {
-          "length": 185,
-          "prompt": "she performs one slow chest circle while keeping her hips still, ending centered Middle-eastern percussion music with a steady drum rhythm, continuing without a break."
+          "length": 121,
+          "prompt": "she performs one slow chest circle while keeping her hips still, and ends centered"
         },
         {
-          "length": 185,
-          "prompt": "she turns slowly on the spot, arms flowing like a veil around her shoulders, ending facing the camera Middle-eastern percussion music with a steady drum rhythm, continuing without a break."
+          "length": 121,
+          "prompt": "she turns slowly on the spot, arms flowing like a veil around her shoulders, and ends facing the camera"
         },
         {
-          "length": 185,
-          "prompt": "she traces a figure eight with her hips, hands framing her face, ending with hands at her collarbone Middle-eastern percussion music with a steady drum rhythm, continuing without a break."
+          "length": 121,
+          "prompt": "she traces a figure eight with her hips, hands framing her face, and ends with hands at her collarbone"
         },
         {
-          "length": 185,
-          "prompt": "one slow undulation travels down her torso from chest to hips, ending with her weight settled and a smile Middle-eastern percussion music with a steady drum rhythm, continuing without a break."
+          "length": 121,
+          "prompt": "she shimmies again for a short burst with arms overhead, then stops with hips still"
+        },
+        {
+          "length": 121,
+          "prompt": "one slow undulation travels down her torso from chest to hips, and ends with her weight settled"
+        },
+        {
+          "length": 121,
+          "prompt": "she turns slowly once more, gathering an imaginary silk veil around her shoulders, and ends facing the camera"
+        },
+        {
+          "length": 121,
+          "prompt": "she lowers her arms slowly and crosses her hands over her heart, and holds"
+        },
+        {
+          "length": 121,
+          "prompt": "she bows her head slightly, then lifts it with a soft smile at the camera, and ends still"
         }
       ]
     }

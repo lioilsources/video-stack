@@ -1,0 +1,14 @@
+{
+ "name": "bench_soundtrack",
+ "source": "leather_shorts_src.png",
+ "width": 464,
+ "height": 944,
+ "identity": "face",
+ "transition": "slices",
+ "crossfade": 6,
+ "soundtrack": "she dances joyfully to the beat. Upbeat pop dance music with a clear steady rhythm, warm bass line and catchy synth melody.",
+ "beats": [
+  {"prompt": "she sways her hips gently side to side, arms loose and relaxed, feet in place, and ends mid-sway"},
+  {"prompt": "she raises both arms above her head as her hips sway, head tilting once to each side, and ends with arms high"}
+ ]
+}

@@ -43,6 +43,8 @@ SEC_PER_FRAME_LTX = 1.0
 # Oživení tváře je u LTX samostatný prompt (FLUX+PuLID se do grafu s 27GB
 # checkpointem nevejde), takže na každém handoffu ComfyUI modely vymění.
 SEC_REFRESH_LTX = 75
+# hudební dárce (soundtrack): 481 sn LTX v malém rozlišení + mux
+SEC_TRACK = 300
 MAX_BODY = 32 << 20
 
 
@@ -80,15 +82,16 @@ def load_scenes():
             "label_en": t.get("label_en", t["label"]),
             "desc_en": t.get("desc_en", t.get("desc", "")),
             "beats": len(lens), "seconds": round(frames / fps, 1),
-            # klient podle toho scénu odliší: zvuk umí zatím jen LTX engine
-            "audio": t.get("engine") == "ltx",
+            # klient podle toho scénu odliší: zvuk = LTX engine nebo hudební dárce
+            "audio": t.get("engine") == "ltx" or bool(t.get("soundtrack")),
             # control beat (VACE + reference) je ~1.5× I2V (190–205 s vs 130 s)
             "minutes_est": max(1, round(
-                (SEC_LOAD_LTX + sum(SEC_PER_FRAME_LTX * L for L in lens)
-                 + (SEC_REFRESH_LTX * (len(lens) - 1) if t.get("identity") == "face" else 0)) / 60
-                if t.get("engine") == "ltx" else
-                sum(SEC_PER_BEAT * L / 81 * (1.5 if c else 1.0)
-                    for L, c in zip(lens, beat_controls(t))) / 60)),
+                ((SEC_LOAD_LTX + sum(SEC_PER_FRAME_LTX * L for L in lens)
+                  + (SEC_REFRESH_LTX * (len(lens) - 1) if t.get("identity") == "face" else 0))
+                 if t.get("engine") == "ltx" else
+                 sum(SEC_PER_BEAT * L / 81 * (1.5 if c else 1.0)
+                     for L, c in zip(lens, beat_controls(t))))
+                / 60 + (SEC_TRACK / 60 if t.get("soundtrack") else 0))),
             "_tpl": t,
         }
     return out
