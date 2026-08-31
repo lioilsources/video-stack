@@ -19,7 +19,8 @@ ComfyUI; verdikt F3 může znít „počkat na 2.5 + upgrade".
 
 ## F1 — váhy (40,6 GB, `tools/get_ltx.sh`)
 
-Zdroje dle [docs.comfy.org](https://docs.comfy.org/tutorials/video/ltx/ltx-2-3):
+Zdroje dle [docs.comfy.org](https://docs.comfy.org/tutorials/video/ltx/ltx-2-3);
+**staženo a ověřeno 31. 8. 2026** (velikosti bajt po bajtu, žádné .part):
 
 | soubor | kam | B |
 |---|---|---|
