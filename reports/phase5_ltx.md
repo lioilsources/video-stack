@@ -256,6 +256,26 @@ Ověřeno end-to-end přes appkové API: job `1ca84d92`, 173 s, výsledek
 na `/result`. Appka 1.14.0 scény se zvukem odliší štítkem, ale katalog je
 serverový — objeví se i ve starší verzi.
 
+### Oživení tváře u LTX funguje — a drží líp než Wan
+
+`bench_ltx_refresh` (2 beaty × 185 sn, hd, `identity: face`): oživení běží
+jako samostatný prompt, ComfyUI mezi ním a LTX vymění model.
+
+| | beat | oživení | handoff sim |
+|---|---|---|---|
+| beat 01 | 175 s | 75 s | **0.767** |
+| beat 02 | 215 s | — | **0.589** |
+
+průměr **0.678** proti Wan `identity: face` **0.630** (phase4, 6 beatů).
+
+Takže na **střizích** drží LTX identitu lépe než Wan — pravděpodobně proto,
+že oživení pracuje na hd snímku. Uvnitř klipu drift zůstává (0.97 → 0.49 za
+4,8 s), takže delší beaty = víc rozpadu mezi dvěma opravami. Minutový preset
+je proto postavený na 8 beatech po 185 snímcích, ne na 3 × 481.
+
+Cena: 75 s na handoff navíc (výměna 27GB LTX ↔ 12GB FLUX), tedy minutová
+scéna ~30 min proti 26 min u Wan ekvivalentu — za to je v ní hudba.
+
 ## Co zbývá změřit (až bude čas)
 
 - Oživení tváře jako samostatný prompt po LTX — sníží drift na použitelnou
