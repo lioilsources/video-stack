@@ -116,7 +116,41 @@ model během 5 s ztratí 0.38.
 Rychlost Wan pro srovnání (phase4, draft 464×944): 105–185 s na 81 snímků
 = 5 s videa, tedy **~35 s GPU na sekundu videa**.
 
-## F3 — protokol A/B (až bude GPU volno, ~1 h)
+## F3 — naměřeno (31. 8. 2026)
+
+### Smoke: I2V + zvuk, 480×960, 249 snímků (10 s @ 25 fps)
+
+| co | LTX-2.3 | Wan 2.2 (phase4) |
+|---|---|---|
+| GPU čas | **156 s** na 10 s videa = **15,6 s/s** | ~35 s/s |
+| délka klipu | 249 snímků v kuse | max 81 (5 s) |
+| zvuk | **AAC 48 kHz, 9,96 s, mean −23,5 dB** (reálná stopa) | žádný |
+| paměť | model `loaded completely` (23,8 GB), minimum volno 6,5 GB | — |
+
+**LTX je 2,2× rychlejší na sekundu videa** a klip je dvakrát delší než
+maximum Wan. Zvuk se opravdu generuje — není to ticho.
+
+Vizuálně (snímky 0/71/141/247): pohyb plynulý a čitelný, scéna, oblečení i
+boty drží celý klip, žádné rozmazané končetiny, kterými trpí Wan na rychlém
+pohybu. Kvalita obrazu je nad Wan draftem.
+
+### Identita: LTX drží hůř než Wan
+
+ArcFace proti zdrojové fotce, `face_drift --video`:
+
+| čas v klipu | ~0 s | ~1,4 s | ~2,8 s | ~4,2 s | ~5,6 s | ~7 s | ~8,5 s | ~9,9 s |
+|---|---|---|---|---|---|---|---|---|
+| **LTX** (249 sn) | 0.851 | 0.630 | 0.350 | 0.270 | 0.382 | 0.287 | 0.374 | 0.310 |
+| **Wan** (81 sn) | 0.901 | 0.783 (1,25 s) | 0.760 (2,5 s) | 0.551 (3,7 s) | 0.518 (5 s) | — | — | — |
+
+průměr LTX **0.432** (min 0.270) proti Wan **0.703** (min 0.518).
+
+Na společném úseku je rozdíl jednoznačný: ve 2,8 s má Wan 0.76, LTX 0.35.
+LTX se pod hranici „jiný člověk" (0.4) dostane už kolem 3. sekundy, Wan tam
+nedojde ani na konci pětisekundového klipu. Delší klip tedy sám o sobě
+identitu nezachrání — jen posune problém z handoffů dovnitř klipu.
+
+## F3 — zbývající testy
 
 Vstup: `bench_src.png` v ComfyUI `input/` (portrétní fotka),
 `chains/bench_ltx.json` (2×249 sn belly dance, identity face, slices),
