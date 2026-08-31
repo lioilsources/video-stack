@@ -178,6 +178,18 @@ boty a scéna drží celý klip.
 kameře** a přešlapuje. Žádná moonwalk technika. Větší text encoder (Gemma 12B)
 tedy nepomohl — **kostry z `drive/` zůstávají pro ikonické tance nutné.**
 
+### Control z kostry: nefunguje na 0.19.3
+
+`bench_ltx_ctl` (gangnam kostra, 73 sn, 85 s) — výstup je **doslovná kopie
+kostry**: barevný panáček na černém pozadí, jen první snímek je fotka.
+Model kostru vzal jako obsah, ne jako řídicí signál.
+
+Potvrzuje to omezení #1: bez `GetICLoRAParameters` (v 0.19.3 chybí,
+v ComfyUI master je) dostane `LTXVAddGuide` referenci s downscale 1 místo
+trénovaných 0.5 a IC-LoRA se nechytne. **Control beaty na LTX vyžadují
+upgrade ComfyUI** — dokud k němu nedojde, ikonické tance musí zůstat na
+Wan (VACE/fun_control), které fungují.
+
 ## F3 — zbývající testy
 
 Vstup: `bench_src.png` v ComfyUI `input/` (portrétní fotka),
