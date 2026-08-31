@@ -1,0 +1,9 @@
+{
+ "name": "bench_ltx_ctl",
+ "engine": "ltx",
+ "source": "bench_src.png",
+ "length": 73,
+ "beats": [
+  {"prompt": "A person dances the Gangnam Style horse-riding dance, bouncing rhythmically, wrists crossed then a lasso swing overhead, energetic K-pop dance music with a driving beat, camera locked off.", "control": "gangnam"}
+ ]
+}

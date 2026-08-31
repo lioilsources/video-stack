@@ -49,6 +49,15 @@ CONTROL_BASE = {"fun": "control_beat_14b_lightning_portrait",     # fun_control:
                 "vace": "vace_control_14b_lightning_portrait"}    # VACE: reference_image = vzhled, silnější kotva
 DRIVE = os.path.join(HERE, "drive")
 
+# LTX-2.3: druhý engine — 22B AV DiT, video + synchronní zvuk jedním průchodem,
+# 25 fps, length 8n+1 do 481 (~19 s). Řetězení beatů (seedNN.png), colormatch
+# i oživení tváře jedou stejnou cestou (stejná ID nodů 8-16); navíc jde ven
+# seg<id>_av.mp4 se zvukem (nody 67-69). RIFE se přeskakuje — 25 fps nativně.
+# Union control (kostra) je experiment: 0.19.3 nemá GetICLoRAParameters,
+# reference se enkóduje s downscale 1 místo trénovaných 0.5 (viz
+# reports/phase5_ltx.md); pořádné IC-LoRA zapojení chce novější ComfyUI.
+LTX_BASE = {"i2v": "ltx_i2v_portrait", "control": "ltx_control_portrait"}
+
 
 def pose_path(cid):
     return os.path.join(DRIVE, "%s_pose.webm" % cid)
@@ -73,8 +82,12 @@ def load_dict(m):
     """Manifest už načtený z JSONu → doplněné defaulty a zploštěné scény.
     Oddělené od load(), ať jde katalog scén zkontrolovat bez souboru
     (tools/check_scenes.py)."""
-    m.setdefault("fps", 16)
-    m.setdefault("length", 81)
+    m.setdefault("engine", "wan")
+    if m["engine"] not in ("wan", "ltx"):
+        die("engine %r: čekám wan nebo ltx" % m["engine"])
+    ltx = m["engine"] == "ltx"
+    m.setdefault("fps", 25 if ltx else 16)
+    m.setdefault("length", 121 if ltx else 81)
     m.setdefault("seed", 42)
     m.setdefault("negative", "blurry, static, low quality, watermark, text")
     m.setdefault("style_tail", "")
@@ -83,7 +96,7 @@ def load_dict(m):
     m.setdefault("crossfade", 1)
     m.setdefault("transition", "fade")
     m.setdefault("bands", 12)
-    check_length(m["length"], "manifest")
+    check_length(m["length"], "manifest", m["engine"])
     if not isinstance(m["crossfade"], int) or not 1 <= m["crossfade"] <= 16:
         die("crossfade %r: čekám 1–16 snímků (1 = tvrdý střih)" % m["crossfade"])
     if m["transition"] not in ("cut", "fade", "slices"):
@@ -118,8 +131,8 @@ def load_dict(m):
                       "control_ref", "control_model"):
                 if k in s or k in m:
                     b.setdefault(k, s.get(k, m.get(k)))
-            b.setdefault("length", 81)
-            check_length(b["length"], "beat %s" % b["id"])
+            b.setdefault("length", 121 if ltx else 81)
+            check_length(b["length"], "beat %s" % b["id"], m["engine"])
             if b.get("control"):
                 if not os.path.exists(pose_path(b["control"])):
                     die("beat %s: control %r — chybí %s (tools/drive.py pose)"
@@ -137,7 +150,13 @@ def load_dict(m):
     return m
 
 
-def check_length(L, what):
+def check_length(L, what, engine="wan"):
+    if engine == "ltx":
+        if not isinstance(L, int) or L < 9 or (L - 1) % 8:
+            die("%s: length %r není 8n+1 (LTX VAE komprimuje čas 8:1)" % (what, L))
+        if L > 481:
+            die("%s: length %d > 481 — přes ~19 s na klip LTX-2.3 neumí" % (what, L))
+        return
     if not isinstance(L, int) or L < 5 or (L - 1) % 4:
         die("%s: length %r není 4n+1 (Wan VAE komprimuje čas 4:1)" % (what, L))
     if L > 81:
@@ -215,7 +234,8 @@ def resolution(m, src, tier):
 
     h = math.sqrt(BUDGET[tier] / aspect)
     w = aspect * h
-    w, h = max(16, round(w / 16) * 16), max(16, round(h / 16) * 16)
+    q = 32 if m.get("engine") == "ltx" else 16
+    w, h = max(q, round(w / q) * q), max(q, round(h / q) * q)
     if w > w0 or h > h0:
         print("  ! zdroj %d×%d je menší než render %d×%d — upscaluje se, "
               "detaily v obličeji tím trpí" % (w0, h0, w, h))
@@ -227,13 +247,22 @@ def resolution(m, src, tier):
 def build(m, beat, idx, seed_img, orig_img, w, h):
     """Základní I2V workflow + tři nody navíc pro předání snímku dál."""
     control = beat.get("control")
-    cmodel = beat.get("control_model") or "vace"
-    if cmodel not in CONTROL_BASE:
-        die("control_model %r: čekám fun nebo vace" % cmodel)
-    g = json.load(open(os.path.join(HERE, "workflows", (CONTROL_BASE[cmodel] if control else m["base"]) + ".json")))
+    ltx = m["engine"] == "ltx"
+    if ltx:
+        g = json.load(open(os.path.join(HERE, "workflows", LTX_BASE["control" if control else "i2v"] + ".json")))
+    else:
+        cmodel = beat.get("control_model") or "vace"
+        if cmodel not in CONTROL_BASE:
+            die("control_model %r: čekám fun nebo vace" % cmodel)
+        g = json.load(open(os.path.join(HERE, "workflows", (CONTROL_BASE[cmodel] if control else m["base"]) + ".json")))
     L, name = beat["length"], m["name"]
     cm = m["colormatch"]
-    if control:
+    if control and ltx:
+        # core LoadVideo neumí frame_load_cap — délku ořeže ImageFromBatch (72)
+        g["60"]["inputs"]["file"] = os.path.basename(pose_path(control))
+        g["72"]["inputs"]["length"] = L
+        g["61"]["inputs"].update(width=w, height=h)
+    elif control:
         # kostra do input/ kopíruje cmd_render; tady jen jméno, délka a měřítko
         g["60"]["inputs"].update(video=os.path.basename(pose_path(control)), frame_load_cap=L)
         g["61"]["inputs"].update(width=w, height=h)
@@ -252,16 +281,27 @@ def build(m, beat, idx, seed_img, orig_img, w, h):
         for n in ("50", "52", "53"):
             g[n]["inputs"].update(width=w, height=h)
         g["50"]["inputs"]["batch_size"] = g["53"]["inputs"]["batch_size"] = L - 1
-    for n in ("13", "14"):
-        g[n]["inputs"]["noise_seed"] = beat["seed"]
-    if beat.get("boundary") is not None:  # víc kroků v high-noise expertu = víc pohybu
-        g["13"]["inputs"]["end_at_step"] = beat["boundary"]
-        g["14"]["inputs"]["start_at_step"] = beat["boundary"]
-    if beat.get("motion") is not None and not control:  # u control beatu pohyb určuje kostra
-        g["2"]["inputs"]["strength_model"] = beat["motion"]
-    if beat.get("shift") is not None:
-        for n in ("3", "6"):
-            g[n]["inputs"]["shift"] = beat["shift"]
+    if ltx:
+        g["13"]["inputs"]["seed"] = beat["seed"]
+        # zvuková větev: délka a tempo drží krok s videem
+        g["63"]["inputs"].update(frames_number=L, frame_rate=m["fps"])
+        g["65"]["inputs"]["frame_rate"] = float(m["fps"])
+        g["68"]["inputs"]["fps"] = float(m["fps"])
+        g["69"]["inputs"]["filename_prefix"] = "%s/seg%s_av" % (name, beat["id"])
+        for knob in ("motion", "boundary", "shift"):
+            if beat.get(knob) is not None:
+                print("  ! beat %s: %s je knob Wan — LTX ho ignoruje" % (beat["id"], knob))
+    else:
+        for n in ("13", "14"):
+            g[n]["inputs"]["noise_seed"] = beat["seed"]
+        if beat.get("boundary") is not None:  # víc kroků v high-noise expertu = víc pohybu
+            g["13"]["inputs"]["end_at_step"] = beat["boundary"]
+            g["14"]["inputs"]["start_at_step"] = beat["boundary"]
+        if beat.get("motion") is not None and not control:  # u control beatu pohyb určuje kostra
+            g["2"]["inputs"]["strength_model"] = beat["motion"]
+        if beat.get("shift") is not None:
+            for n in ("3", "6"):
+                g[n]["inputs"]["shift"] = beat["shift"]
     g["16"]["inputs"].update(filename_prefix="%s/seg%s" % (name, beat["id"]),
                              fps=float(m["fps"]), crf=float(m.get("crf", 18)))
 
@@ -411,6 +451,7 @@ def state_path(m):
 def beat_hash(m, b, w, h):
     """Otisk všeho, co ovlivní segment i navazovací snímek. Změna = přegenerovat."""
     key = (b["prompt"], b["style_tail"], b["negative"], b["seed"], w, h, b["length"],
+           m["engine"], m["fps"],
            m["base"], b.get("motion"), b.get("boundary"), b.get("shift"), b.get("sharpen"),
            b.get("identity"), b.get("face_denoise"), m["colormatch"], b.get("control"),
            b.get("control_ref"), b.get("control_model"),
@@ -665,6 +706,9 @@ def cmd_smooth(m, upto):
     a RIFE ×2 vrací 2F−1, takže ho nic nezdvojí) a přechod se udělá až na
     32 fps: překryv 2k−1 snímků = stejná doba jako k snímků na 16 fps.
     Vedlejší zisk: chunky jsou malé, paměť neroste s délkou klipu."""
+    if m["engine"] == "ltx":
+        print("  LTX je nativně plynulé (25 fps) — RIFE se přeskakuje, výstup = slepení")
+        return cmd_assemble(m, upto)
     segs, fps = segments(m, upto), m["fps"]
     beats = m["beats"][:upto]
     chunks = []

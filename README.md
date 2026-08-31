@@ -178,3 +178,15 @@ Segment N+1 začíná přesně tím snímkem, kterým segment N končí, takže
 `--assemble` ho zahazuje (`select=gte(n\,1)`) — jinak by každý spoj zadrhl
 o zdvojený snímek. RIFE se pouští `--smooth` přes **celý** slepený klip, ne po
 segmentech, aby vyhladil i spoje.
+
+## Druhý engine: LTX-2.3 (experimentální)
+
+`"engine": "ltx"` v kořeni manifestu přepne beaty na LTX-2.3 (22B AV DiT):
+video **a synchronní zvuk** jedním průchodem, 25 fps, klip až 481 snímků
+(~19 s, `length` 8n+1), nativní vertikála. Řetězení, colormatch i oživení
+tváře jedou stejnou cestou jako u Wan; navíc vzniká `seg<id>_av.mp4` se
+zvukem. RIFE se u LTX přeskakuje. Váhy stáhne `tools/get_ltx.sh` (~41 GB),
+stav a omezení viz `reports/phase5_ltx.md`.
+
+Licence: LTX-2 Community License — do $10M ročního obratu zdarma, výstupy
+patří nám, ale je nutné **označovat AI výstup**; zákaz deepfake/impersonace.
