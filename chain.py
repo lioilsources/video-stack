@@ -322,7 +322,11 @@ def build(m, beat, idx, seed_img, orig_img, w, h):
     # Identita: každý beat vidí jen svůj první snímek, který je už o generaci
     # dál — tvář driftuje. Oživení přemaluje jen obličej navazovacího snímku
     # s identitou z ORIGINÁLU (node 30), tělo a pozadí zůstanou.
-    if beat.get("identity") == "face":
+    # U Wan se oživení tváře přilepí rovnou do grafu. U LTX ne: 27GB checkpoint
+    # a FLUX+PuLID (~10 GB) se do paměti najednou nevejdou (ComfyUI zaloguje
+    # `loaded partially` a beat se plazí na CPU), takže tam běží jako samostatný
+    # prompt po dokončení beatu — viz refresh_prompt().
+    if beat.get("identity") == "face" and not ltx:
         handoff = face_refresh(g, handoff, ["30", 0], beat["seed"],
                                denoise=beat.get("face_denoise") or FACE["denoise"])
     # Navazovací snímek je VAE-dekódovaný, tedy měkčí než originál, a další beat
@@ -390,6 +394,21 @@ def face_refresh(g, image, ref, seed, denoise=None):
                           "sam_mask_hint_threshold": 0.7, "sam_mask_hint_use_negative": "False",
                           "drop_size": 10, "bbox_detector": ["57", 0], "wildcard": "", "cycle": 1}}
     return ["58", 0]
+
+
+def refresh_prompt(beat, seed_png, orig_png, prefix):
+    """Samostatný graf: oživí tvář na už uloženém navazovacím snímku.
+
+    Existuje kvůli LTX — do jeho grafu se FLUX+PuLID nevejde. Tím, že jde o
+    druhý prompt, ComfyUI mezi nimi model vymění (LTX ven, FLUX dovnitř), takže
+    obojí má paměť pro sebe. Cena je to přehození, ~1 min na beat."""
+    g = {"30": {"class_type": "LoadImage", "inputs": {"image": orig_png}},
+         "31": {"class_type": "LoadImage", "inputs": {"image": seed_png}}}
+    out = face_refresh(g, ["31", 0], ["30", 0], beat["seed"],
+                       denoise=beat.get("face_denoise") or FACE["denoise"])
+    g["22"] = {"class_type": "SaveImage",
+               "inputs": {"images": out, "filename_prefix": prefix}}
+    return g
 
 
 # ---------------------------------------------------------------- paměť
@@ -616,6 +635,13 @@ def cmd_render(m, src, w, h, start, stop, hd):
         shutil.copy(outfile(outputs, "22", ".png"), nxt)
         print("     %s  →  %s" % (os.path.basename(outfile(outputs, "16", ".webm")),
                                   os.path.basename(nxt)))
+        # LTX: oživení tváře až teď, druhým promptem (do jednoho grafu se nevejde)
+        if m["engine"] == "ltx" and b.get("identity") == "face" and i + 1 < len(beats):
+            staged = "%s_pre%02d.png" % (name, i + 1)
+            shutil.copy(nxt, os.path.join(IN, staged))
+            rg = refresh_prompt(b, staged, orig, "%s/face%02d" % (name, i + 1))
+            shutil.copy(outfile(submit(rg, "oživení tváře %s" % b["id"]), "22", ".png"), nxt)
+            print("     tvář oživena z originálu  →  %s" % os.path.basename(nxt))
         st[b["id"]] = beat_hash(m, b, w, h)
         # co je za právě vyrenderovaným beatem, stojí na starém navazovacím
         # snímku — pro --resume už neplatí

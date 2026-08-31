@@ -1,0 +1,61 @@
+{
+  "id": "ltx_dance_long_music",
+  "label": "Tanec · minutový s hudbou (LTX)",
+  "label_en": "Dance · one minute with music (LTX)",
+  "desc": "Minuta volného tance s vygenerovanou hudbou. Osm klipů, mezi nimi obnova tváře z původní fotky. Rychlejší než klasická minutová scéna, ale podoba drží hůř.",
+  "desc_en": "A minute of free dance with generated music. Eight clips with the face restored from the original photo in between. Faster than the classic minute preset, but the likeness holds up less well.",
+  "engine": "ltx",
+  "order": 1,
+  "length": 185,
+  "fps": 25,
+  "crf": 18,
+  "identity": "face",
+  "transition": "slices",
+  "crossfade": 6,
+  "bands": 12,
+  "style_tail": ", static camera, natural room lighting, photorealistic, highly detailed",
+  "negative": "worst quality, inconsistent motion, blurry, jittery, distorted",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "scenes": [
+    {
+      "name": "main",
+      "beats": [
+        {
+          "length": 185,
+          "prompt": "she starts to sway her hips gently side to side, arms loose and relaxed, feet in place Upbeat pop dance music with a clear steady beat, continuing without a break."
+        },
+        {
+          "length": 185,
+          "prompt": "she steps to one side and shifts her weight onto that leg while both arms rise to shoulder height Upbeat pop dance music with a clear steady beat, continuing without a break."
+        },
+        {
+          "length": 185,
+          "prompt": "she turns halfway away from the camera and back again in one smooth motion, hair swinging with her Upbeat pop dance music with a clear steady beat, continuing without a break."
+        },
+        {
+          "length": 185,
+          "prompt": "she raises both arms above her head as her hips sway, head tilting once to each side Upbeat pop dance music with a clear steady beat, continuing without a break."
+        },
+        {
+          "length": 185,
+          "prompt": "she lowers her arms slowly while rolling her shoulders back, hips still swaying Upbeat pop dance music with a clear steady beat, continuing without a break."
+        },
+        {
+          "length": 185,
+          "prompt": "she steps to the other side, weight shifting, one arm sweeping across her body Upbeat pop dance music with a clear steady beat, continuing without a break."
+        },
+        {
+          "length": 185,
+          "prompt": "she spins once on the spot, hair swinging, ending facing the camera with arms relaxed Upbeat pop dance music with a clear steady beat, continuing without a break."
+        },
+        {
+          "length": 185,
+          "prompt": "the sway slows, she laughs softly and settles into a warm steady gaze at the camera Upbeat pop dance music with a clear steady beat, continuing without a break."
+        }
+      ]
+    }
+  ]
+}

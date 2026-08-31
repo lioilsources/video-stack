@@ -36,6 +36,9 @@ SEC_PER_BEAT = 150     # Wan, draft 0.44 Mpx / 81 snímků, naměřeno
 # většina času, takže se počítá zvlášť. Radši nadhodnotit: uživatel čeká.
 SEC_LOAD_LTX = 70
 SEC_PER_FRAME_LTX = 0.8
+# Oživení tváře je u LTX samostatný prompt (FLUX+PuLID se do grafu s 27GB
+# checkpointem nevejde), takže na každém handoffu ComfyUI modely vymění.
+SEC_REFRESH_LTX = 75
 MAX_BODY = 32 << 20
 
 
@@ -77,7 +80,8 @@ def load_scenes():
             "audio": t.get("engine") == "ltx",
             # control beat (VACE + reference) je ~1.5× I2V (190–205 s vs 130 s)
             "minutes_est": max(1, round(
-                (SEC_LOAD_LTX + sum(SEC_PER_FRAME_LTX * L for L in lens)) / 60
+                (SEC_LOAD_LTX + sum(SEC_PER_FRAME_LTX * L for L in lens)
+                 + (SEC_REFRESH_LTX * (len(lens) - 1) if t.get("identity") == "face" else 0)) / 60
                 if t.get("engine") == "ltx" else
                 sum(SEC_PER_BEAT * L / 81 * (1.5 if c else 1.0)
                     for L, c in zip(lens, beat_controls(t))) / 60)),
