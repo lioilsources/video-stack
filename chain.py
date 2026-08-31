@@ -42,7 +42,10 @@ IN, OUT = os.path.join(COMFY, "input"), os.path.join(COMFY, "output")
 # 832x480 = 399k -> 290 s/81f, 1280x704 = 901k -> 806 s/81f.
 BUDGET = {"draft": 442368, "hd": 995328}
 SEC_PER_MPX = 333  # naměřeno 26. 8.: 140–155 s @ 0.445 Mpx / 81 snímků
-CACHE_EVERY = 15  # s — jak často během promptu pouštět page cache (viz submit)
+CACHE_EVERY = int(os.environ.get("CHAIN_CACHE_EVERY", 15))  # s, viz submit()
+# Načítání 27GB checkpointu trvá jednotky sekund; při 15 s stihne janitor jeden
+# průchod a cache mezitím sežere paměť pro váhy. Přes CHAIN_CACHE_EVERY se dá
+# interval stáhnout (průchod models/ stojí ~2 s).
 
 # Control beat: pohyb z kostry řídicího klipu (drive/<id>_pose.webm), vzhled z
 # navazovacího snímku — pro pohyby, které Wan z textu neumí (moonwalk…).
