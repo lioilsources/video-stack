@@ -322,7 +322,12 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/health":
             return self._json(200, {"ok": True, "queued": len(JOBSTORE.queue)})
         if path == PREFIX + "/scenes":
-            return self._json(200, {"scenes": [public(s) for s in SCENE_CATALOG.values()]})
+            # Pořadí katalogu = pořadí v appce (klient nic netřídí). Volitelné
+            # "order" ve scéně tedy rozhoduje, co uživatel uvidí první; bez něj
+            # 100 a pak abecedně jako dřív.
+            items = sorted(SCENE_CATALOG.values(),
+                           key=lambda s: (s["_tpl"].get("order", 100), s["id"]))
+            return self._json(200, {"scenes": [public(s) for s in items]})
         m = re.fullmatch(PREFIX + r"/jobs/([0-9a-f]{8})(/result)?", path)
         if not m:
             return self._err(404, "neznámá cesta")

@@ -1,5 +1,6 @@
 {
   "id": "ltx_dance_music",
+  "order": 0,
   "label": "Tanec s hudbou · 5 s (LTX)",
   "label_en": "Dance with music · 5 s (LTX)",
   "desc": "Krátký tanec, ke kterému si model rovnou vymyslí i hudbu — obraz a zvuk vznikají naráz. Jeden klip bez střihu, vyšší rozlišení. Podoba tváře drží slaběji než u ostatních presetů.",
