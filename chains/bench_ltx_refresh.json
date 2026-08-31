@@ -1,0 +1,14 @@
+{
+ "name": "bench_ltx_refresh",
+ "engine": "ltx",
+ "source": "leather_shorts_src.png",
+ "identity": "face",
+ "transition": "slices",
+ "crossfade": 6,
+ "length": 185,
+ "fps": 25,
+ "beats": [
+  {"prompt": "she sways her hips gently side to side, arms loose and relaxed, feet in place. Upbeat pop dance music with a clear steady beat."},
+  {"prompt": "she raises both arms above her head as her hips sway, head tilting once to each side. The music continues without a break."}
+ ]
+}
