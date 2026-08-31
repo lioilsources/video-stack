@@ -276,6 +276,24 @@ je proto postavený na 8 beatech po 185 snímcích, ne na 3 × 481.
 Cena: 75 s na handoff navíc (výměna 27GB LTX ↔ 12GB FLUX), tedy minutová
 scéna ~30 min proti 26 min u Wan ekvivalentu — za to je v ní hudba.
 
+## Hudební dárce (soundtrack) — nasazeno, GPU ověření PŘERUŠENO
+
+31. 8. večer: vícebeatové scény měnily hudbu s každým střihem (každý beat =
+samostatná generace) a LTX identita uvnitř 7,4s beatů driftovala. Řešení:
+
+- kořenový klíč `soundtrack` — JEDEN 19s LTX AV klip jako dárce, stopa se
+  zacyklí (acrossfade 1 s na švech) a namuxuje přes finální mp4
+  (`-c:v copy`, video beze změny);
+- minutovky čtyřmo na porovnání: `belly/dance_long_music` (Wan video,
+  stabilní tvář) a `ltx_*_long_music` (LTX, beaty 121 sn = 12 oprav tváře).
+
+**Ověřeno offline** (check_scenes, Wan materialize bit-shodný). **GPU bench
+`bench_soundtrack` nedoběhl** — uprostřed běhu (22:00) se ComfyUI zastavilo
+(uživatel vzal paměť pro Nemotron-3-Super-120B). Před spuštěním minutovek
+z appky proto zbývá ověřit: souvislá stopa přes celé video, švy smyčky,
+video stream po muxu netknutý, identita Wan ~0.63. Spustit až bude ComfyUI
+zpět: `python3 chain.py chains/bench_soundtrack.json --all` (+ face_drift).
+
 ## Co zbývá změřit (až bude čas)
 
 - Oživení tváře jako samostatný prompt po LTX — sníží drift na použitelnou
