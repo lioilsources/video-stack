@@ -1,0 +1,11 @@
+{
+ "name": "bench_ltx_long",
+ "engine": "ltx",
+ "source": "leather_shorts_src.png",
+ "width": 480,
+ "height": 960,
+ "length": 481,
+ "beats": [
+  {"prompt": "A young woman dances joyfully in place through a full routine: she starts with gentle hip sways, adds flowing arm movements, turns slowly on the spot, then returns to rhythmic stepping, smiling at the camera. Camera locked off, natural room lighting. Continuous upbeat dance music with a steady beat."}
+ ]
+}
