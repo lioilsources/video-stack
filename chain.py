@@ -30,7 +30,7 @@ globální přes celý řetěz, scény ho nemění.
     ./chain.py chains/idle01.json --assemble   # slepení (ffmpeg, bez GPU)
     ./chain.py chains/idle01.json --smooth     # RIFE 16 -> 32 fps po scénách
 """
-import argparse, glob, hashlib, json, math, os, shutil, subprocess, sys, time
+import argparse, glob, hashlib, json, math, os, shutil, subprocess, sys, threading, time
 import urllib.error, urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -42,6 +42,7 @@ IN, OUT = os.path.join(COMFY, "input"), os.path.join(COMFY, "output")
 # 832x480 = 399k -> 290 s/81f, 1280x704 = 901k -> 806 s/81f.
 BUDGET = {"draft": 442368, "hd": 995328}
 SEC_PER_MPX = 333  # naměřeno 26. 8.: 140–155 s @ 0.445 Mpx / 81 snímků
+CACHE_EVERY = 15  # s — jak často během promptu pouštět page cache (viz submit)
 
 # Control beat: pohyb z kostry řídicího klipu (drive/<id>_pose.webm), vzhled z
 # navazovacího snímku — pro pohyby, které Wan z textu neumí (moonwalk…).
@@ -412,6 +413,15 @@ def drop_page_cache():
 # ---------------------------------------------------------------- API
 
 def submit(g, label):
+    """Pošli graf a čekej na výsledek; po celou dobu drž page cache dole.
+
+    Jedno dropnutí před promptem nestačí. Načítání checkpointu je na unified
+    paměti dvojí zátěž — bajty jdou jednou do page cache a jednou do vah — a
+    než se 27GB LTX dočte, cache spolkne přesně tu paměť, kterou model
+    potřebuje: ComfyUI zaloguje `loaded partially … offloaded, lowvram
+    patches` a beat se plazí na CPU (naměřeno 31. 8.: vram_free 67 → 9 GB
+    během načítání, 10.8 GB odloženo). Vlákno na pozadí proto pouští cache i
+    během běhu."""
     drop_page_cache()
     req = urllib.request.Request(API + "/prompt", json.dumps({"prompt": g}).encode(),
                                  {"Content-Type": "application/json"})
@@ -421,18 +431,28 @@ def submit(g, label):
         body = json.load(e)
         die("%s odmítnut: %s" % (label, json.dumps(body.get("node_errors") or body)[:900]))
     t0 = time.time()
-    while True:
-        time.sleep(5)
-        hist = json.load(urllib.request.urlopen(API + "/history/" + pid))
-        if pid in hist:
-            st = hist[pid]["status"]
-            if st.get("completed"):
-                print("  ok %s  %.0f s" % (label, time.time() - t0), flush=True)
-                return hist[pid]["outputs"]
-            if st.get("status_str") == "error":
-                die("%s spadl: %s" % (label, json.dumps(st.get("messages"))[:900]))
-        if time.time() - t0 > 5400:
-            die("%s běží přes 90 min, přestávám čekat" % label)
+    stop = threading.Event()
+
+    def janitor():
+        while not stop.wait(CACHE_EVERY):
+            drop_page_cache()
+
+    threading.Thread(target=janitor, daemon=True).start()
+    try:
+        while True:
+            time.sleep(5)
+            hist = json.load(urllib.request.urlopen(API + "/history/" + pid))
+            if pid in hist:
+                st = hist[pid]["status"]
+                if st.get("completed"):
+                    print("  ok %s  %.0f s" % (label, time.time() - t0), flush=True)
+                    return hist[pid]["outputs"]
+                if st.get("status_str") == "error":
+                    die("%s spadl: %s" % (label, json.dumps(st.get("messages"))[:900]))
+            if time.time() - t0 > 5400:
+                die("%s běží přes 90 min, přestávám čekat" % label)
+    finally:
+        stop.set()
 
 
 def outfile(outputs, node, ext):
