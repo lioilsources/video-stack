@@ -1,13 +1,19 @@
 {
  "name": "bench_ltx",
  "engine": "ltx",
- "source": "bench_src.png",
+ "source": "leather_shorts_src.png",
  "identity": "face",
  "transition": "slices",
  "crossfade": 6,
  "length": 249,
  "beats": [
-  {"prompt": "A young woman performs a joyful belly dance in place, hips swaying rhythmically, arms flowing gracefully, feet stepping lightly, camera locked off, natural room lighting. Upbeat middle-eastern percussion music with a steady drum rhythm."},
-  {"prompt": "The same woman continues the belly dance, adds a slow spin and shimmering hip shakes, smiling at the camera, camera locked off. The percussion music continues seamlessly."}
- ]
+  {
+   "prompt": "A young woman performs a joyful belly dance in place, hips swaying rhythmically, arms flowing gracefully, feet stepping lightly, camera locked off, natural room lighting. Upbeat middle-eastern percussion music with a steady drum rhythm."
+  },
+  {
+   "prompt": "The same woman continues the belly dance, adds a slow spin and shimmering hip shakes, smiling at the camera, camera locked off. The percussion music continues seamlessly."
+  }
+ ],
+ "width": 480,
+ "height": 960
 }
