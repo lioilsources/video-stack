@@ -233,6 +233,29 @@ ve 2,8 s ještě 0.350, v 481snímkovém už ve 2,7 s jen 0.234.
    (control), ID-LoRA na identitu a rovnou LTX-2.5. Do té doby je LTX-2.3
    u nás model pro krátké ozvučené klipy, ne pro dlouhé příběhy.
 
+## F4 — nasazeno do appky (31. 8. 2026)
+
+Dvě scény se zvukem, obě jednobeatové (podle verdiktu: krátké klipy, hd):
+`ltx_dance_music` (121 sn, 4,8 s) a `ltx_belly_music` (249 sn, 10 s).
+
+Co k tomu bylo potřeba v kódu:
+
+- `segments()` u LTX bere `seg*_av_*.mp4` — němé webm by vygenerovanou hudbu
+  zahodilo hned v montáži.
+- `concat(with_audio=True)` mapuje zvuk ze vstupů: acrossfade u prolínačky,
+  concat u tvrdého střihu; beze změny zůstává dolepené ticho pro Wan.
+- LTX jede v **hd** (naměřeno: 2,15× pixelů = 1,2× čas a identita 0.43 → 0.61).
+- `cmd_smooth` u LTX vrací hotový soubor místo druhého překódování.
+- `serve.py`: `result_path` zná i `_full.mp4` (LTX nedělá RIFE), katalog
+  respektuje volitelné `order` (nové scény nahoru) a hlásí `audio: true`.
+- Odhad času pro LTX počítá zvlášť **načtení 27GB checkpointu (~70 s)** —
+  u 5s klipu je to většina času (slibovaná 1 min proti reálným 2,9 min).
+
+Ověřeno end-to-end přes appkové API: job `1ca84d92`, 173 s, výsledek
+704×1408 h264 High/BT.709 + **AAC 48 kHz, −18,5 dB**, tedy zvuk projde až
+na `/result`. Appka 1.14.0 scény se zvukem odliší štítkem, ale katalog je
+serverový — objeví se i ve starší verzi.
+
 ## Co zbývá změřit (až bude čas)
 
 - Oživení tváře jako samostatný prompt po LTX — sníží drift na použitelnou
