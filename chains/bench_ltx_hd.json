@@ -1,0 +1,11 @@
+{
+ "name": "bench_ltx_hd",
+ "engine": "ltx",
+ "source": "leather_shorts_src.png",
+ "width": 704,
+ "height": 1408,
+ "length": 121,
+ "beats": [
+  {"prompt": "A young woman performs a joyful belly dance in place, hips swaying rhythmically, arms flowing gracefully, feet stepping lightly, camera locked off, natural room lighting. Upbeat middle-eastern percussion music with a steady drum rhythm."}
+ ]
+}
