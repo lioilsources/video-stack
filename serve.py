@@ -73,6 +73,8 @@ def load_scenes():
             "label_en": t.get("label_en", t["label"]),
             "desc_en": t.get("desc_en", t.get("desc", "")),
             "beats": len(lens), "seconds": round(frames / fps, 1),
+            # klient podle toho scénu odliší: zvuk umí zatím jen LTX engine
+            "audio": t.get("engine") == "ltx",
             # control beat (VACE + reference) je ~1.5× I2V (190–205 s vs 130 s)
             "minutes_est": max(1, round(
                 (SEC_LOAD_LTX + sum(SEC_PER_FRAME_LTX * L for L in lens)) / 60
