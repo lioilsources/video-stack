@@ -1,0 +1,11 @@
+{
+ "name": "bench_ltx_mw",
+ "engine": "ltx",
+ "source": "leather_shorts_src.png",
+ "width": 480,
+ "height": 960,
+ "length": 121,
+ "beats": [
+  {"prompt": "The woman performs Michael Jackson's moonwalk: she glides smoothly backwards across the floor while her feet appear to walk forwards, weight on the toes, one foot sliding back at a time, body upright, arms loose at her sides. Full body visible, camera locked off. Funky bass groove music."}
+ ]
+}
