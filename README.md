@@ -191,6 +191,17 @@ stav a omezení viz `reports/phase5_ltx.md`.
 Licence: LTX-2 Community License — do $10M ročního obratu zdarma, výstupy
 patří nám, ale je nutné **označovat AI výstup**; zákaz deepfake/impersonace.
 
+### Držení identity u LTX
+
+| klíč | co dělá |
+|---|---|
+| `identity: "face"` | oživení tváře z originálu na navazovacím snímku. U LTX běží jako **samostatný prompt** (do jednoho grafu se FLUX+PuLID vedle 27GB checkpointu nevejde) — stojí ~75 s na střih. |
+| `beat_ref: "original"` | beat startuje z **původní fotky** místo z navazovacího snímku, takže drift se nekumuluje. Cena: skok do výchozí pózy na střihu (prolínačka `slices` ho schová). Oživení tváře pak není potřeba. |
+
+`soundtrack: "<popis hudby>"` složí jednu skladbu přes celé video (jeden 19s
+LTX klip jako dárce, stopa se zacyklí a namuxuje). Bez něj má každý beat
+vlastní hudbu — u víc beatů to zní jako přeskakující rádio.
+
 **Stav po A/B (31. 8. 2026, celá čísla v `reports/phase5_ltx.md`):** LTX je
 ~6× rychlejší než Wan na jednotku práce, umí zvuk a klipy do 19 s, obraz je
 ostřejší. **Identitu ale drží hůř** (0.61 hd / 0.43 draft proti Wan 0.70) a
