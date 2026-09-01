@@ -864,7 +864,7 @@ def cmd_assemble(m, upto):
                  transition=m["transition"], bands=m["bands"],
                  with_audio=m["engine"] == "ltx")
     n = nframes(dst)
-    print("  %s  %d snímků = %.2f s @ %d fps" % (dst, n, n / fps, fps))
+    print("  %s  %d snímků = %.2f s" % (dst, n, duration_s(dst)))
     if m.get("soundtrack"):
         cmd_soundtrack(m, dst)
     return dst
@@ -901,7 +901,7 @@ def cmd_smooth(m, upto):
                  xfade=(2 * k - 1) if k > 1 else 1, lengths=[2 * b["length"] - 1 for b in beats],
                  transition=m["transition"], bands=m["bands"])
     n = nframes(dst)
-    print("  %s  %d snímků = %.2f s" % (dst, n, n / 30.0))
+    print("  %s  %d snímků = %.2f s" % (dst, n, duration_s(dst)))
     if m.get("soundtrack"):
         cmd_soundtrack(m, dst)
     return dst

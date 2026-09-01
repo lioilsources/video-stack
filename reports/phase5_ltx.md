@@ -326,6 +326,20 @@ prolínačka `slices` schová. Nasazeno do obou LTX minutovek.
 Vedlejší potvrzení: s `free_models()` už časy beatů nerostou
 (245 → 190 → 190 s), zatímco 31. 8. bez něj šly 205 → 310 s.
 
+## Hudební dárce — ověřeno (1. 9. 2026)
+
+`bench_soundtrack` (2 Wan beaty + dárce): dárce 365 s, stopa `track.m4a`
+19,2 s. Kontroly: audio AAC 9,75 s, **mean −16,1 dB** (ne ticho), video po
+muxu h264 30 fps netknuté, identita Wan **0.780** (cesta beze změny).
+
+Smyčka ověřena zvlášť na minutovém videu (57,37 s): stopa **×4 → 57,36 s**,
+audio 57,34 s, −16,0 dB. Tedy jedna skladba přes celou minutu.
+
+Vedlejší nález: `cmd_assemble`/`cmd_smooth` tiskly délku jako
+`snímky / m["fps"]`, jenže `concat()` posílá ven 30 fps kvůli iOS — výpis
+u 16fps manifestu tvrdil 18,31 s místo skutečných 9,77 s. Opraveno na
+`duration_s()`; video bylo vždy správně, lhal jen výpis.
+
 ## Co zbývá změřit (až bude čas)
 
 - Oživení tváře jako samostatný prompt po LTX — sníží drift na použitelnou
