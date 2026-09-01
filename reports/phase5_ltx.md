@@ -294,6 +294,38 @@ z appky proto zbývá ověřit: souvislá stopa přes celé video, švy smyčky,
 video stream po muxu netknutý, identita Wan ~0.63. Spustit až bude ComfyUI
 zpět: `python3 chain.py chains/bench_soundtrack.json --all` (+ face_drift).
 
+## Ztráta identity v dalších beatech — příčina a fix (1. 9. 2026)
+
+Uživatel hlásil, že „identity driftují do nepoznání". A/B na **4 beatech**
+(hd 704×1408, 121 sn) měřené `face_drift --video` přes celé klipy:
+
+| beat | handoff + oživení tváře | `beat_ref: "original"` |
+|---|---|---|
+| 01 | 0.646 | 0.646 |
+| 02 | 0.576 | 0.629 |
+| 03 | 0.376 | **0.848** |
+| 04 | **−0.007** | **0.531** |
+| **průměr** | **0.398** | **0.664** |
+
+**Příčina není drift rysů, ale ztráta orientace.** Beat 03 měl prompt „otočí
+se od kamery a zpět" — postava se otočila a nevrátila. Navazovací snímek byl
+tedy záda, oživení tváře na něm nemělo co dělat (ArcFace hlásí „tvář
+nenalezena") a **každý další beat startoval zády** → 0.003 / −0.007. Řetěz
+se nemá jak vzpamatovat, protože jediná vazba na originál byl obličej.
+
+**Fix — `beat_ref: "original"`:** beat startuje z původní fotky, ne
+z navazovacího snímku. Startovní podobnost je pak **0.97 u každého beatu**
+(u handoffu klesá 0.97 → 0.84 → 0.70 → −0.01), drift se nekumuluje a jedna
+zvrtnutá pozice nezničí zbytek videa. Stejný princip jako `control_ref:
+"original"` u Wan VACE. Bonus: oživení tváře odpadá → beat 145 s místo
+190–245 s + 75 s.
+
+Cena: na střihu postava skočí do výchozí pózy — u tance na místě to
+prolínačka `slices` schová. Nasazeno do obou LTX minutovek.
+
+Vedlejší potvrzení: s `free_models()` už časy beatů nerostou
+(245 → 190 → 190 s), zatímco 31. 8. bez něj šly 205 → 310 s.
+
 ## Co zbývá změřit (až bude čas)
 
 - Oživení tváře jako samostatný prompt po LTX — sníží drift na použitelnou
