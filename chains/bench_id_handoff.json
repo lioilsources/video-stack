@@ -1,0 +1,26 @@
+{
+ "engine": "ltx",
+ "source": "leather_shorts_src.png",
+ "width": 704,
+ "height": 1408,
+ "length": 121,
+ "fps": 25,
+ "transition": "slices",
+ "crossfade": 6,
+ "beats": [
+  {
+   "prompt": "she sways her hips gently side to side, arms loose and relaxed, feet in place"
+  },
+  {
+   "prompt": "she raises both arms above her head as her hips sway, head tilting once to each side"
+  },
+  {
+   "prompt": "she turns halfway away from the camera and back again in one smooth motion"
+  },
+  {
+   "prompt": "she lowers her arms slowly while rolling her shoulders back, hips still swaying"
+  }
+ ],
+ "name": "bench_id_handoff",
+ "identity": "face"
+}

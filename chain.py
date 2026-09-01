@@ -132,7 +132,7 @@ def load_dict(m):
             b.setdefault("negative", s.get("negative", m["negative"]))
             # tempo se ladí po beatech: délka a knoby pohybu dědí beat ← scéna ← kořen
             for k in ("length", "motion", "boundary", "shift", "sharpen", "identity", "face_denoise",
-                      "control_ref", "control_model"):
+                      "control_ref", "control_model", "beat_ref"):
                 if k in s or k in m:
                     b.setdefault(k, s.get(k, m.get(k)))
             b.setdefault("length", 121 if ltx else 81)
@@ -277,7 +277,14 @@ def build(m, beat, idx, seed_img, orig_img, w, h):
     # boty i místnost se v každém klipu vrátí k originálu (A/B na gangnamu: VACE
     # + originál tvář 0.66 a nejvěrnější tělo; fun_control + handoff 0.53 a bosá).
     # "handoff" = navazovací snímek: kontinuita, ale každý klip zdědí drift.
-    g["10"]["inputs"]["image"] = orig_img if (control and (beat.get("control_ref") or "original") == "original") else seed_img
+    # Vstupní snímek beatu. Default je navazovací snímek předchozího beatu —
+    # plynulá návaznost, ale beat dědí i jeho drift. `beat_ref: "original"`
+    # startuje každý beat z PŮVODNÍ fotky: identita se nekumuluje, za cenu
+    # skoku do výchozí pózy (u tance na místě to prolínačka schová). Totéž
+    # dělá u Wan control beatů `control_ref: "original"` přes VACE reference.
+    from_original = (control and (beat.get("control_ref") or "original") == "original") \
+        or beat.get("beat_ref") == "original"
+    g["10"]["inputs"]["image"] = orig_img if from_original else seed_img
     g["12"]["inputs"].update(width=w, height=h, length=L)
     if g["12"]["class_type"] == "WanVaceToVideo" and "50" in g:
         # VACE I2V báze: control_video = [navazovací snímek, šedé×(L−1)], masky [0, 1×(L−1)];
@@ -514,7 +521,7 @@ def beat_hash(m, b, w, h):
            m["engine"], m["fps"],
            m["base"], b.get("motion"), b.get("boundary"), b.get("shift"), b.get("sharpen"),
            b.get("identity"), b.get("face_denoise"), m["colormatch"], b.get("control"),
-           b.get("control_ref"), b.get("control_model"),
+           b.get("control_ref"), b.get("control_model"), b.get("beat_ref"),
            os.path.getmtime(pose_path(b["control"])) if b.get("control") else None)
     return hashlib.sha1(json.dumps(key, sort_keys=True).encode()).hexdigest()[:12]
 
@@ -654,7 +661,9 @@ def cmd_render(m, src, w, h, start, stop, hd):
         print("     %s  →  %s" % (os.path.basename(outfile(outputs, "16", ".webm")),
                                   os.path.basename(nxt)))
         # LTX: oživení tváře až teď, druhým promptem (do jednoho grafu se nevejde)
-        if m["engine"] == "ltx" and b.get("identity") == "face" and i + 1 < len(beats):
+        # beat_ref: original → další beat handoff ignoruje, oživovat ho je jen ztráta času
+        if (m["engine"] == "ltx" and b.get("identity") == "face"
+                and b.get("beat_ref") != "original" and i + 1 < len(beats)):
             staged = "%s_pre%02d.png" % (name, i + 1)
             shutil.copy(nxt, os.path.join(IN, staged))
             rg = refresh_prompt(b, staged, orig, "%s/face%02d" % (name, i + 1))
