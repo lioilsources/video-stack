@@ -25,15 +25,15 @@
       "beats": [
         {
           "length": 81,
-          "prompt": "she breathes gently, chest rising once, then blinks slowly and opens her eyes again, and ends perfectly still"
+          "prompt": "the dancer breathes gently, chest rising once, then blinks slowly and opens their eyes again, and ends perfectly still"
         },
         {
           "length": 65,
-          "prompt": "a warm smile slowly spreads across her face with a small tilt of the head, and she ends holding the smile"
+          "prompt": "a warm smile slowly spreads across their face with a small tilt of the head, and the dancer ends holding the smile"
         },
         {
           "length": 81,
-          "prompt": "she starts to sway her hips gently side to side, arms loose and relaxed, feet in place, and ends mid-sway with weight centered"
+          "prompt": "the dancer starts to sway their hips gently side to side, arms loose and relaxed, feet in place, and ends mid-sway with weight centered"
         }
       ]
     },
@@ -45,27 +45,27 @@
       "beats": [
         {
           "length": 65,
-          "prompt": "she steps to one side and shifts her weight onto that leg while both arms rise to shoulder height, and ends there"
+          "prompt": "the dancer steps to one side and shifts their weight onto that leg while both arms rise to shoulder height, and ends there"
         },
         {
           "length": 81,
-          "prompt": "she turns halfway away from the camera and back again in one smooth motion, hair swinging with the turn, and ends facing the camera"
+          "prompt": "the dancer turns halfway away from the camera and back again in one smooth motion, hair swinging with the turn, and ends facing the camera"
         },
         {
           "length": 65,
-          "prompt": "she raises both arms above her head as her hips sway, head tilting once to each side, and ends with arms up"
+          "prompt": "the dancer raises both arms above their head as their hips sway, head tilting once to each side, and ends with arms up"
         },
         {
           "length": 81,
-          "prompt": "she lowers her arms slowly while rolling her shoulders back, hips still swaying, and ends with hands on her hips"
+          "prompt": "the dancer lowers their arms slowly while rolling their shoulders back, hips still swaying, and ends with hands on their hips"
         },
         {
           "length": 65,
-          "prompt": "she steps to the other side, weight shifting, one arm sweeping across her body, and ends with that arm extended"
+          "prompt": "the dancer steps to the other side, weight shifting, one arm sweeping across their body, and ends with that arm extended"
         },
         {
           "length": 81,
-          "prompt": "she spins once on the spot, hair swinging, and ends facing the camera with arms relaxed at her sides"
+          "prompt": "the dancer spins once on the spot, hair swinging, and ends facing the camera with arms relaxed at their sides"
         }
       ]
     },
@@ -76,15 +76,15 @@
       "beats": [
         {
           "length": 81,
-          "prompt": "the sway slows to a stop, she exhales and lets her shoulders drop, and ends standing still"
+          "prompt": "the sway slows to a stop, the dancer exhales and lets their shoulders drop, and ends standing still"
         },
         {
           "length": 65,
-          "prompt": "she tucks a loose strand of hair behind her ear and looks at the camera, a smile forming, and holds"
+          "prompt": "the dancer tucks a loose strand of hair behind their ear and looks at the camera, a smile forming, and holds"
         },
         {
           "length": 81,
-          "prompt": "she laughs softly, eyes creasing, then settles into a warm steady gaze at the camera and stays still"
+          "prompt": "the dancer laughs softly, eyes creasing, then settles into a warm steady gaze at the camera and stays still"
         }
       ]
     }

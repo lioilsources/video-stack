@@ -24,15 +24,15 @@
       "beats": [
         {
           "length": 65,
-          "prompt": "she looks straight into the camera as her head tilts slightly to one side, a faint smile forming, and ends holding the look"
+          "prompt": "the person looks straight into the camera as their head tilts slightly to one side, a faint smile forming, and ends holding the look"
         },
         {
           "length": 49,
-          "prompt": "she winks one eye with a playful smile, eyebrow lifting, then opens the eye again and holds the smile"
+          "prompt": "the person winks one eye with a playful smile, eyebrow lifting, then opens the eye again and holds the smile"
         },
         {
           "length": 81,
-          "prompt": "she laughs softly, eyes creasing and shoulders dropping as she relaxes, then the laugh fades into a warm steady gaze at the camera"
+          "prompt": "the person laughs softly, eyes creasing and shoulders dropping as the person relaxes, then the laugh fades into a warm steady gaze at the camera"
         }
       ]
     }

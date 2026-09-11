@@ -26,15 +26,15 @@
       "beats": [
         {
           "length": 81,
-          "prompt": "she stands tall and slowly raises her chin, one arm curving up in front of her, and ends with the arm held high"
+          "prompt": "the dancer stands tall and slowly raises their chin, one arm curving up in front of them, and ends with the arm held high"
         },
         {
           "length": 65,
-          "prompt": "she draws a slow circle with her wrist above her head while her other hand rests on her hip, and ends with both hands on her hips"
+          "prompt": "the dancer draws a slow circle with their wrist above their head while their other hand rests on their hip, and ends with both hands on their hips"
         },
         {
           "length": 49,
-          "prompt": "she stomps her heels on the floor three times, arching her back with each stomp, and ends with her chin raised"
+          "prompt": "the dancer stomps their heels on the floor three times, arching them back with each stomp, and ends with their chin raised"
         }
       ]
     },
@@ -46,27 +46,27 @@
       "beats": [
         {
           "length": 81,
-          "prompt": "she slowly raises both arms overhead, wrists twisting in circular flamenco wrist-work, and ends with arms high"
+          "prompt": "the dancer slowly raises both arms overhead, wrists twisting in circular flamenco wrist-work, and ends with arms high"
         },
         {
           "length": 49,
-          "prompt": "she claps her hands sharply above her head once and snaps her face toward the camera, then holds"
+          "prompt": "the dancer claps their hands sharply above their head once and snaps their face toward the camera, then holds"
         },
         {
           "length": 81,
-          "prompt": "she spins once, her skirt flaring out in a wide arc around her legs, and ends facing the camera as the skirt settles"
+          "prompt": "the dancer spins once, their skirt flaring out in a wide arc around their legs, and ends facing the camera as the skirt settles"
         },
         {
           "length": 65,
-          "prompt": "she steps forward with a sharp heel strike and sweeps one arm across her body, and ends with the arm extended to the side"
+          "prompt": "the dancer steps forward with a sharp heel strike and sweeps one arm across their body, and ends with the arm extended to the side"
         },
         {
           "length": 49,
-          "prompt": "she stomps twice more, faster, with her hands framing her face, and ends still with her hands raised"
+          "prompt": "the dancer stomps twice more, faster, with their hands framing their face, and ends still with their hands raised"
         },
         {
           "length": 81,
-          "prompt": "she spins in the other direction, skirt flaring, and ends facing the camera with one hand on her hip"
+          "prompt": "the dancer spins in the other direction, skirt flaring, and ends facing the camera with one hand on their hip"
         }
       ]
     },
@@ -78,15 +78,15 @@
       "beats": [
         {
           "length": 65,
-          "prompt": "she slowly lowers both arms in a wide arc down to her sides, and ends with palms resting on her thighs"
+          "prompt": "the dancer slowly lowers both arms in a wide arc down to their sides, and ends with palms resting on their thighs"
         },
         {
           "length": 49,
-          "prompt": "she strikes a proud final stance, one hand on her hip and head tilted back, and holds it perfectly still"
+          "prompt": "the dancer strikes a proud final stance, one hand on their hip and head tilted back, and holds it perfectly still"
         },
         {
           "length": 81,
-          "prompt": "she relaxes the pose, breathes out and smiles at the camera, and ends standing still"
+          "prompt": "the dancer relaxes the pose, breathes out and smiles at the camera, and ends standing still"
         }
       ]
     }

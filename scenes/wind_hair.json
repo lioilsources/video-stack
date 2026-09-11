@@ -24,15 +24,15 @@
       "beats": [
         {
           "length": 81,
-          "prompt": "a light breeze slowly lifts her hair and lets it drift across her face and shoulders, she blinks softly, and the hair settles again as the breeze fades"
+          "prompt": "a light breeze slowly lifts their hair and lets it drift across their face and shoulders, the person blinks softly, and the hair settles again as the breeze fades"
         },
         {
           "length": 65,
-          "prompt": "she raises one hand, tucks a loose strand of hair behind her ear, then lowers the hand back to her side and stands still"
+          "prompt": "the person raises one hand, tucks a loose strand of hair behind their ear, then lowers the hand back to their side and stands still"
         },
         {
           "length": 81,
-          "prompt": "she turns her head to look over her shoulder, hair swinging with the turn, then turns back to the camera and ends with a soft smile"
+          "prompt": "the person turns their head to look over their shoulder, hair swinging with the turn, then turns back to the camera and ends with a soft smile"
         }
       ]
     }

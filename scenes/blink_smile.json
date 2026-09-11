@@ -24,15 +24,15 @@
       "beats": [
         {
           "length": 81,
-          "prompt": "she breathes gently, chest rising once, then blinks slowly and opens her eyes again, loose strands of hair settling near her cheek, and ends perfectly still"
+          "prompt": "the person breathes gently, chest rising once, then blinks slowly and opens their eyes again, loose strands of hair settling near their cheek, and ends perfectly still"
         },
         {
           "length": 81,
-          "prompt": "a warm smile slowly spreads across her face over the whole shot, lips parting slightly with a small tilt of the head, and she ends holding the smile"
+          "prompt": "a warm smile slowly spreads across their face over the whole shot, lips parting slightly with a small tilt of the head, and the person ends holding the smile"
         },
         {
           "length": 65,
-          "prompt": "she glances to the side, then back to the camera, chin lifting a little, and ends resting in a calm direct gaze"
+          "prompt": "the person glances to the side, then back to the camera, chin lifting a little, and ends resting in a calm direct gaze"
         }
       ]
     }
