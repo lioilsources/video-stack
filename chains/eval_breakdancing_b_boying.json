@@ -1,9 +1,8 @@
 {
-  "id": "breakdancing_b_boying",
-  "label": "Tanec · Breakdance",
-  "label_en": "Dance · Breakdance",
-  "desc": "Toprock, přechod k zemi, flair podle kostry z Mixama, freeze na jedné ruce.",
-  "desc_en": "Toprock, a drop to the floor, a flair driven by a Mixamo skeleton, a one-handed freeze.",
+  "name": "eval_breakdancing_b_boying",
+  "source": "leather_shorts_src.png",
+  "seed": 42,
+  "_ucel": "breakdance preset s flairem (control, zoom 1.5), konec na freeze — finální podoba presetu na referenci",
   "length": 81,
   "fps": 16,
   "crf": 18,

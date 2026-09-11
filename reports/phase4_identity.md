@@ -232,3 +232,89 @@ tedy ~+25–40 s na beat v ustáleném stavu. Kdyby to bolelo, knob `face_every`
 
 Pozn.: při přepisu se omylem smazala drop_page_cache (NameError v submit,
 serve by padal na AttributeError) — vrácena; commit 8652708.
+
+## Flair z Mixamo FBX: klouby místo odhadu pózy (2026-09-11)
+
+Otevřený bod z moonwalku („render z Blenderu zepředu by byl přesnější")
+dotažený přes FBX z Mixama („With Skin", postava Beta, 60 snímků @ 30 fps,
+smyčka na místě). Flair je přitom první pohyb po zemi: boky 0.35–0.75 m nad
+podlahou, nohy v rozpětí 2 m.
+
+První pokus šel starou cestou — render zepředu v Blenderu (Workbench, ortho
+kamera) → `drive.py pose` (Sapiens2), tempo 0.65×. **Kostra nepoužitelná:**
+23 z 81 snímků úplně prázdných, dalších 11 slabých, zbytek v úlomcích (průměrný
+jas nad černou: medián 0.29, robot 2.82, moonwalk 3.19). Odhad pózy je naučený
+na lidech hlavou nahoru; tělo vodorovně s nohama nad hlavou nepozná.
+
+Z FBX ale odhad pózy potřeba není — klouby jsou v každém snímku přesně.
+`tools/mixamo_pose.py` (Blender) je promítne ortho kamerou zepředu do bodů
+OpenPose (tělo 18, chodidla 6, ruce 2×21) a `drive.py draw` je na SPARKu
+nakreslí **tímtéž kresličem**, na který Sapiens2DrawPose deleguje OpenPose
+formát (`comfy_extras.nodes_sdpose.SDPoseDrawKeypoints`, stick_width 3,
+threshold 0.3) — barvy a tloušťky jsou shodné s ostatními kostrami. Výsledek
+81/81 snímků bez výpadku (jas min 1.29, medián 1.59 — míň než u stojících
+postav, protože postava zabírá jen 40 % výšky: rozpětí nohou limituje šířka
+portrétu). Překryv s renderem postavy sedí na kloubech i hlavou dolů.
+`spark-video drive flair Flair.fbx --loop --speed 0.65` trvá 16 s.
+
+Co Mixamo nemá, se dopočítá: nos, oči a uši z kosti hlavy (Head →
+HeadTop_End) v poměrech její délky, palec, malík a pata z chodidla. Body
+obličeje mají skóre 0, když míří od kamery — OpenPose kostra zezadu nemá nos
+ani oči a podle toho model pozná otočení zády. Tempo a smyčka se vzorkují
+přímo z animace (sub-snímky), ne zpomalením hotového videa.
+
+Moonwalk z FBX (`Moonwalk.fbx`, stažený 29. 8.) tudy zatím nejde: animace má
+kořenový posun dozadu, 1 m za 32 snímků. Zepředu v ortho kameře ho není vidět
+a `--loop` by postavu každou sekundu vrátil na start. Nahrávka zůstává.
+
+**Control beat na referenci** (`chains/flair_ctl.json`: přípravný beat „dřep,
+ruce na zem" → flair podle kostry; `leather_shorts_src.png`, seed 42). Pohyb
+kostru kopíruje — opora na rukou, nohy v širokých obloucích, fáze sedí snímek
+po snímku. Pro srovnání: dva joby breakdance scény z appky (text) místo
+backspinu ukázaly ležení na zádech s nohama nahoře.
+
+Velikost postavy v kostře ale řídí záběr — model ho oddálí nebo přiblíží podle
+ní:
+
+| kostra | postava v kostře | místnost v control beatu | tvář na handoffu beatu 1 |
+|---|---|---|---|
+| zoom 1.0 | 40 % výšky | oddálená: betonový strop s trámy, jiná místnost | 0.775 |
+| **zoom 1.5** | 60 % (krajní polohy 0.56 m za rámem) | **místnost z fotky** — béžové stěny, dřevěné dveře, okno s palmami | 0.794 |
+
+Kostra `flair` je proto se `--zoom 1.5`: nohy občas vyjedou k okraji, ale na
+střihu není skok do jiné místnosti. Podpatky se ztratí v obou variantách.
+Control beat 300–343 s (fronta sdílená s jinými joby).
+
+Tvář **uvnitř** flairu ArcFace nečte (`face_drift.py --video`, 12 snímků:
+nalezena v 6, průměr 0.06 / 0.04 — malá, hlavou dolů, rozmazaná) a na
+posledním snímku ji nenajde ani oživení tváře (`seed02: tvář nenalezena`).
+Beat po flairu tedy startuje bez opravy identity. Ve scéně
+`breakdancing_b_boying` to jsou freeze a sed s pohledem do kamery — ověřuje
+`chains/eval_breakdancing_b_boying.json`.
+
+**Celá scéna** (`eval_breakdancing_b_boying`, ještě s kostrou zoom 1.0;
+toprock → dřep, ruce na zem → flair → freeze → sed s pohledem do kamery;
+34 min včetně RIFE). Flair i tady kopíruje kostru, freeze model udělal jako
+stojku u zdi. Handoffy 0.746 / 0.422 / — / — / 0.748: po flairu a po stojce
+tvář není, oživení nemá co opravit. Uvnitř závěrečného beatu, kde se postava
+dívá do kamery:
+
+| snímek | výška tváře | det | podobnost k fotce |
+|---|---|---|---|
+| začátek klipu, t 0.5 s | 100 px | 0.86 | 0.589 |
+| závěr, t 18.6 / 19.5 / 20.4 s | 60 / 75 / 82 px | 0.86 | −0.02 / 0.05 / 0.10 |
+| kontrola: snímek z t 0.5 s zmenšený na tvář 70 / 55 / 45 / 35 px | 73 / 55 / 45 / 34 px | 0.79–0.85 | 0.588 / 0.569 / 0.560 / 0.427 |
+
+Kontrola vylučuje, že nízké číslo dělá malá tvář: tatáž osoba zmenšená na
+45 px drží 0.56, závěr má tvář větší a podobnost ~0.05. **Po dvou beatech bez
+tváře si ji model v závěru vymyslí** — podobný typ, jiný člověk. Scéna proto
+končí freezem (u breakdance setu klasický konec): toprock → přechod k zemi →
+flair → freeze. Kdyby se pohled do kamery měl vrátit, jde to posledním beatem
+s `beat_ref: "original"` — start z fotky, za cenu skoku z podlahy do výchozí
+pózy.
+
+**Finální podoba** (`eval_breakdancing_b_boying`, kostra zoom 1.5, 4 beaty,
+16.1 s, 14 min včetně RIFE): toprock a přechod k zemi v místnosti z fotky
+(handoff 0.774 / 0.486), flair ve stejné místnosti s větší postavou než při
+zoomu 1.0, freeze jako stojka u zdi. Po flairu už scéna žádnou tvář
+neukazuje, takže není kde se objevit vymyšlené.

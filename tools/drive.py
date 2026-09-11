@@ -2,7 +2,8 @@
 """drive.py — řídicí klipy pro control beaty (pohyb z kostry místo z textu).
 
     ./tools/drive.py t2v  <id> "<prompt>" [--seed 42] [--length 81]   # Wan T2V → drive/src/<id>.webm
-    ./tools/drive.py pose <id> [--src cesta] [--start 0] [--length 81] # DWPose kostra → drive/<id>_pose.webm
+    ./tools/drive.py pose <id> [--src cesta] [--start 0] [--length 81] # odhad pózy z klipu → drive/<id>_pose.webm
+    ./tools/drive.py draw <id> [--src drive/src/<id>.json]            # body z Mixamo FBX → drive/<id>_pose.webm
 
 Do repa jde jen kostra (černé pozadí, pár set kB); zdrojový klip zůstává v
 drive/src/ (gitignore). Jede na SPARKu přes ComfyUI jako chain.py (stejný
@@ -117,6 +118,33 @@ def pose(a):
               % (os.path.getsize(dst) // 1000, "Sapiens2 (bez --dwpose)" if a.dwpose else "--dwpose"))
 
 
+def draw(a):
+    """Body z tools/mixamo_pose.py → kostra bez odhadu pózy.
+
+    Odhad pózy je naučený na lidech hlavou nahoru — na flairu vrátil Sapiens2
+    23 z 81 snímků prázdných. Z FBX jsou klouby přesné, takže se jen nakreslí,
+    a to tímtéž kresličem ComfyUI, na který Sapiens2DrawPose v pose() deleguje
+    OpenPose formát: control beat dostane stejné barvy a tloušťky jako dosud."""
+    import json
+    src = a.src or os.path.join(DRIVE, "src", a.id + ".json")
+    if not os.path.exists(src):
+        chain.die("body %s neexistují (Mixamo FBX: tools/mixamo_pose.py v Blenderu)" % src)
+    frames = json.load(open(src))["frames"]
+    sys.path.insert(0, chain.COMFY)
+    from comfy_extras.nodes_sdpose import SDPoseDrawKeypoints
+    # parametry = Sapiens2DrawPose v pose(): draw_skeleton → tělo i ruce, draw_points → chodidla
+    img = SDPoseDrawKeypoints.execute(frames, draw_body=True, draw_hands=True, draw_face=False, draw_feet=True,
+                                      stick_width=3, face_point_size=3, score_threshold=0.3).args[0]
+    rgb = (img.clamp(0, 1) * 255).round().byte().cpu().numpy()
+    n, h, w, _ = rgb.shape
+    dst = os.path.join(DRIVE, a.id + "_pose.webm")
+    # vp9 crf 10 @ 16 fps jako SaveWEBM v pose()
+    subprocess.run(["ffmpeg", "-y", "-v", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", "%dx%d" % (w, h),
+                    "-r", "16", "-i", "-", "-c:v", "libvpx-vp9", "-crf", "10", "-b:v", "0", "-pix_fmt", "yuv420p",
+                    dst], input=rgb.tobytes(), check=True)
+    print("  %s  (%d snímků @ 16 fps, nakresleno z kloubů)" % (os.path.relpath(dst, HERE), nframes(dst)))
+
+
 def skeleton_visible(png):
     from PIL import Image
     import numpy as np
@@ -143,5 +171,7 @@ if __name__ == "__main__":
     p.add_argument("--dwpose", action="store_true", help="DWPose místo Sapiens2 (rychlejší, ale stylizované postavy nečte)")
     p.add_argument("--speed", type=float, default=1.0,
                    help="tempo pohybu: 0.5 = poloviční (míň rozmazání), 1 = původní")
+    p = sub.add_parser("draw"); p.add_argument("id")  # noqa: E702
+    p.add_argument("--src", help="JSON z tools/mixamo_pose.py (default drive/src/<id>.json)")
     a = ap.parse_args()
-    {"t2v": t2v, "pose": pose}[a.cmd](a)
+    {"t2v": t2v, "pose": pose, "draw": draw}[a.cmd](a)
