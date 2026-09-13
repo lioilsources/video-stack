@@ -1,0 +1,42 @@
+{
+  "name": "eval_samba",
+  "source": "leather_shorts_src.png",
+  "seed": 42,
+  "_ucel": "samba s kostrou --fill 0.9 (pohyb do stran 0.73 m za rámem) — drží se tanečnice v záběru?",
+  "length": 81,
+  "fps": 16,
+  "crf": 18,
+  "transition": "slices",
+  "crossfade": 6,
+  "bands": 12,
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "scenes": [
+    {
+      "name": "samba",
+      "boundary": 3,
+      "beats": [
+        {
+          "control": "samba",
+          "prompt": "the dancer dances samba with quick bouncing steps, arms opening wide to the sides, hips swaying and the body turning from side to side, same clothes and room"
+        },
+        {
+          "control": "samba",
+          "prompt": "the dancer dances samba with quick bouncing steps, arms opening wide to the sides, hips swaying and the body turning from side to side, same clothes and room"
+        },
+        {
+          "control": "samba",
+          "prompt": "the dancer dances samba with quick bouncing steps, arms opening wide to the sides, hips swaying and the body turning from side to side, same clothes and room"
+        },
+        {
+          "control": "samba",
+          "prompt": "the dancer dances samba with quick bouncing steps, arms opening wide to the sides, hips swaying and the body turning from side to side, same clothes and room"
+        }
+      ]
+    }
+  ]
+}

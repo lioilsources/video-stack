@@ -1,0 +1,39 @@
+{
+  "id": "twerk",
+  "label": "Tanec · Twerk",
+  "label_en": "Dance · Twerk",
+  "desc": "Široký podřep s rukama na stehnech, rytmické pohupování boky, na konci drží pózu.",
+  "desc_en": "A wide low squat with hands on the thighs, rhythmic hip bounces, holding the pose at the end.",
+  "length": 81,
+  "fps": 16,
+  "crf": 18,
+  "transition": "slices",
+  "crossfade": 6,
+  "bands": 12,
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "scenes": [
+    {
+      "name": "twerk",
+      "boundary": 3,
+      "beats": [
+        {
+          "control": "twerk",
+          "prompt": "the dancer twerks in a wide low squat with the hands on the thighs, bouncing the hips in rhythm, same clothes and room"
+        },
+        {
+          "control": "twerk",
+          "prompt": "the dancer twerks in a wide low squat with the hands on the thighs, bouncing the hips in rhythm, same clothes and room"
+        },
+        {
+          "control": "twerk",
+          "prompt": "the dancer twerks in a wide low squat with the hands on the thighs, bouncing the hips in rhythm, same clothes and room"
+        }
+      ]
+    }
+  ]
+}

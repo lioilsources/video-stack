@@ -140,10 +140,19 @@ Množství pohybu řídí *high-noise expert*. Volitelné klíče, dědí se
 | `transition` | `fade` | střih mezi beaty: `cut` (tvrdý), `fade` (prolínačka), `slices` (pásová přejížďka — liché pásy nový obraz zleva, sudé zprava; krátký, čitelný střih jako záměr). |
 | `crossfade` | 1 | délka střihu ve snímcích (1 = tvrdý). Presety: `slices` + 6 (0,375 s). Skok na střihu má i tvrdý střih bez oživení — je to re-encode navazovacího snímku a reset pohybu (`tools/seam_pop.py`). |
 | `bands` | 12 | počet pásů u `slices`. |
-| `control` | – | per beat: `"<id>"` = pohyb z kostry `drive/<id>_pose.webm` (Wan VACE), vzhled z **úvodní fotky** (`control_ref: original`; `handoff` = navazovací snímek). `control_model: fun` přepne na fun_control (rychlejší, slabší kotva vzhledu). Pro pohyby, které Wan z textu neumí (moonwalk, flair). Kostru vyrobí `spark-video drive <id> <zdroj> [--loop] [--speed 0.65]`: z videa (vlastní natočení, stock) odhadem pózy Sapiens2 (`tools/drive.py pose`), z **Mixamo FBX** („With Skin“) přímo z kloubů animace (`tools/mixamo_pose.py` v Blenderu → `tools/drive.py draw`) — kamera přesně zepředu, žádný snímek nevypadne ani hlavou dolů. Jen kostra jde do repa. |
+| `control` | – | per beat: `"<id>"` = pohyb z kostry `drive/<id>_pose.webm` (Wan VACE), vzhled z **úvodní fotky** (`control_ref: original`; `handoff` = navazovací snímek). `control_model: fun` přepne na fun_control (rychlejší, slabší kotva vzhledu). Pro pohyby, které Wan z textu neumí (moonwalk, flair). Kostru vyrobí `spark-video drive <id> <zdroj> [--loop] [--speed 0.65]`: z videa (vlastní natočení, stock) odhadem pózy Sapiens2 (`tools/drive.py pose`), z **Mixamo FBX** („With Skin“) přímo z kloubů animace (`tools/mixamo_pose.py` v Blenderu → `tools/drive.py draw`) — kamera přesně zepředu, žádný snímek nevypadne ani hlavou dolů; smyčka, která není na místě, má posun do strany rozpuštěný přes cyklus, ať šev neposkočí. Jen kostra jde do repa. |
+| `control_start` | auto | snímek kostry, od kterého beat čte. Beat se **stejnou kostrou jako předchozí** pokračuje, kde ten skončil (start + délka − `crossfade`, ať pásová přejížďka míchá tentýž okamžik pohybu), jinak 0. Celý tanec = jedna kostra na všechny beaty: `spark-video drive salsa Salsa.fbx --loop --speed 0.65 --fill 0.9 --length 306` a 4 beaty po 81 s `"control": "salsa"` (81 + 3 × 75 = 306). Kratší kostra než poslední beat shodí manifest při načtení. |
 | `sharpen` | 0 | doostření navazovacího snímku (0–1). Navazovací snímek je VAE-dekódovaný, tedy měkčí, a další beat z něj startuje — měkkost se sčítá. |
 
-Presety v `scenes/` mají taneční scény `boundary 3` + `motion 0.8`, klidné `shift 7`.
+Presety v `scenes/` mají textové taneční scény (ikony) `boundary 3` + `motion 0.8`, klidné `shift 7`.
+Tance z Mixama (`salsa`, `samba`, … ) jsou celé z kostry: jedna kostra, 4 beaty
+po 81 snímcích (twerk 3 — animace není smyčka, konec drží poslední pózu), bez
+`identity` — každý control beat bere vzhled z úvodní fotky, takže oživení tváře
+na navazovacím snímku nemá komu posloužit. Délka beatu je dána stropem Wanu,
+ne identitou: drift se mezi control beaty nesčítá. Identitu uvnitř control beatu
+ale drží **velikost postavy v kostře** — model podle ní rámuje, a menší postava
+= menší tvář. Kostry tanců jsou proto `--fill 0.9` (postava ve stoje na 90 %
+výšky, střed na pohybu boků), ne z obálky pohybu; čísla v `reports/phase4_identity.md`.
 
 Identita tváře: `tools/face_drift.py <jméno>` změří ArcFace podobnost každého
 navazovacího snímku k originálu (1.0 = táž tvář, < 0.4 = jiný člověk); u 3 klidných

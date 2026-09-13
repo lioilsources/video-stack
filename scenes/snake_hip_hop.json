@@ -1,0 +1,43 @@
+{
+  "id": "snake_hip_hop",
+  "label": "Tanec · Hip hop vlna",
+  "label_en": "Dance · Snake Hip Hop",
+  "desc": "Hip hop s vlnou těla: předklon s rukama na kolenou, vlna vzhůru a ruka přes hlavu.",
+  "desc_en": "Hip hop with body waves: bending forward with the hands on the knees, rolling up, an arm sweeping overhead.",
+  "length": 81,
+  "fps": 16,
+  "crf": 18,
+  "transition": "slices",
+  "crossfade": 6,
+  "bands": 12,
+  "style_tail": ", static camera, cinematic studio lighting, photorealistic, one continuous dance movement at a steady moderate tempo, highly detailed",
+  "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, bad anatomy, extra limbs",
+  "colormatch": {
+    "method": "mkl",
+    "strength": 0.6
+  },
+  "scenes": [
+    {
+      "name": "snake_hip_hop",
+      "boundary": 3,
+      "beats": [
+        {
+          "control": "snake_hip_hop",
+          "prompt": "the dancer dances hip hop with body waves, bending forward with the hands on the knees, rolling up through the body and sweeping one arm overhead, same clothes and room"
+        },
+        {
+          "control": "snake_hip_hop",
+          "prompt": "the dancer dances hip hop with body waves, bending forward with the hands on the knees, rolling up through the body and sweeping one arm overhead, same clothes and room"
+        },
+        {
+          "control": "snake_hip_hop",
+          "prompt": "the dancer dances hip hop with body waves, bending forward with the hands on the knees, rolling up through the body and sweeping one arm overhead, same clothes and room"
+        },
+        {
+          "control": "snake_hip_hop",
+          "prompt": "the dancer dances hip hop with body waves, bending forward with the hands on the knees, rolling up through the body and sweeping one arm overhead, same clothes and room"
+        }
+      ]
+    }
+  ]
+}

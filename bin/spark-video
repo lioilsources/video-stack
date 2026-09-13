@@ -7,7 +7,7 @@
 #   spark-video run  <jméno> [--hd] [--from X] [--until X] [--resume]
 #                                                    # render + slepení + RIFE, stáhne výsledek
 #   spark-video ls                                   # co už je hotové
-#   spark-video drive <id> <klip.mp4|animace.fbx> [--start s] [--loop] [--speed 0.65]  # kostra
+#   spark-video drive <id> <klip.mp4|animace.fbx> [--start s] [--loop] [--speed 0.65] [--length N]  # kostra
 #
 # --scenes N   kostra N scén × 5 beatů s prázdnými prompty (bez toho 3-beatová ukázka)
 # --from X     od beatu / scény X dál (vše za ní se přegeneruje)
@@ -15,6 +15,8 @@
 # --resume     pokračuj od prvního nehotového beatu (po pádu, nebo po --until)
 # drive        klip (vlastní natočení, stock) → odhad pózy na SPARKu; Mixamo FBX → klouby přímo
 #              z animace (Blender tady, BLENDER=…); kostra do drive/, v beatu pak "control": "<id>"
+#              --length N  snímků kostry @ 16 fps (default 81); celý tanec přes víc beatů = víc snímků
+#              --fill 0.9  (FBX) postava ve stoje na 90 % výšky — velikost tváře, tedy identita
 #
 # Manifesty:  <repo>/chains/<jméno>.json      — verzované, čte je i chain.py
 # Výsledky:   <repo>/out/<jméno>_{16,32}fps.mp4  — v .gitignore
@@ -39,7 +41,7 @@ CHAINS="$DIR/chains"; OUT="$DIR/out"
 mkdir -p "$CHAINS" "$OUT"
 
 die() { echo "spark-video: $*" >&2; exit 1; }
-usage() { sed -n '2,21p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+usage() { sed -n '2,23p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
 manifest() { echo "$CHAINS/$1.json"; }
 need() { [ -f "$(manifest "$1")" ] || die "manifest $1 neexistuje — založ ho: spark-video new $1 <obrázek>"; }
 # jméno beatu/scény jde do ssh příkazu, tak ať v něm není nic, co by shell četl
@@ -176,8 +178,8 @@ cmd_run() {
 }
 
 cmd_drive() {
-  local id="${1:-}" clip="${2:-}" start="0" loop="" speed="" dwpose="" zoom=""
-  [ -n "$id" ] && [ -n "$clip" ] || die "použití: spark-video drive <id> <klip.mp4|animace.fbx> [--start s] [--loop] [--speed 0.65] [--zoom 1.5]"
+  local id="${1:-}" clip="${2:-}" start="0" loop="" speed="" dwpose="" zoom="" length="" fill=""
+  [ -n "$id" ] && [ -n "$clip" ] || die "použití: spark-video drive <id> <klip.mp4|animace.fbx> [--start s] [--loop] [--speed 0.65] [--zoom 1.5 | --fill 0.9] [--length N]"
   [[ "$id" =~ ^[A-Za-z0-9_-]+$ ]] || die "id smí být jen [A-Za-z0-9_-]"
   [ -f "$clip" ] || die "klip $clip neexistuje"
   shift 2
@@ -188,11 +190,13 @@ cmd_drive() {
       --dwpose) dwpose="--dwpose" ;;
       --speed) speed="--speed ${2:-1}"; shift ;;
       --zoom) zoom="--zoom ${2:-1}"; shift ;;
-      *) die "neznámý přepínač $1 (drive umí --start s, --loop, --speed x, --zoom x, --dwpose)" ;;
+      --fill) fill="--fill ${2:-0.9}"; shift ;;
+      --length) [[ "${2:-}" =~ ^[0-9]+$ ]] || die "--length čeká počet snímků"; length="--length $2"; shift ;;
+      *) die "neznámý přepínač $1 (drive umí --start s, --loop, --speed x, --zoom x, --fill x, --length N, --dwpose)" ;;
     esac; shift
   done
-  [ -z "$zoom" ] || [ "${clip##*.}" = fbx ] || [ "${clip##*.}" = FBX ] \
-    || die "--zoom je jen pro FBX (u videa rozhoduje záběr klipu)"
+  [ -z "$zoom$fill" ] || [ "${clip##*.}" = fbx ] || [ "${clip##*.}" = FBX ] \
+    || die "--zoom a --fill jsou jen pro FBX (u videa rozhoduje záběr klipu)"
   local ext="${clip##*.}"
   mkdir -p "$DIR/drive/src"
   ssh "$HOST" "mkdir -p $STACK/drive/src"
@@ -208,7 +212,7 @@ cmd_drive() {
     echo "  body z kloubů $clip (Blender)…"
     rm -f "$DIR/drive/src/$id.json"
     "$blender" -b --factory-startup -noaudio --python-exit-code 1 -P "$DIR/tools/mixamo_pose.py" -- \
-      "$clip" "$DIR/drive/src/$id.json" --preview "$DIR/drive/src/${id}_preview.mp4" $loop $speed $zoom 2>&1 \
+      "$clip" "$DIR/drive/src/$id.json" --preview "$DIR/drive/src/${id}_preview.mp4" $loop $speed $zoom $fill $length 2>&1 \
       | grep -E "^POSE|Error|rror:" || true
     [ -s "$DIR/drive/src/$id.json" ] || die "export bodů se nepovedl"
     scp -q "$DIR/drive/src/$id.json" "$HOST:$STACK/drive/src/$id.json"
@@ -219,7 +223,7 @@ cmd_drive() {
     echo "  nahrávám $clip -> $HOST:$STACK/drive/src/$id.$ext"
     scp -q "$clip" "$HOST:$STACK/drive/src/$id.$ext"
     echo "  odhad pózy na ${HOST}…"
-    ssh "$HOST" "cd $STACK && ~/Code/ComfyUI/.venv/bin/python tools/drive.py pose $id --src drive/src/$id.$ext --start $start $loop $speed $dwpose" \
+    ssh "$HOST" "cd $STACK && ~/Code/ComfyUI/.venv/bin/python tools/drive.py pose $id --src drive/src/$id.$ext --start $start $loop $speed $length $dwpose" \
       || die "kostra se nepovedla"
   fi
   scp -q "$HOST:$STACK/drive/${id}_pose.webm" "$DIR/drive/${id}_pose.webm"

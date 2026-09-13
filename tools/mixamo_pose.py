@@ -28,6 +28,12 @@ Velikost postavy v kostře = velikost postavy ve videu: control beat záběr
 oddálí nebo přiblíží podle ní. Široký pohyb (flair, rozpětí nohou 2 m) se do
 portrétu vejde jen malý a model pak ukáže víc místnosti než fotka. `--zoom`
 záběr zúží — postava větší, krajní polohy končetin vyjedou z rámu.
+
+S velikostí postavy jde i velikost tváře, a tím identita: salsa z obálky
+(postava 66 % výšky) držela tvář ve videu 0.11, s postavou na 90 % 0.30 —
+stejný beat, seed i fotka. `--fill 0.9` proto rámuje podle výšky postavy
+**ve stoje** místo obálky pohybu: každý tanec má stejně velkou tvář bez
+ohledu na to, kam sahají ruce (zdvižené paže a široké výpady z rámu vyjedou).
 """
 import argparse
 import json
@@ -62,6 +68,8 @@ def parse():
     ap.add_argument("--loop", action="store_true", help="animaci opakovat (Mixamo smyčky); jinak drží poslední pózu")
     ap.add_argument("--zoom", type=float, default=1.0,
                     help="1 = celý pohyb v záběru; víc = postava větší, krajní polohy končetin z rámu ven")
+    ap.add_argument("--fill", type=float,
+                    help="výška postavy ve stoje jako podíl výšky záběru (0.9); místo --zoom")
     ap.add_argument("--preview", help="mp4 s renderem postavy ve stejných snímcích (kontrola kostry)")
     ap.add_argument("--width", type=int, default=480)
     ap.add_argument("--height", type=int, default=832)
@@ -70,21 +78,38 @@ def parse():
 
 def main():
     a = parse()
+    if a.fill is not None and (a.zoom != 1.0 or not 0 < a.fill <= 1):
+        sys.exit("mixamo_pose.py: --fill čeká podíl 0–1 a nejde spolu se --zoom")
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.import_scene.fbx(filepath=os.path.abspath(a.fbx))
     sc = bpy.context.scene
     arm = next(o for o in sc.objects if o.type == "ARMATURE")
     meshes = [o for o in sc.objects if o.type == "MESH"]
     B = {pb.name.split(":")[-1]: pb for pb in arm.pose.bones}
-    W = arm.matrix_world
+    W = arm.matrix_world.copy()                          # klidová matice — jen pro směry, posun smyčky ji mění
 
     f0, f1 = (int(round(x)) for x in arm.animation_data.action.frame_range)
     span = f1 - f0                                       # u Mixamo smyčky je f1 == f0
     src_fps = sc.render.fps / sc.render.fps_base
 
+    # Smyčka z animace, která není na místě (salsa skončí 0.26 m vedle startu), by
+    # na každém švu poskočila do strany. Posun kořene se proto rozpustí lineárně
+    # přes cyklus — konec cyklu navazuje na začátek. Jen do strany: hloubku kamera
+    # zepředu nevidí a výška patří póze (dřep na konci není posun).
+    home = arm.location.x
+    drift = 0.0
+    if a.loop and span:
+        sc.frame_set(f0)
+        x0 = (arm.matrix_world @ B["Hips"].head).x
+        sc.frame_set(f1)
+        drift = (arm.matrix_world @ B["Hips"].head).x - x0
+        drift = drift if abs(drift) > 0.01 else 0.0     # smyčky na místě nechat beze změny
+
     def goto(i):
         t = i / FPS * a.speed * src_fps
         fr = f0 + (t % span if a.loop else min(t, span))
+        if drift:
+            arm.location.x = home - drift * (fr - f0) / span
         sc.frame_set(int(fr), subframe=fr - int(fr))
 
     # směry z klidové pózy: dopředu podle chodidla, doprava podle ramen
@@ -106,10 +131,10 @@ def main():
                    "down": local(s + "Foot", down_w)} for s in ("Left", "Right")}
 
     def pos(name):
-        return W @ B[name].head
+        return arm.matrix_world @ B[name].head
 
     def turn(name, v):
-        return ((W @ B[name].matrix).to_3x3() @ v).normalized()
+        return ((arm.matrix_world @ B[name].matrix).to_3x3() @ v).normalized()
 
     def keypoints():
         body = [None] * 18
@@ -149,8 +174,10 @@ def main():
 
     # obálka postavy přes všechny vzorkované snímky
     lo, hi = np.full(2, np.inf), np.full(2, -np.inf)
+    hips = []
     for i in range(a.length):
         goto(i)
+        hips.append(pos("Hips").x)
         if meshes:
             dg = bpy.context.evaluated_depsgraph_get()
             for o in meshes:
@@ -165,15 +192,23 @@ def main():
                 ev.to_mesh_clear()
         else:
             for pb in arm.pose.bones:
-                for p in (W @ pb.head, W @ pb.tail):
+                for p in (arm.matrix_world @ pb.head, arm.matrix_world @ pb.tail):
                     lo, hi = np.minimum(lo, (p.x, p.z)), np.maximum(hi, (p.x, p.z))
     if not meshes:                                       # kosti vedou středem těla, tělo je širší
         lo, hi = lo - (0.1, 0.05), hi + (0.1, 0.1)
 
     w, h = hi - lo
-    frame_h = max(h / FILL_H, w / FILL_W * a.height / a.width) / a.zoom
+    # výška ve stoje z klidové pózy (temeno − špičky), nezávislá na tom, co tanec dělá
+    stand = rest("HeadTop_End").z - min(rest("LeftToe_End").z, rest("RightToe_End").z)
+    if a.fill:
+        frame_h = stand / a.fill
+    else:
+        frame_h = max(h / FILL_H, w / FILL_W * a.height / a.width) / a.zoom
     frame_w = frame_h * a.width / a.height
-    cx = (lo[0] + hi[0]) / 2
+    # Z obálky je střed rámu i s rozmáchnutou paží — při --fill, kdy se končetiny
+    # ořezávají, by tělo stálo mimo střed (snake hip hop u pravého okraje). Tam
+    # se centruje rozsah pohybu boků a končetiny vyjíždějí na obě strany.
+    cx = (min(hips) + max(hips)) / 2 if a.fill else (lo[0] + hi[0]) / 2
     bottom = lo[1] - FLOOR_MARGIN * frame_h
     left, top = cx - frame_w / 2, bottom + frame_h
 
@@ -195,7 +230,7 @@ def main():
     os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
     with open(a.out, "w") as fh:
         json.dump({"source": os.path.basename(a.fbx), "fps": FPS, "speed": a.speed, "loop": a.loop,
-                   "zoom": a.zoom, "frames": frames}, fh)
+                   "zoom": a.zoom, "fill": a.fill, "frames": frames}, fh)
 
     if a.preview:
         cam = bpy.data.objects.new("cam", bpy.data.cameras.new("cam"))
@@ -223,9 +258,11 @@ def main():
         finally:
             shutil.rmtree(tmp)
 
-    print("POSE %s  %d snímků @ %d fps  (animace %d snímků @ %g fps, tempo %g×%s, zoom %g)  obálka %.2f×%.2f m  "
+    print("POSE %s  %d snímků @ %d fps  (animace %d snímků @ %g fps, tempo %g×%s, %s)  obálka %.2f×%.2f m  "
           "postava %d %% výšky%s"
-          % (a.out, a.length, FPS, span, src_fps, a.speed, ", smyčka" if a.loop else "", a.zoom, w, h,
+          % (a.out, a.length, FPS, span, src_fps, a.speed,
+             (", smyčka (posun %.2f m rozpuštěn)" % drift if drift else ", smyčka") if a.loop else "",
+             "ve stoje %d %% výšky" % round(100 * stand / frame_h) if a.fill else "zoom %g" % a.zoom, w, h,
              round(100 * h / frame_h), "" if w <= frame_w else ", krajní polohy %.2f m za rámem" % (w - frame_w)))
 
 

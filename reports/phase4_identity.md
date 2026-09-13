@@ -318,3 +318,46 @@ pózy.
 (handoff 0.774 / 0.486), flair ve stejné místnosti s větší postavou než při
 zoomu 1.0, freeze jako stojka u zdi. Po flairu už scéna žádnou tvář
 neukazuje, takže není kde se objevit vymyšlené.
+
+## Tanec celý z kostry: jedna kostra, víc beatů (2026-09-13)
+
+Nová taneční kolekce z Mixama (salsa, samba, rumba, twerk, macarena, ptačí
+tanec, tři hip hopy) je celá z kostry: jedna kostra na tanec (306 snímků @
+0.65×), 4 control beaty po 81 snímcích, každý čte další výřez
+(`control_start` 0 / 75 / 150 / 225 — o `crossfade` dřív, ať pásová přejížďka
+míchá tentýž okamžik pohybu). Ze staré kolekce zůstaly jen textové ikony
+Disco a Single Ladies.
+
+Handoff tady nic neměří: control beat bere vzhled z fotky, ne z navazovacího
+snímku, a oživení tváře na handoffu nemá komu posloužit (scény ho nemají).
+Měří se tvář **uvnitř** klipu (`face_drift.py --video`, 12 snímků, fotka
+`leather_shorts_src.png`, seed 42):
+
+| | tvář ve videu (průměr za beat) | vizuálně |
+|---|---|---|
+| textové I2V beaty (breakdance toprock, pro srovnání) | 0.44–0.50 | záběr fotky |
+| gangnam control (VACE / originál, 29. 8.) | 0.26 | — |
+| **salsa, kostra z obálky** (postava 66 % výšky) | 0.11 / 0.21 / 0.14 / 0.12 | oddálený záběr se stropem, ploché sandály, tvář malá |
+| salsa beat 1, zoom 1.35 (obálka 90 %) | 0.30 | podpatky zpět, postava jako na fotce |
+| **salsa, `--fill 0.9`** (ve stoje 90 %, obálka 85 %) | 0.26 / 0.23 / 0.29 / 0.19 | záběr a boty z fotky, otočka čitelná |
+| samba beat 1, `--fill 0.9` (pohyb 0.73 m za rámem) | 0.28 | drží se v záběru, drdol → culík |
+
+**Velikost postavy v kostře řídí záběr, a tím velikost tváře.** Model rámuje
+podle kostry, takže postava na 66 % znamenala oddálení a tvář, na které ArcFace
+skoro nic nepozná. `mixamo_pose.py --fill` proto rámuje podle výšky postavy
+ve stoje (ne podle obálky pohybu — zdvižená paže snake hip hopu by jinak
+postavu zmenšila) a centruje na rozsah pohybu boků (z obálky stál snake hip
+hop u pravého okraje). Končetiny v krajních polohách z rámu vyjedou; na
+výsledku to nevadí.
+
+I s tím zůstává control beat pod textovým I2V (~0.25 proti ~0.5): I2V začíná
+ze skutečných pixelů fotky, VACE reference je jen kotva vzhledu. Strop je
+navíc závislý na fotce — `--fill 0.9` sedí na postavu přes celou výšku
+snímku; u fotky do pasu by kostra měla být větší. Další krok by byl fit
+kostry na postavu ve fotce per job (detekce pózy na zdroji → měřítko a posun
+kostry v `chain.py`), ne pevné číslo v kostře.
+
+Délka beatu 81 je strop Wanu, ne identity: control beaty jsou navzájem
+nezávislé (každý z fotky), takže drift se nesčítá — hodnoty po beatech
+nerostou ani neklesají soustavně. Beat 165–185 s (VACE), celý tanec 11 min
+GPU + RIFE.

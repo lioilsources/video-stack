@@ -138,9 +138,24 @@ def load_dict(m):
             b.setdefault("length", 121 if ltx else 81)
             check_length(b["length"], "beat %s" % b["id"], m["engine"])
             if b.get("control"):
-                if not os.path.exists(pose_path(b["control"])):
+                pose = pose_path(b["control"])
+                if not os.path.exists(pose):
                     die("beat %s: control %r — chybí %s (tools/drive.py pose)"
-                        % (b["id"], b["control"], os.path.relpath(pose_path(b["control"]), HERE)))
+                        % (b["id"], b["control"], os.path.relpath(pose, HERE)))
+                # Tanec z jedné kostry: beat se stejnou kostrou jako předchozí pokračuje,
+                # kde ten skončil — o překryv střihu dřív, ať prolínačka míchá tentýž
+                # okamžik pohybu. Jinak kostra od začátku.
+                prev = beats[-1] if beats else None
+                if "control_start" not in b:
+                    b["control_start"] = (prev["control_start"] + prev["length"] - m["crossfade"]
+                                          if prev and prev.get("control") == b["control"] else 0)
+                if not isinstance(b["control_start"], int) or b["control_start"] < 0:
+                    die("beat %s: control_start %r — čekám snímek kostry ≥ 0" % (b["id"], b["control_start"]))
+                have = nframes(pose)
+                if b["control_start"] + b["length"] > have:
+                    # loader by vrátil míň snímků než beat a VACE by zbytek domaloval bez kostry
+                    die("beat %s: kostra %r má %d snímků, beat chce %d–%d (drive --length)"
+                        % (b["id"], b["control"], have, b["control_start"], b["control_start"] + b["length"]))
             b["scene"] = name
             if not (b.get("prompt") or "").strip():
                 die("beat %s%s nemá prompt" % (b["id"], " (%s)" % name if name else ""))
@@ -264,11 +279,12 @@ def build(m, beat, idx, seed_img, orig_img, w, h):
     if control and ltx:
         # core LoadVideo neumí frame_load_cap — délku ořeže ImageFromBatch (72)
         g["60"]["inputs"]["file"] = os.path.basename(pose_path(control))
-        g["72"]["inputs"]["length"] = L
+        g["72"]["inputs"].update(batch_index=beat["control_start"], length=L)
         g["61"]["inputs"].update(width=w, height=h)
     elif control:
-        # kostra do input/ kopíruje cmd_render; tady jen jméno, délka a měřítko
-        g["60"]["inputs"].update(video=os.path.basename(pose_path(control)), frame_load_cap=L)
+        # kostra do input/ kopíruje cmd_render; tady jen jméno, výřez a měřítko
+        g["60"]["inputs"].update(video=os.path.basename(pose_path(control)), frame_load_cap=L,
+                                 skip_first_frames=beat["control_start"])
         g["61"]["inputs"].update(width=w, height=h)
 
     g["8"]["inputs"]["text"] = beat["prompt"] + beat["style_tail"]
@@ -522,7 +538,7 @@ def beat_hash(m, b, w, h):
            m["base"], b.get("motion"), b.get("boundary"), b.get("shift"), b.get("sharpen"),
            b.get("identity"), b.get("face_denoise"), m["colormatch"], b.get("control"),
            b.get("control_ref"), b.get("control_model"), b.get("beat_ref"),
-           os.path.getmtime(pose_path(b["control"])) if b.get("control") else None)
+           (os.path.getmtime(pose_path(b["control"])), b["control_start"]) if b.get("control") else None)
     return hashlib.sha1(json.dumps(key, sort_keys=True).encode()).hexdigest()[:12]
 
 
