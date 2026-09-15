@@ -2,6 +2,7 @@
 
     blender -b --factory-startup -noaudio -P tools/mixamo_pose.py -- Flair.fbx drive/src/flair.json \\
         [--length 81] [--speed 0.65] [--loop] [--zoom 1.5] [--preview drive/src/flair_preview.mp4]
+        [--proportions drive/src/<postava>_prop.json]   # kostra s proporcemi postavy z fotky
 
 Výstup je JSON ve formátu POSE_KEYPOINT (canvas_width/height, people[] s
 pose/foot/hand body v pixelech), který `drive.py draw` nakreslí tímtéž
@@ -70,10 +71,121 @@ def parse():
                     help="1 = celý pohyb v záběru; víc = postava větší, krajní polohy končetin z rámu ven")
     ap.add_argument("--fill", type=float,
                     help="výška postavy ve stoje jako podíl výšky záběru (0.9); místo --zoom")
+    ap.add_argument("--proportions", help="JSON z tools/rig_proportions.py: kostra s proporcemi postavy z fotky")
     ap.add_argument("--preview", help="mp4 s renderem postavy ve stejných snímcích (kontrola kostry)")
     ap.add_argument("--width", type=int, default=480)
     ap.add_argument("--height", type=int, default=832)
     return ap.parse_args(sys.argv[sys.argv.index("--") + 1:])
+
+
+def action_fcurves(arm):
+    """F-křivky aktivní akce. Blender 4.4+ má vrstvené akce a `Action.fcurves`
+    v 5.x už neexistuje — křivky jsou v channelbagu slotu."""
+    action = arm.animation_data.action
+    if hasattr(action, "fcurves"):
+        return list(action.fcurves)
+    from bpy_extras import anim_utils
+    bag = anim_utils.action_get_channelbag_for_slot(action, arm.animation_data.action_slot)
+    return list(bag.fcurves) if bag else []
+
+
+def reshape(arm, ratios):
+    """Přestaví klidovou kostru na proporce postavy: délky a šířky segmentů podle
+    poměrů z rig_proportions.py, směry kostí zůstanou.
+
+    Animace je v rotacích vůči klidové póze, takže tanec se nezmění — jen ho tančí
+    tělo s kratšími pažemi, širšími boky apod. Kosti bez poměru (ruce, prsty, hlava,
+    chodidla) se jen posunou s rodičem. Posun boků se škáluje délkou nohou, jinak
+    by kratší nohy visely nad podlahou a delší se do ní bořily.
+
+    Počítá se ve světě: FBX armatura má rotaci 90° kolem X a měřítko 0.01, takže
+    "do šířky" je světové X, ne lokální osa kosti."""
+    r = ratios
+    W = arm.matrix_world.copy()
+    Wi = W.inverted()
+    unit = Vector((1.0, 1.0, 1.0))
+
+    def rules(short):
+        """(škála offsetu hlavy od rodiče po osách světa, škála délky kosti)"""
+        side = short.replace("Left", "").replace("Right", "")
+        if short in ("Spine", "Spine1", "Spine2", "Neck"):
+            return unit * r["torso"], r["torso"]
+        if short == "Head":
+            return unit * r["torso"], 1.0
+        if side == "Shoulder":
+            return Vector((r["shoulders"], 1.0, r["torso"])), r["shoulders"]
+        if side == "Arm":
+            return Vector((r["shoulders"], 1.0, 1.0)), r["arm"]
+        if side == "ForeArm":
+            return unit * r["arm"], r["forearm"]
+        if side == "Hand":
+            return unit * r["forearm"], 1.0
+        if side == "UpLeg":
+            return Vector((r["hips"], 1.0, 1.0)), r["thigh"]
+        if side == "Leg":
+            return unit * r["thigh"], r["shin"]
+        if side == "Foot":
+            return unit * r["shin"], 1.0
+        return unit, 1.0
+
+    bpy.context.view_layer.objects.active = arm
+    bpy.ops.object.mode_set(mode="EDIT")
+    eb = arm.data.edit_bones
+    old = {b.name: (W @ b.head, W @ b.tail, b.roll) for b in eb}
+    floor = min(min(h.z, t.z) for h, t, _ in old.values())
+    thigh = (old["mixamorig:LeftLeg"][0] - old["mixamorig:LeftUpLeg"][0]).length
+    shin = (old["mixamorig:LeftFoot"][0] - old["mixamorig:LeftLeg"][0]).length
+    leg = (thigh * r["thigh"] + shin * r["shin"]) / (thigh + shin)
+
+    new_head = {}
+    for b in sorted(eb, key=lambda b: len(b.parent_recursive)):
+        h, t, roll = old[b.name]
+        off_scale, len_scale = rules(b.name.split(":")[-1])
+        if b.parent is None:
+            nh = Vector((h.x, h.y, floor + (h.z - floor) * leg))
+            len_scale = r["torso"]
+        else:
+            nh = new_head[b.parent.name] + (h - old[b.parent.name][0]) * off_scale
+        new_head[b.name] = nh
+        b.use_connect = False
+        b.head, b.tail = Wi @ nh, Wi @ (nh + (t - h) * len_scale)
+        b.roll = roll
+    bpy.ops.object.mode_set(mode="OBJECT")
+
+    root = next(b.name for b in arm.data.bones if b.parent is None)
+    for fc in action_fcurves(arm):
+        if fc.data_path == 'pose.bones["%s"].location' % root:
+            for kp in fc.keyframe_points:
+                for p in (kp.co, kp.handle_left, kp.handle_right):
+                    p.y *= leg
+            fc.update()
+    return leg
+
+
+def clip_lowest(arm, meshes=()):
+    """Nejnižší bod přes celou animaci (celé snímky), ve světě: (kosti, mesh).
+    Mesh je None, když žádný není."""
+    sc = bpy.context.scene
+    f0, f1 = (int(round(x)) for x in arm.animation_data.action.frame_range)
+    bone_low = mesh_low = None
+    for f in range(f0, f1 + 1):
+        sc.frame_set(f)
+        for pb in arm.pose.bones:
+            for p in (pb.head, pb.tail):
+                z = (arm.matrix_world @ p).z
+                bone_low = z if bone_low is None else min(bone_low, z)
+        if meshes:
+            dg = bpy.context.evaluated_depsgraph_get()
+            for o in meshes:
+                ev = o.evaluated_get(dg)
+                m = ev.to_mesh()
+                co = np.empty(len(m.vertices) * 3, dtype=np.float64)
+                m.vertices.foreach_get("co", co)
+                M = np.array(o.matrix_world)
+                z = float((co.reshape(-1, 3) @ M[2, :3] + M[2, 3]).min())
+                ev.to_mesh_clear()
+                mesh_low = z if mesh_low is None else min(mesh_low, z)
+    return bone_low, mesh_low
 
 
 def main():
@@ -85,6 +197,28 @@ def main():
     sc = bpy.context.scene
     arm = next(o for o in sc.objects if o.type == "ARMATURE")
     meshes = [o for o in sc.objects if o.type == "MESH"]
+    proportions, floor_pad = None, 0.05
+    if a.proportions:
+        if a.fill is None:
+            sys.exit("mixamo_pose.py: --proportions jen s --fill (rámování podle výšky ve stoje)")
+        with open(a.proportions) as fh:
+            proportions = json.load(fh)["ratios"]
+        # Záběr stojí na nejnižším bodu klipu. A/B proti Mixamo kostře má měnit
+        # jen proporce, ne rámování, takže:
+        # - kratší nohy s chodidlem Mixamo velikosti by nejnižší bod posunuly
+        #   (salsa: špička o 4.7 cm níž) → armatura se posune, aby zůstal;
+        # - skin figuríny se maže (k přestavěné kostře nesedí), a obálka z kostí
+        #   by jinak dostala pevnou rezervu 5 cm místo skutečné podrážky — salsa
+        #   pak stála v rámu o 11 cm výš. Rezerva se proto změří na původní
+        #   kostře jako rozdíl mesh − kosti a použije místo pevné.
+        bone_low, mesh_low = clip_lowest(arm, meshes)
+        floor_pad = (bone_low - mesh_low) if mesh_low is not None else 0.05
+        for o in meshes:
+            bpy.data.objects.remove(o, do_unlink=True)
+        meshes = []
+        leg = reshape(arm, proportions)
+        arm.location.z += bone_low - clip_lowest(arm)[0]
+        print("mixamo_pose: proporce %s, nohy ×%.3f" % (proportions, leg))
     B = {pb.name.split(":")[-1]: pb for pb in arm.pose.bones}
     W = arm.matrix_world.copy()                          # klidová matice — jen pro směry, posun smyčky ji mění
 
@@ -195,7 +329,7 @@ def main():
                 for p in (arm.matrix_world @ pb.head, arm.matrix_world @ pb.tail):
                     lo, hi = np.minimum(lo, (p.x, p.z)), np.maximum(hi, (p.x, p.z))
     if not meshes:                                       # kosti vedou středem těla, tělo je širší
-        lo, hi = lo - (0.1, 0.05), hi + (0.1, 0.1)
+        lo, hi = lo - (0.1, floor_pad), hi + (0.1, 0.1)
 
     w, h = hi - lo
     # výška ve stoje z klidové pózy (temeno − špičky), nezávislá na tom, co tanec dělá
@@ -230,7 +364,7 @@ def main():
     os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
     with open(a.out, "w") as fh:
         json.dump({"source": os.path.basename(a.fbx), "fps": FPS, "speed": a.speed, "loop": a.loop,
-                   "zoom": a.zoom, "fill": a.fill, "frames": frames}, fh)
+                   "zoom": a.zoom, "fill": a.fill, "proportions": proportions, "frames": frames}, fh)
 
     if a.preview:
         cam = bpy.data.objects.new("cam", bpy.data.cameras.new("cam"))

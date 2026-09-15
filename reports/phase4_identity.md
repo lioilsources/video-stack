@@ -361,3 +361,52 @@ Délka beatu 81 je strop Wanu, ne identity: control beaty jsou navzájem
 nezávislé (každý z fotky), takže drift se nesčítá — hodnoty po beatech
 nerostou ani neklesají soustavně. Beat 165–185 s (VACE), celý tanec 11 min
 GPU + RIFE.
+
+## Kostra s proporcemi postavy z 3D modelu (2026-09-15)
+
+Hypotéza z předchozí sekce: kostra má vždycky proporce Mixamo figuríny a Wan
+podle ní tělo z fotky přetváří. Zkoušeno ne fitem na fotku, ale přes 3D:
+UGCFactory z téže fotky postaví 3D model a MIA rig (Mixamo kostra napasovaná na
+mesh), `tools/rig_proportions.py` z něj vezme poměry segmentů a
+`mixamo_pose.py --proportions` jimi přestaví Mixamo kostru salsy (směry kostí,
+tedy tanec, zůstávají). Jinak totéž jako `eval_salsa`: fotka, seed 42, prompty,
+`--fill 0.9 --speed 0.65 --loop`, 4 control beaty — `chains/eval_salsa_leather.json`.
+
+**Kalibrace je nutná.** MIA staví klouby jinde než Mixamo: na samotné Mixamo
+figuríně (mesh ze Zombie Walk.fbx) jí vyšla stehna 0.79×, trup 1.22× a ramena
+1.15× Mixamo kostry. Poměry se proto berou MIA(postava) / MIA(figurína);
+figurína sama vůči sobě dává 1.0 všude. Postava z fotky: stehno 1.03, holeň
+0.84, paže 0.83, předloktí 0.83, trup 1.13, boky 1.24, ramena 1.05 (normováno
+kotníky → krk).
+
+**Rámování musí zůstat stejné**, jinak A/B měří záběr, ne proporce: salsa má
+v FBX i skin figuríny a obálka z něj stojí 11 cm výš než obálka z kostí
+s pevnou rezervou. `--proportions` proto rezervu změří na původní kostře
+(mesh − kosti) a nejnižší bod klipu drží na místě.
+
+Výsledek (tvář = `face_drift.py --video`, 12 snímků; tělo = MediaPipe Pose na
+16 snímcích z beatu, jen postava čelem, segmenty / trup, odchylka od fotky):
+
+| | tvář po beatech | průměr | ramena | boky | paže | předloktí | stehno | holeň | tělo \|odchylka\| |
+|---|---|---|---|---|---|---|---|---|---|
+| kostra Mixamo (`eval_salsa`) | 0.26 / 0.23 / 0.29 / 0.19 | 0.242 | +4 % | −9 % | +6 % | −1 % | −8 % | −12 % | **6.9 %** |
+| kostra s proporcemi z 3D | 0.32 / 0.25 / 0.26 / 0.24 | **0.269** | −4 % | −12 % | −6 % | −18 % | −9 % | −22 % | 11.7 % |
+
+**Tělo se od fotky vzdálilo, ne přiblížilo.** Fotka je focená zespodu: nohy
+na ní vypadají dlouhé a trup krátký. 3D rekonstrukce perspektivu odstraní a dá
+skutečné proporce (kratší holeň, delší trup) — jenže video animuje tutéž
+fotku z téhož úhlu, takže potřebuje zdánlivé 2D proporce, ne 3D. Postava ve
+videu vyšla podsaditější a kratší v nohou. Zlepšení tváře (+0.03, 3 ze 4
+beatů) je nejspíš vedlejší efekt záběru: kratší končetiny → postava v rámu
+větší → větší obličej (stejná páka jako `--fill`), a na jednom seedu je na
+hranici šumu.
+
+Video kostru navíc slepě nenásleduje: už Mixamo kostra má vůči fotce boky
+−25 % a ramena −15 %, ve videu z toho je −9 % a +4 % — Wan kostru s referencí
+vyvažuje.
+
+Závěr: proporce z 3D modelu do tanečních videí nepatří. Pokud fit kostry, tak
+na 2D pózu ve fotce (odhad pózy na zdroji → poměry pro `--proportions`, bez
+TRELLIS a GPU navíc); mechanismus přestavby kostry je na to připravený.
+`rig_proportions.py` zůstává pro 3D cestu (tančící 3D figurka), kde skutečné
+proporce dávají smysl.
