@@ -103,14 +103,15 @@ pošle příběh z katalogu a obrázky postav podle rolí; co nepošle, doplní 
 z výchozích postav, které vznikly přes `story.py sheet`/`cast`.
 
 ```
-GET  /v1/video/stories                 {stories: [{id, title, title_en, desc, desc_en, shots, beats, seconds,
-                                         minutes_est, minutes_est_hd, languages, characters: [{role, name,
-                                         name_en, desc, hero, default}]}]}
+GET  /v1/video/stories                 {stories: [{id, title, title_en, desc, desc_en, setting, shots, beats,
+                                         seconds, minutes_est, minutes_est_hd, languages, characters: [{role,
+                                         name, name_en, desc, look, hero, default}], script: [{id, chars,
+                                         action, narration, narration_en, control, camera, beats}]}]}
 POST /v1/video/stories/jobs            {story, characters?: {role: base64}, seed?, lang?: cs|en,
                                         review?: bool, hd?: bool} → 202 {job_id, shots, beats, seconds, minutes_est}
 GET  /v1/video/jobs/<id>               {kind: "story", story, stage, status, phase, keyframe, keyframes,
                                         beat, beats, lang, review, hd, error, position?}
-GET  /v1/video/jobs/<id>/keyframes     {shots: [{id, chars, keyframe, narration, narration_en, control,
+GET  /v1/video/jobs/<id>/keyframes     {shots: [{id, chars, keyframe, action, narration, narration_en, control,
                                         camera, ready, url}], contact}
 GET  /v1/video/jobs/<id>/keyframes/NN  image/jpeg
 GET  /v1/video/jobs/<id>/contact       image/jpeg (kontaktní arch)

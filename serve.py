@@ -142,6 +142,7 @@ def load_stories():
         out[st["id"]] = {
             "id": st["id"], "title": st.get("title", st["id"]), "title_en": st.get("title_en", st.get("title", "")),
             "desc": st.get("desc", ""), "desc_en": st.get("desc_en", st.get("desc", "")),
+            "setting": st.get("setting", ""),
             "shots": len(st["shots"]), "beats": len(m["beats"]), "seconds": round(tl["total"], 1),
             "minutes_est": est(SEC_PER_BEAT), "minutes_est_hd": est(SEC_PER_BEAT_HD),
             "audio": True, "languages": list(story.LANGS),
@@ -158,8 +159,14 @@ def public_story(entry):
     work = story.Work("story_" + st["id"])
     v = {k: v for k, v in entry.items() if not k.startswith("_")}
     v["characters"] = [{"role": r, "name": c["name"], "name_en": c["name_en"], "desc": c["desc"],
-                        "hero": n == 0, "default": bool(story.char_path(st, work, r))}
+                        "look": c.get("look", ""), "hero": n == 0,
+                        "default": bool(story.char_path(st, work, r))}
                        for n, (r, c) in enumerate(st["characters"].items())]
+    # scénář k přečtení před spuštěním: děj česky, vypravěč v obou jazycích
+    v["script"] = [{"id": sh["id"], "chars": sh["chars"], "action": sh.get("action", ""),
+                    "narration": sh.get("narration", ""), "narration_en": sh.get("narration_en", ""),
+                    "control": sh.get("control"), "camera": sh.get("camera"), "beats": sh["beats"]}
+                   for sh in st["shots"]]
     return v
 
 
@@ -564,6 +571,7 @@ class Handler(BaseHTTPRequestHandler):
             st = json.load(open(os.path.join(d, "story.json")))
             return self._json(200, {"shots": [
                 {"id": sh["id"], "chars": sh.get("chars"), "keyframe": sh.get("keyframe"),
+                 "action": sh.get("action"),
                  "narration": sh.get("narration"), "narration_en": sh.get("narration_en"),
                  "control": sh.get("control"), "camera": sh.get("camera"),
                  "ready": os.path.exists(os.path.join(d, "kf", sh["id"] + ".png")),
