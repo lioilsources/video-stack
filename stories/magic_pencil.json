@@ -1,0 +1,174 @@
+{
+  "id": "magic_pencil",
+  "order": 3,
+  "title": "Kouzelná tužka",
+  "title_en": "The Magic Pencil",
+  "desc": "Co Ondra nakreslí zlatou tužkou, to ožije. Nakreslený pejsek udělá nepořádek — a pak přijde kamarádka.",
+  "desc_en": "Whatever Oliver draws with the golden pencil comes alive. A drawn puppy makes a mess, and then a friend arrives.",
+  "seed": 1008,
+  "lang": "cs",
+  "world": "a cozy child's bedroom with a big white sheet of paper on the floor, crayons, toy shelves and a sunny window",
+  "setting": "Útulný dětský pokoj s velkým bílým papírem na zemi, pastelkami, poličkami s hračkami a oknem.",
+  "music": "magical playful children's music, pizzicato strings, celesta and bassoon, curious and funny, instrumental, 100 bpm",
+  "characters": {
+    "oliver": {
+      "name": "Ondra",
+      "name_en": "Oliver",
+      "desc": "a curious 7-year-old boy with spiky black hair and a big grin, wearing a red and white striped T-shirt and blue overalls",
+      "look": "Zvídavý sedmiletý kluk s ježatými černými vlasy a širokým úsměvem, v červenobíle pruhovaném tričku a modrých laclácích."
+    },
+    "spot": {
+      "name": "pejsek Flíček",
+      "name_en": "Spot",
+      "tag": "Spot the puppy",
+      "desc": "a small fluffy white puppy with one black spot around his eye, floppy ears and a wagging tail, drawn with slightly sketchy crayon outlines",
+      "look": "Malé chlupaté bílé štěně s černou skvrnou kolem oka, klopenýma ušima a vrtícím ocáskem, s lehce načrtnutými obrysy jako od pastelky."
+    }
+  },
+  "shots": [
+    {
+      "id": "01",
+      "chars": [
+        "oliver"
+      ],
+      "action": "Ondra sedí sám na zemi v uklizeném pokoji s bradou v dlaních, za oknem prší. Vzdychne a bubnuje prsty o podlahu.",
+      "keyframe": "Oliver sits alone on the floor of his tidy bedroom, bored, chin on his hands, rain on the window",
+      "motion": "Oliver sighs, taps his fingers on the floor and looks around the room",
+      "narration": "Ondra se nudil. Venku pršelo.",
+      "narration_en": "Oliver was bored. It was raining outside.",
+      "camera": "zoom_in"
+    },
+    {
+      "id": "02",
+      "chars": [
+        "oliver"
+      ],
+      "action": "Ondra vytáhne zpod postele zářící zlatou tužku. Zajiskří a Ondra vykulí oči.",
+      "keyframe": "Oliver pulls a glowing golden pencil from under his bed",
+      "motion": "Oliver pulls the golden pencil out from under the bed, it sparkles and his eyes grow wide",
+      "narration": "Pod postelí našel zlatou tužku.",
+      "narration_en": "Under his bed he found a golden pencil."
+    },
+    {
+      "id": "03",
+      "chars": [
+        "oliver"
+      ],
+      "action": "Ondra nakreslí na velký papír kruh a vybarví ho načerveno, z kresby stoupají jiskry. Z papíru vyskočí skutečný červený míč a skáče, Ondra překvapeně ucukne.",
+      "keyframe": "Oliver kneels over a big sheet of paper on the floor and draws a red ball with the golden pencil",
+      "motion": [
+        "Oliver draws a circle on the paper and colors it red, sparkles rise from the drawing",
+        "a real red ball pops out of the paper and bounces, Oliver jumps back in surprise"
+      ],
+      "narration": "Nakreslil míč… a míč vyskočil z papíru!",
+      "narration_en": "He drew a ball… and it jumped off the paper!"
+    },
+    {
+      "id": "04",
+      "chars": [
+        "oliver"
+      ],
+      "action": "Nakreslený dort zajiskří a promění se ve skutečný dort s třešní. Ondra si olízne rty a směje se.",
+      "keyframe": "Oliver kneels next to a real cake with a cherry that has appeared on the paper",
+      "motion": "the drawn cake sparkles and becomes real, Oliver licks his lips and laughs",
+      "narration": "Nakreslil dort. A byl opravdový!",
+      "narration_en": "He drew a cake. And it was real!"
+    },
+    {
+      "id": "05",
+      "chars": [
+        "oliver",
+        "spot"
+      ],
+      "action": "Ondra klečí nad papírem se zlatou tužkou a z papíru se souká pejsek Flíček, napůl kresba, napůl skutečný. Oklepe se, zavrtí ocáskem a olízne Ondrovi nos.",
+      "keyframe": "Oliver kneels over the paper holding the golden pencil while Spot the puppy climbs out of the paper, half drawing and half real",
+      "motion": [
+        "sparkles swirl around the drawing, the puppy wiggles out of the paper onto the floor",
+        "the puppy shakes himself, wags his tail and licks Oliver's nose, Oliver laughs"
+      ],
+      "narration": "Pak nakreslil pejska. Flíček ožil a olízl mu nos!",
+      "narration_en": "Then he drew a puppy. Spot came alive and licked his nose!"
+    },
+    {
+      "id": "06",
+      "chars": [
+        "spot"
+      ],
+      "action": "Flíček se prožene pokojem a hračky padají z poliček. Pak se zastaví a vrtí ocáskem.",
+      "keyframe": "Spot the puppy runs around the bedroom knocking toys off the shelves",
+      "motion": "the puppy dashes around the room, toys tumble off the shelf, then he stops and wags his tail",
+      "narration": "Flíček běhal a všechno rozházel.",
+      "narration_en": "Spot ran around and made a big mess."
+    },
+    {
+      "id": "07",
+      "chars": [
+        "oliver"
+      ],
+      "action": "Ondra stojí v pokoji plném rozházených hraček, chytí se za hlavu a pak se rozesměje.",
+      "keyframe": "Oliver stands in his messy bedroom full of scattered toys, hands on his head",
+      "motion": "Oliver looks at the mess, puts his hands on his head and then laughs",
+      "narration": "Jé, takový nepořádek!",
+      "narration_en": "Oh no, what a mess!"
+    },
+    {
+      "id": "08",
+      "chars": [
+        "oliver"
+      ],
+      "action": "Ondra nakreslí velkou bednu, ta se zhmotní a hračky do ní jedna po druhé vlétnou. Víko se zavře.",
+      "keyframe": "Oliver draws a big toy box on the paper with the golden pencil, toys fly into the real box",
+      "motion": "the drawn box becomes real, the toys fly into it one by one and the lid closes",
+      "narration": "Nakreslil bednu na hračky. Uklizeno!",
+      "narration_en": "He drew a toy box. All tidy!"
+    },
+    {
+      "id": "09",
+      "chars": [
+        "oliver"
+      ],
+      "action": "Ondra v uklizeném pokoji tančí radostný hip hop a vlní tělem i rukama.",
+      "keyframe": "Oliver stands in the middle of his tidy bedroom, grinning",
+      "motion": "Oliver dances a happy hip hop dance on the spot, waving his body and arms to the beat, same striped T-shirt, same bedroom",
+      "narration": "Ondra radostí tancoval a Flíček štěkal do rytmu.",
+      "narration_en": "Oliver danced for joy, and Spot barked along.",
+      "control": "snake_hip_hop",
+      "beats": 2
+    },
+    {
+      "id": "10",
+      "chars": [
+        "oliver"
+      ],
+      "action": "Ondra opatrně kreslí zlatou tužkou holčičku s culíkem a z papíru stoupají jiskry.",
+      "keyframe": "Oliver draws a girl with a ponytail on the paper with the golden pencil, smiling",
+      "motion": "Oliver draws carefully with the golden pencil, sparkles rise from the paper",
+      "narration": "Nakonec si nakreslil kamarádku.",
+      "narration_en": "Last of all, he drew a friend."
+    },
+    {
+      "id": "11",
+      "chars": [
+        "oliver"
+      ],
+      "action": "Z papíru vystoupí usměvavá holčička s hnědým culíkem ve žlutých šatech a zamává. Ondra jí zamává zpátky.",
+      "keyframe": "a smiling girl with a brown ponytail and a yellow dress steps out of the paper and waves at Oliver",
+      "motion": "the girl steps out of the paper and waves at Oliver, and he waves back",
+      "narration": "Ahoj, jsem Ema! A už se nenudil.",
+      "narration_en": "Hi, I'm Emma! And he wasn't bored anymore."
+    },
+    {
+      "id": "12",
+      "chars": [
+        "oliver",
+        "spot"
+      ],
+      "action": "Ondra hodí červený míč, Flíček za ním běží a přinese ho zpátky. Ondra se směje.",
+      "keyframe": "Oliver and Spot the puppy play with a red ball in the bedroom",
+      "motion": "Oliver throws the red ball, the puppy chases it and brings it back, Oliver laughs",
+      "narration": "Hráli si spolu až do večera.",
+      "narration_en": "They played together until evening.",
+      "camera": "zoom_out"
+    }
+  ]
+}

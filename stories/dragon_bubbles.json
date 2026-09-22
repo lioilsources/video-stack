@@ -1,0 +1,174 @@
+{
+  "id": "dragon_bubbles",
+  "order": 5,
+  "title": "Dráček, který neuměl foukat oheň",
+  "title_en": "The Little Dragon Who Couldn't Breathe Fire",
+  "desc": "Pip místo ohně fouká bubliny. Ostatní se smějí — dokud bubliny nezachrání vesnici.",
+  "desc_en": "Pip blows bubbles instead of fire. The others laugh, until the bubbles save the village.",
+  "seed": 1002,
+  "lang": "cs",
+  "world": "a sunny fairy-tale valley with green hills, a small village of round houses and a mossy rock dragon school",
+  "setting": "Slunné pohádkové údolí se zelenými kopci, vesnicí kulatých domků a dračí školou na mechové skále.",
+  "music": "whimsical fairy tale children's music, flute, harp and soft marimba, curious and warm, instrumental, 95 bpm",
+  "characters": {
+    "pip": {
+      "name": "dráček Pip",
+      "name_en": "Pip",
+      "tag": "Pip the little dragon",
+      "desc": "a small chubby green baby dragon standing upright on two legs, big round yellow eyes, tiny orange wings, a pale yellow belly and a short curly tail",
+      "look": "Malý baculatý zelený dráček, stojí na zadních, má velké žluté oči, oranžová křidélka, světlé bříško a zatočený ocásek."
+    },
+    "owl": {
+      "name": "sova Hedvika",
+      "name_en": "Hedwig the owl",
+      "desc": "a wise round brown owl with big golden eyes, small round glasses and a tiny blue scarf",
+      "look": "Moudrá kulatá hnědá sova se zlatýma očima, kulatými brýlemi a modrou šálou."
+    }
+  },
+  "shots": [
+    {
+      "id": "01",
+      "chars": [
+        "pip"
+      ],
+      "action": "Pip sedí v první lavici dračí školy na kopci, za ním stojí řada velkých draků. Rozhlíží se a vrtí ocáskem.",
+      "keyframe": "Pip the little dragon sits on the front bench of a dragon school class on a green hill, big dragons stand in a row behind him",
+      "motion": "Pip looks around the class with big curious eyes, wiggles his tail and then sits still",
+      "narration": "V dračí škole se učilo foukat oheň.",
+      "narration_en": "At dragon school, everyone learned to breathe fire.",
+      "camera": "zoom_in"
+    },
+    {
+      "id": "02",
+      "chars": [
+        "pip"
+      ],
+      "action": "Velcí draci chrlí do nebe dlouhé plameny. Pip je pozoruje s otevřenou pusou.",
+      "keyframe": "a row of big dragons breathe long flames into the sky while Pip the little dragon watches from the side",
+      "motion": "the big dragons blow long orange flames into the sky, Pip watches them with his mouth open",
+      "narration": "Velcí draci chrlili dlouhé plameny.",
+      "narration_en": "The big dragons blew long, hot flames."
+    },
+    {
+      "id": "03",
+      "chars": [
+        "pip"
+      ],
+      "action": "Pip stojí na plochém kameni, zhluboka se nadechne a nafoukne tváře. Zafouká a z pusy mu vyletí spousta lesklých mýdlových bublin. Překvapeně otevře oči.",
+      "keyframe": "Pip the little dragon stands on a flat rock, cheeks puffed, taking a deep breath",
+      "motion": [
+        "Pip takes a big deep breath, his cheeks puff up round and he squeezes his eyes shut",
+        "Pip blows hard and many shiny soap bubbles float out of his mouth and up into the air, he opens his eyes, surprised"
+      ],
+      "narration": "Pip se nadechl, zafoukal… a místo ohně vyletěly bubliny!",
+      "narration_en": "Pip took a deep breath, blew… and out came bubbles!"
+    },
+    {
+      "id": "04",
+      "chars": [
+        "pip"
+      ],
+      "action": "Pip stojí mezi poletujícími bublinami, červená se a schovává obličej za křidélka.",
+      "keyframe": "Pip the little dragon stands among floating soap bubbles, blushing and looking down at his feet",
+      "motion": "bubbles float around Pip, he blushes, lowers his head and hides his face behind his little wings",
+      "narration": "Ostatní draci se smáli. Pip se styděl.",
+      "narration_en": "The other dragons laughed. Pip felt shy."
+    },
+    {
+      "id": "05",
+      "chars": [
+        "pip"
+      ],
+      "action": "Při západu slunce sedí Pip sám na mechovém kameni u lesa. Povzdechne si a skane mu slza.",
+      "keyframe": "Pip the little dragon sits alone on a big mossy rock at the edge of a forest at sunset, looking sad",
+      "motion": "Pip sits on the rock and sighs, his shoulders drop, a small tear rolls down his cheek, then he stays still",
+      "narration": "Sedl si na kámen a byl smutný.",
+      "narration_en": "He sat on a rock, feeling sad."
+    },
+    {
+      "id": "06",
+      "chars": [
+        "pip",
+        "owl"
+      ],
+      "action": "Na větev vedle Pipa přiletí sova Hedvika a zvědavě nakloní hlavu.",
+      "keyframe": "Hedwig the owl lands on a branch next to Pip the little dragon sitting on the mossy rock",
+      "motion": "the owl flaps her wings, lands on the branch next to Pip and tilts her head at him",
+      "narration": "Přiletěla moudrá sova Hedvika.",
+      "narration_en": "Hedwig the wise owl flew down."
+    },
+    {
+      "id": "07",
+      "chars": [
+        "pip",
+        "owl"
+      ],
+      "action": "Sova Pipovi vlídně něco vysvětluje a ukazuje křídlem. Mezi nimi pluje bublina, Pip zvedne hlavu a usměje se.",
+      "keyframe": "Hedwig the owl talks gently to Pip the little dragon, a shiny soap bubble floats between them",
+      "motion": [
+        "the owl talks and gestures with one wing, Pip listens and slowly lifts his head",
+        "a shiny bubble floats between them, Pip looks at it and a small smile appears on his face"
+      ],
+      "narration": "Každý umí něco jiného, řekla sova. Tvoje bubliny jsou kouzelné.",
+      "narration_en": "Everyone has a different gift, said the owl. Your bubbles are magic."
+    },
+    {
+      "id": "08",
+      "chars": [
+        "pip"
+      ],
+      "action": "Na návsi odlétají z ohně velké jiskry k seníku. Pip přiběhne a vyděšeně se zastaví.",
+      "keyframe": "in the village square a bonfire throws big sparks towards a haystack, Pip the little dragon runs in",
+      "motion": "sparks fly from the bonfire towards the haystack, Pip runs in, stops and looks worried",
+      "narration": "Ve vesnici létaly jiskry k seníku!",
+      "narration_en": "In the village, sparks flew toward the haystack!"
+    },
+    {
+      "id": "09",
+      "chars": [
+        "pip"
+      ],
+      "action": "Pip fouká velké bubliny, jiskry se v nich chytají a s tichým puknutím zhasínají.",
+      "keyframe": "Pip the little dragon blows a stream of big soap bubbles that catch the flying sparks next to the haystack",
+      "motion": "Pip blows many big bubbles, the sparks land in the bubbles and go out with a tiny pop, then the air is calm",
+      "narration": "Pip foukl bubliny a ty jiskry pochytaly.",
+      "narration_en": "Pip blew bubbles and they caught every spark."
+    },
+    {
+      "id": "10",
+      "chars": [
+        "pip"
+      ],
+      "action": "Děti ze vsi tleskají a skáčou kolem Pipa. Pip se nesměle usmívá a mává.",
+      "keyframe": "village children cheer and clap around Pip the little dragon in the village square",
+      "motion": "the children clap and jump around Pip, Pip smiles shyly and waves at them",
+      "narration": "Děti tleskaly. Pip zachránil vesnici!",
+      "narration_en": "The children cheered. Pip saved the village!"
+    },
+    {
+      "id": "11",
+      "chars": [
+        "pip"
+      ],
+      "action": "Pip tančí na návsi sambu mezi poletujícími bublinami.",
+      "keyframe": "Pip the little dragon stands in the village square surrounded by floating bubbles, happy, ready to dance",
+      "motion": "Pip dances samba on the spot, stepping quickly and swaying his hips, arms moving, bubbles floating around him, same village square",
+      "narration": "Radostí zatančil sambu mezi bublinami.",
+      "narration_en": "Full of joy, he danced a samba among the bubbles.",
+      "control": "samba",
+      "beats": 2
+    },
+    {
+      "id": "12",
+      "chars": [
+        "pip"
+      ],
+      "action": "Pod hvězdnou oblohou spí Pip stočený na mechovém kameni. Z nosu mu vyletí poslední bublinka a odpluje.",
+      "keyframe": "Pip the little dragon sleeps curled up on the mossy rock under a starry night sky, one last bubble floating above him",
+      "motion": "Pip breathes slowly in his sleep, a small bubble floats up from his nose and drifts away",
+      "narration": "Večer usnul s úsměvem. Dobrou noc, Pipe.",
+      "narration_en": "That night he fell asleep smiling. Good night, Pip.",
+      "camera": "zoom_out"
+    }
+  ]
+}

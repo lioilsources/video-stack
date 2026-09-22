@@ -1,0 +1,175 @@
+{
+  "id": "night_fright",
+  "order": 2,
+  "title": "Noční strach",
+  "title_en": "The Night Fright",
+  "desc": "Kubu v noci vyleká stín na zdi. Lampička ukáže, že je to jen bunda — a medvídek je po ruce.",
+  "desc_en": "A shadow on the wall scares Jake at night. The lamp shows it is only a jacket, and Teddy is right there.",
+  "seed": 1005,
+  "lang": "cs",
+  "world": "a cozy child's bedroom at night, moonlight through the window, a bed with a star quilt, a toy shelf, a chair with clothes, soft blue night colors",
+  "setting": "Útulný dětský pokojíček v noci: měsíční světlo z okna, postel s hvězdičkovou peřinou, polička s hračkami, židle s oblečením a tlumené modré barvy.",
+  "music": "soft lullaby children's music, music box, celesta and warm strings, gentle and slightly mysterious then calm, instrumental, 70 bpm",
+  "characters": {
+    "jake": {
+      "name": "Kuba",
+      "name_en": "Jake",
+      "desc": "a 6-year-old boy with fluffy red hair and big blue eyes, wearing light blue pajamas with yellow stars",
+      "look": "Šestiletý kluk s načechranými zrzavými vlasy a velkýma modrýma očima, ve světle modrém pyžamu se žlutými hvězdičkami."
+    },
+    "teddy": {
+      "name": "medvídek Bručoun",
+      "name_en": "Teddy",
+      "tag": "Teddy the bear",
+      "desc": "a soft old brown teddy bear with a patched ear, button eyes and a red bow tie",
+      "look": "Měkký starý hnědý plyšový medvídek se záplatou na uchu, knoflíkovýma očima a červeným motýlkem."
+    }
+  },
+  "shots": [
+    {
+      "id": "01",
+      "chars": [
+        "jake"
+      ],
+      "action": "V tmavém pokojíčku leží Kuba pod hvězdičkovou peřinou s očima dokořán, po zdi se rozlévá měsíční světlo. Mrkne a vytáhne si peřinu k bradě.",
+      "keyframe": "Jake lies in bed under a star quilt in his dark bedroom, eyes wide open, moonlight on the wall",
+      "motion": "Jake lies in bed, blinks, and pulls the quilt up to his chin",
+      "narration": "Bylo zhasnuto. Kuba ale nemohl usnout.",
+      "narration_en": "The lights were out, but Jake couldn't sleep.",
+      "camera": "zoom_in"
+    },
+    {
+      "id": "02",
+      "chars": [
+        "jake"
+      ],
+      "action": "Na zdi se kýve velký strašidelný stín s ostrými tvary. Kuba na něj zírá a svírá peřinu.",
+      "keyframe": "a big spooky shadow with pointy shapes on the bedroom wall, Jake in bed staring at it",
+      "motion": "the big shadow on the wall wobbles slightly, Jake stares at it and grips his quilt",
+      "narration": "Na zdi byl velký stín. Hýbal se!",
+      "narration_en": "A big shadow moved on the wall!"
+    },
+    {
+      "id": "03",
+      "chars": [
+        "jake"
+      ],
+      "action": "Kuba sklouzne pod peřinu a koukají mu jen oči. Peřina se chvěje, ještě jednou vykoukne na zeď a zase si oči zakryje.",
+      "keyframe": "Jake hides under his star quilt in bed, only his eyes peeking out",
+      "motion": [
+        "Jake slides down and hides under the quilt, then only his eyes peek out",
+        "the quilt trembles a little, Jake peeks at the wall again, then hides his eyes"
+      ],
+      "narration": "Kuba se schoval pod peřinu. Srdíčko mu bušilo jako buben.",
+      "narration_en": "Jake hid under his quilt. His heart beat like a drum."
+    },
+    {
+      "id": "04",
+      "chars": [
+        "teddy"
+      ],
+      "action": "Medvídek Bručoun se překlopí přes okraj poličky a měkce dopadne na koberec.",
+      "keyframe": "Teddy the bear falls from the toy shelf onto the soft carpet of the dark bedroom",
+      "motion": "the teddy bear tips over the edge of the shelf and tumbles softly onto the carpet",
+      "narration": "Bum! Něco spadlo z poličky.",
+      "narration_en": "Thump! Something fell off the shelf."
+    },
+    {
+      "id": "05",
+      "chars": [
+        "jake"
+      ],
+      "action": "Kuba pomalu nadzvedne peřinu, vykulenýma očima kouká k zemi a ztuhne.",
+      "keyframe": "Jake peeks out from under the quilt with big scared eyes",
+      "motion": "Jake slowly lifts the quilt, peeks towards the floor with big eyes, then freezes",
+      "narration": "Kuba zatajil dech a poslouchal.",
+      "narration_en": "Jake held his breath and listened."
+    },
+    {
+      "id": "06",
+      "chars": [
+        "jake"
+      ],
+      "action": "Stín na zdi se natahuje do výšky a dlouhé ruce se mu kývají. Kuba si přetáhne peřinu přes nos.",
+      "keyframe": "the shadow on the bedroom wall grows taller, looking like a monster with long arms, Jake in bed below it",
+      "motion": "the shadow on the wall stretches taller, its long arms sway, Jake pulls the quilt over his nose",
+      "narration": "Stín byl čím dál větší.",
+      "narration_en": "The shadow grew bigger and bigger."
+    },
+    {
+      "id": "07",
+      "chars": [
+        "jake"
+      ],
+      "action": "Kuba se nadechne a pomalu natáhne ruku k lampičce ve tvaru měsíce. Cvakne a pokoj zalije teplé žluté světlo.",
+      "keyframe": "Jake reaches out bravely from his bed to switch on a little moon-shaped bedside lamp",
+      "motion": [
+        "Jake takes a deep breath and slowly reaches his hand towards the lamp",
+        "Jake clicks the lamp on, warm yellow light fills the room and he blinks"
+      ],
+      "narration": "Pak se nadechl, natáhl ruku… a rozsvítil lampičku.",
+      "narration_en": "Then he took a breath, reached out… and switched on the lamp."
+    },
+    {
+      "id": "08",
+      "chars": [
+        "jake"
+      ],
+      "action": "Ve světle lampičky visí na židli bunda a šála a lehce se pohupují. Kuba se na ně podívá a začne se chichotat.",
+      "keyframe": "in warm lamp light a jacket and a scarf hang on a chair next to the bed, Jake sits in bed looking at them",
+      "motion": "the jacket and scarf on the chair sway gently, Jake looks at them, then starts to giggle",
+      "narration": "Stín byla jen bunda a šála na židli!",
+      "narration_en": "The shadow was just his jacket on a chair!"
+    },
+    {
+      "id": "09",
+      "chars": [
+        "jake",
+        "teddy"
+      ],
+      "action": "Kuba zvedne Bručouna z koberce, pevně ho obejme a usměje se.",
+      "keyframe": "Jake picks up Teddy the bear from the carpet and hugs him in the warm lamp light",
+      "motion": "Jake lifts the teddy bear from the carpet and hugs it tightly, smiling",
+      "narration": "A na zemi ležel medvídek Bručoun.",
+      "narration_en": "And there on the floor lay Teddy."
+    },
+    {
+      "id": "10",
+      "chars": [
+        "jake"
+      ],
+      "action": "Kuba v pyžamu tančí na koberci makarenu: ruce dopředu, na ramena, na boky a malý skok.",
+      "keyframe": "Jake stands on the carpet next to his bed in his pajamas in the warm lamp light, laughing",
+      "motion": "Jake dances the macarena on the spot, hands out, hands on shoulders, hands on hips and a little jump, same pajamas, same bedroom",
+      "narration": "Kubovi se tak ulevilo, že zatančil makarenu.",
+      "narration_en": "Jake felt so relieved he danced the macarena.",
+      "control": "macarena",
+      "beats": 2
+    },
+    {
+      "id": "11",
+      "chars": [
+        "jake",
+        "teddy"
+      ],
+      "action": "Kuba uloží Bručouna pod peřinu, pohladí ho po hlavě a lehne si vedle něj.",
+      "keyframe": "Jake tucks Teddy the bear into bed next to him under the star quilt",
+      "motion": "Jake tucks the teddy under the quilt, pats its head and lies down next to it",
+      "narration": "Uložil Bručouna vedle sebe.",
+      "narration_en": "He tucked Teddy in beside him."
+    },
+    {
+      "id": "12",
+      "chars": [
+        "jake",
+        "teddy"
+      ],
+      "action": "Kuba klidně spí s Bručounem v náručí a lampička tiše svítí.",
+      "keyframe": "Jake sleeps peacefully hugging Teddy the bear, the moon lamp glowing softly",
+      "motion": "Jake breathes slowly in his sleep hugging the teddy, the lamp glows softly",
+      "narration": "Už se nebál. Dobrou noc, Kubo.",
+      "narration_en": "He wasn't scared anymore. Good night, Jake.",
+      "camera": "zoom_out"
+    }
+  ]
+}

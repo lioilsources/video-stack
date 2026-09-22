@@ -1,0 +1,177 @@
+{
+  "id": "lost_mitten",
+  "order": 8,
+  "title": "Ztracená rukavice",
+  "title_en": "The Lost Mitten",
+  "desc": "Anetě se při koulování ztratí rukavice. Ráno ji najde — v ruce sněhuláka.",
+  "desc_en": "Annie loses a mitten in a snowball fight. In the morning she finds it, in the snowman's hand.",
+  "seed": 1007,
+  "lang": "cs",
+  "world": "a snowy village park in winter, snow-covered trees, a wooden bench, gentle snowfall, soft blue and white colors",
+  "setting": "Zasněžený vesnický park v zimě: zapadané stromy, dřevěná lavička, jemné sněžení a modrobílé barvy.",
+  "music": "cozy winter children's music, sleigh bells, celesta and soft piano, gentle and magical, instrumental, 90 bpm",
+  "characters": {
+    "annie": {
+      "name": "Aneta",
+      "name_en": "Annie",
+      "desc": "a lively 7-year-old girl with long blond hair under a white knitted hat with a pompom, rosy cheeks, a purple winter coat, a pink scarf and red knitted mittens",
+      "look": "Živá sedmiletá holčička s dlouhými blond vlasy pod bílou pletenou čepicí s bambulí, s růžovými tvářemi, ve fialovém kabátku, s růžovou šálou a červenými pletenými rukavicemi."
+    },
+    "snowman": {
+      "name": "sněhulák",
+      "name_en": "the snowman",
+      "desc": "a friendly round snowman with a carrot nose, coal eyes and a coal smile, two stick arms and a small black top hat",
+      "look": "Přátelský kulatý sněhulák s mrkví místo nosu, uhlíkovýma očima a úsměvem, s rukama z klacíků a malým černým cylindrem."
+    }
+  },
+  "shots": [
+    {
+      "id": "01",
+      "chars": [
+        "annie"
+      ],
+      "action": "Aneta stojí v zasněženém parku, chytá vločky na červené rukavice a s úsměvem se dívá nahoru.",
+      "keyframe": "Annie stands in the snowy park catching snowflakes on her red mittens",
+      "motion": "Annie holds out her hands, snowflakes land on her red mittens, she looks up and smiles",
+      "narration": "Napadl první sníh. Aneta běžela ven.",
+      "narration_en": "The first snow fell. Annie ran outside.",
+      "camera": "zoom_in"
+    },
+    {
+      "id": "02",
+      "chars": [
+        "annie"
+      ],
+      "action": "Aneta nabere sníh, uplácá kouli a hodí ji daleko. Směje se, udělá další a hodí znovu.",
+      "keyframe": "Annie throws a snowball in the snowy park, laughing",
+      "motion": [
+        "Annie scoops up snow, pats it into a ball and throws it far",
+        "Annie laughs, bends down, makes another snowball and throws it"
+      ],
+      "narration": "Koulovala se, až jí čepice sjela do očí.",
+      "narration_en": "She threw snowballs until her hat slipped over her eyes."
+    },
+    {
+      "id": "03",
+      "chars": [
+        "annie"
+      ],
+      "action": "Aneta udiveně zírá na holou ruku, jedna červená rukavice chybí. Zavrtí zmrzlými prsty a rozhlíží se.",
+      "keyframe": "Annie looks at her bare right hand in surprise, one red mitten is missing",
+      "motion": "Annie looks at her bare hand, wiggles her cold fingers and looks around",
+      "narration": "Jejda! Jedna rukavice zmizela.",
+      "narration_en": "Oops! One mitten was gone."
+    },
+    {
+      "id": "04",
+      "chars": [
+        "annie"
+      ],
+      "action": "Aneta klečí v hlubokém sněhu, hrabe v něm oběma rukama a pak zavrtí hlavou.",
+      "keyframe": "Annie kneels in the deep snow and digs in it with her hands",
+      "motion": "Annie digs in the snow with both hands, looks, then shakes her head",
+      "narration": "Hledala a hledala, ale nenašla ji.",
+      "narration_en": "She searched and searched, but couldn't find it."
+    },
+    {
+      "id": "05",
+      "chars": [
+        "annie",
+        "snowman"
+      ],
+      "action": "Aneta zapíchne mrkev do obličeje sněhuláka, kterého právě postavila, couvne a zatleská.",
+      "keyframe": "Annie puts a carrot nose on the snowman she has just built in the park",
+      "motion": "Annie pushes the carrot nose into the snowman's face, steps back and claps",
+      "narration": "Tak si aspoň postavila sněhuláka.",
+      "narration_en": "So she built a snowman instead."
+    },
+    {
+      "id": "06",
+      "chars": [
+        "annie",
+        "snowman"
+      ],
+      "action": "Za soumraku Aneta zamává sněhulákovi a jde domů s jednou holou rukou v kapse. Padá sníh.",
+      "keyframe": "Annie waves goodbye to the snowman in the park as evening falls, one bare hand in her pocket",
+      "motion": "Annie waves at the snowman and walks away towards home while snow falls",
+      "narration": "Domů šla s rukou v kapse.",
+      "narration_en": "She went home, one hand in her pocket."
+    },
+    {
+      "id": "07",
+      "chars": [
+        "snowman"
+      ],
+      "action": "V noci pod měsícem stojí sněhulák sám v prázdném parku. Klacíková ruka s červenou rukavicí se pomalu zvedne a uhlíkové oči zajiskří.",
+      "keyframe": "at night under the moon, the snowman stands alone in the empty park holding a red mitten on one stick arm",
+      "motion": [
+        "the moon shines, snow sparkles, the snowman's stick arm with the red mitten slowly lifts",
+        "the snowman's coal eyes twinkle and it seems to smile at the moon"
+      ],
+      "narration": "V noci se v parku dělo kouzlo. Sněhulák držel červenou rukavici!",
+      "narration_en": "At night, magic happened. The snowman was holding a red mitten!"
+    },
+    {
+      "id": "08",
+      "chars": [
+        "annie"
+      ],
+      "action": "Ráno Aneta přiběhne do parku, zastaví se a podívá se ke sněhulákovi.",
+      "keyframe": "in the morning Annie runs into the snowy park in her purple coat",
+      "motion": "Annie runs into the park, stops and looks towards the snowman",
+      "narration": "Ráno Aneta přiběhla do parku.",
+      "narration_en": "In the morning, Annie ran to the park."
+    },
+    {
+      "id": "09",
+      "chars": [
+        "annie",
+        "snowman"
+      ],
+      "action": "Aneta sundá červenou rukavici ze sněhulákovy klacíkové ruky, vydechne a usměje se.",
+      "keyframe": "Annie finds her red mitten on the snowman's stick hand, the snowman smiles",
+      "motion": "Annie takes the red mitten from the snowman's stick hand, gasps and smiles",
+      "narration": "Její rukavice! Sněhulák ji našel.",
+      "narration_en": "Her mitten! The snowman had found it.",
+      "camera": "zoom_in"
+    },
+    {
+      "id": "10",
+      "chars": [
+        "annie"
+      ],
+      "action": "Aneta v obou rukavicích tančí před sněhulákem radostné kroky do strany.",
+      "keyframe": "Annie stands in the snowy park in front of the snowman, both red mittens on, happy",
+      "motion": "Annie dances happy side steps on the spot, stepping left and right and swinging her arms, same purple coat, same snowy park",
+      "narration": "Aneta radostí tancovala a sněhulák se usmíval.",
+      "narration_en": "Annie danced for joy, and the snowman smiled.",
+      "control": "maraschino_step",
+      "beats": 2
+    },
+    {
+      "id": "11",
+      "chars": [
+        "annie",
+        "snowman"
+      ],
+      "action": "Aneta omotá sněhulákovi kolem krku svou růžovou šálu, zaváže ji a poplácá ho.",
+      "keyframe": "Annie wraps her pink scarf around the snowman's neck",
+      "motion": "Annie wraps her scarf around the snowman's neck, ties it and pats it",
+      "narration": "Na poděkování mu dala svou šálu.",
+      "narration_en": "To say thanks, she gave him her scarf."
+    },
+    {
+      "id": "12",
+      "chars": [
+        "annie",
+        "snowman"
+      ],
+      "action": "V prosluněném zasněženém parku Aneta objímá sněhuláka. Sníh se třpytí a ona se směje do kamery.",
+      "keyframe": "Annie hugs the snowman in the sunny snowy park",
+      "motion": "Annie hugs the snowman, snow sparkles in the sun, she looks at the camera and laughs",
+      "narration": "Od té doby byli nejlepší kamarádi.",
+      "narration_en": "From then on, they were best friends.",
+      "camera": "zoom_out"
+    }
+  ]
+}

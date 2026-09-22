@@ -8,6 +8,7 @@
 #                                                    # render + slepení + RIFE, stáhne výsledek
 #   spark-video ls                                   # co už je hotové
 #   spark-video drive <id> <klip.mp4|animace.fbx> [--start s] [--loop] [--speed 0.65] [--length N]  # kostra
+#   spark-video story <příkaz> …                     # minutový anime příběh (tools/story.py), viz níž
 #
 # --scenes N   kostra N scén × 5 beatů s prázdnými prompty (bez toho 3-beatová ukázka)
 # --from X     od beatu / scény X dál (vše za ní se přegeneruje)
@@ -18,7 +19,18 @@
 #              --length N  snímků kostry @ 16 fps (default 81); celý tanec přes víc beatů = víc snímků
 #              --fill 0.9  (FBX) postava ve stoje na 90 % výšky — velikost tváře, tedy identita
 #
+# story ls                                         katalog příběhů a stav
+# story plan      <příběh>                         časová osa a odhad, bez GPU
+# story sheet     <příběh> <role> [--n 4] [--pick K]   kandidáti postavy (stáhne arch), --pick vybere
+# story cast      <příběh> <role> <obrázek>        vlastní postavička místo generované
+# story keyframes <příběh> [--shot 03,07] [--reroll] [--method ipadapter]   + stáhne kontaktní arch
+# story contact   <příběh>                         stáhne a otevře kontaktní arch
+# story approve   <příběh>                         keyframy schválené → smí se renderovat
+# story run       <příběh> [--hd] [--resume] [--only 03] [--no-review] [--lang en]   + stáhne videa
+# story batch     [<příběh>…] [--hd] [--auto-cast]  přes noc: keyframy + draft všech
+#
 # Manifesty:  <repo>/chains/<jméno>.json      — verzované, čte je i chain.py
+# Příběhy:    <repo>/stories/<id>.json        — verzované; výsledky do out/stories/
 # Výsledky:   <repo>/out/<jméno>_{16,32}fps.mp4  — v .gitignore
 # Přepíše se: SPARK_VIDEO_DIR, SPARK_HOST
 set -euo pipefail
@@ -41,7 +53,7 @@ CHAINS="$DIR/chains"; OUT="$DIR/out"
 mkdir -p "$CHAINS" "$OUT"
 
 die() { echo "spark-video: $*" >&2; exit 1; }
-usage() { sed -n '2,23p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+usage() { sed -n '2,35p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
 manifest() { echo "$CHAINS/$1.json"; }
 need() { [ -f "$(manifest "$1")" ] || die "manifest $1 neexistuje — založ ho: spark-video new $1 <obrázek>"; }
 # jméno beatu/scény jde do ssh příkazu, tak ať v něm není nic, co by shell četl
@@ -230,6 +242,115 @@ cmd_drive() {
   echo "  drive/${id}_pose.webm — commitni ji; v beatu pak \"control\": \"$id\""
 }
 
+# ---------------------------------------------------------------- příběhy
+
+story_push() {
+  local f="$DIR/stories/$1.json"
+  [ -f "$f" ] || die "příběh $1 neexistuje (stories/$1.json; katalog: spark-video story ls)"
+  ssh "$HOST" "mkdir -p $STACK/stories"
+  scp -q "$f" "$HOST:$STACK/stories/$1.json"
+  # taneční záběry potřebují kostry (malé, jdou i mimo git pull)
+  ls "$DIR"/drive/*_pose.webm >/dev/null 2>&1 && scp -q "$DIR"/drive/*_pose.webm "$HOST:$STACK/drive/" || true
+}
+story_py() { ssh "$HOST" "cd $STACK && ~/Code/ComfyUI/.venv/bin/python tools/story.py $*"; }
+fetch_open() {
+  scp -q "$HOST:$1" "$2" || { echo "  ! $1 se nepodařilo stáhnout"; return 0; }
+  echo "  $2"
+  [ -t 1 ] && command -v open >/dev/null && open "$2" || true
+}
+story_lang() { python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("lang","cs"))' "$DIR/stories/$1.json"; }
+
+cmd_story() {
+  local sub="${1:-}"; [ $# -gt 0 ] && shift
+  mkdir -p "$OUT/stories"
+  local id="${1:-}" flags=() lang="" f
+  case "$sub" in
+    ls) story_py ls; return ;;
+    batch) ;;
+    plan|sheet|cast|keyframes|contact|approve|run)
+      [ -n "$id" ] || die "story $sub čeká id příběhu (spark-video story ls)"; token "$id" "story $sub"; shift ;;
+    ""|-h|--help) usage ;;
+    *) die "neznámý příkaz story $sub (zkus spark-video --help)" ;;
+  esac
+  local remote_dir="$COMFY/output/story_$id/story"
+  case "$sub" in
+    plan) story_push "$id"; story_py plan "$id" ;;
+    sheet)
+      local role="${1:-}"; [[ "$role" =~ ^[a-z0-9_]+$ ]] || die "story sheet $id čeká roli ([a-z0-9_])"; shift
+      local pick=""
+      while [ $# -gt 0 ]; do
+        case "$1" in
+          --n|--seed) [[ "${2:-}" =~ ^[0-9]+$ ]] || die "$1 čeká číslo"; flags+=("$1" "$2"); shift ;;
+          --pick) [[ "${2:-}" =~ ^[0-9]+$ ]] || die "--pick čeká číslo kandidáta"; flags+=(--pick "$2"); pick=1; shift ;;
+          *) die "neznámý přepínač $1 (sheet umí --n N, --seed N, --pick K)" ;;
+        esac; shift
+      done
+      story_push "$id"; story_py sheet "$id" "$role" "${flags[@]:-}"
+      [ -n "$pick" ] || fetch_open "$remote_dir/cand/${role}_contact.jpg" "$OUT/stories/${id}_${role}_kandidati.jpg" ;;
+    cast)
+      local role="${1:-}" img="${2:-}"
+      [[ "$role" =~ ^[a-z0-9_]+$ ]] || die "story cast $id čeká roli ([a-z0-9_])"
+      [ -f "$img" ] || die "obrázek '$img' neexistuje"
+      local remote="story_${id}_cast_${role}.${img##*.}"
+      story_push "$id"
+      scp -q "$img" "$HOST:$COMFY/input/$remote"
+      story_py cast "$id" "$role" "../ComfyUI/input/$remote" ;;
+    keyframes)
+      while [ $# -gt 0 ]; do
+        case "$1" in
+          --shot) [[ "${2:-}" =~ ^[0-9,]+$ ]] || die "--shot čeká záběry, např. 03,07"; flags+=(--shot "$2"); shift ;;
+          --method) [[ "${2:-}" =~ ^(kontext|ipadapter)$ ]] || die "--method kontext nebo ipadapter"; flags+=(--method "$2"); shift ;;
+          --seed) [[ "${2:-}" =~ ^[0-9]+$ ]] || die "--seed čeká číslo"; flags+=(--seed "$2"); shift ;;
+          --reroll|--force) flags+=("$1") ;;
+          *) die "neznámý přepínač $1 (keyframes umí --shot, --reroll, --force, --method, --seed)" ;;
+        esac; shift
+      done
+      story_push "$id"; story_py keyframes "$id" "${flags[@]:-}"
+      fetch_open "$remote_dir/contact.jpg" "$OUT/stories/${id}_contact.jpg" ;;
+    contact)
+      story_push "$id"; story_py contact "$id"
+      fetch_open "$remote_dir/contact.jpg" "$OUT/stories/${id}_contact.jpg" ;;
+    approve) story_py approve "$id" ;;
+    run)
+      lang="$(story_lang "$id")"
+      while [ $# -gt 0 ]; do
+        case "$1" in
+          --hd|--resume|--no-review) flags+=("$1") ;;
+          --only) [[ "${2:-}" =~ ^[0-9]{1,2}$ ]] || die "--only čeká číslo záběru"; flags+=(--only "shot$(printf %02d "$((10#$2))")"); shift ;;
+          --lang) [[ "${2:-}" =~ ^(cs|en)$ ]] || die "--lang cs nebo en"; lang="$2"; shift ;;
+          --method) [[ "${2:-}" =~ ^(kontext|ipadapter)$ ]] || die "--method kontext nebo ipadapter"; flags+=(--method "$2"); shift ;;
+          *) die "neznámý přepínač $1 (run umí --hd, --resume, --only NN, --no-review, --lang, --method)" ;;
+        esac; shift
+      done
+      story_push "$id"
+      echo "  příběh $id na $HOST (keyframy → render → vypravěč → hudba → mix)…"
+      story_py run "$id" --lang "$lang" "${flags[@]:-}"
+      echo "  stahuju…"
+      local v
+      for v in "" _sub _16x9; do
+        scp -q "$HOST:$COMFY/output/story_$id/story_${id}_story_${lang}${v}.mp4" "$OUT/stories/${id}_${lang}${v}.mp4" \
+          && echo "  $OUT/stories/${id}_${lang}${v}.mp4" || echo "  ! varianta ${v:-hlavní} chybí"
+      done
+      [ -t 1 ] && command -v open >/dev/null && open "$OUT/stories/${id}_${lang}.mp4" || true ;;
+    batch)
+      local ids=()
+      while [ $# -gt 0 ]; do
+        case "$1" in
+          --hd|--auto-cast) flags+=("$1") ;;
+          --lang) [[ "${2:-}" =~ ^(cs|en)$ ]] || die "--lang cs nebo en"; flags+=(--lang "$2"); shift ;;
+          -*) die "neznámý přepínač $1 (batch umí --hd, --auto-cast, --lang)" ;;
+          *) token "$1" "story batch"; ids+=("$1") ;;
+        esac; shift
+      done
+      if [ ${#ids[@]} -eq 0 ]; then
+        for f in "$DIR"/stories/*.json; do ids+=("$(basename "$f" .json)"); done
+      fi
+      for f in "${ids[@]}"; do story_push "$f"; done
+      story_py batch "${ids[@]}" "${flags[@]:-}"
+      echo "  kontaktní archy: spark-video story contact <příběh>; výsledky: spark-video story run <příběh> --resume" ;;
+  esac
+}
+
 cmd_ls() {
   echo "manifesty  $CHAINS"
   ls -1 "$CHAINS" 2>/dev/null | sed 's/\.json$//' | sed 's/^/  /' || true
@@ -244,6 +365,7 @@ case "${1:-}" in
   run)  shift; cmd_run "${1:?chybí jméno}" "${@:2}" ;;
   ls)   cmd_ls ;;
   drive) shift; cmd_drive "$@" ;;
+  story) shift; cmd_story "$@" ;;
   ""|-h|--help) usage ;;
   *) die "neznámý příkaz ${1} (zkus spark-video --help)" ;;
 esac

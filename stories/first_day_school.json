@@ -1,0 +1,174 @@
+{
+  "id": "first_day_school",
+  "order": 4,
+  "title": "První den ve škole",
+  "title_en": "The First Day at School",
+  "desc": "Tomík se ve velké škole ztratí. Robot Bip mu ukáže cestu — a Tomík najde kamarádku.",
+  "desc_en": "Tommy gets lost in the big school. Bip the robot shows him the way, and Tommy finds a friend.",
+  "seed": 1003,
+  "lang": "cs",
+  "world": "a bright friendly primary school with big windows, a colorful classroom, a long hallway with lockers, a sunny schoolyard with trees",
+  "setting": "Světlá přátelská základní škola: velká okna, barevná třída, dlouhá chodba se skříňkami a slunný dvůr se stromy.",
+  "music": "cheerful gentle children's music, piano and xylophone, light bouncy rhythm, hopeful and friendly, instrumental, 100 bpm",
+  "characters": {
+    "tom": {
+      "name": "Tomík",
+      "name_en": "Tommy",
+      "desc": "a small shy 6-year-old boy with messy brown hair and round glasses, wearing a green hoodie, blue shorts and a huge orange backpack",
+      "look": "Malý nesmělý šestiletý kluk s rozcuchanými hnědými vlasy a kulatými brýlemi, v zelené mikině, modrých kraťasech a s obrovským oranžovým batohem."
+    },
+    "bip": {
+      "name": "robot Bip",
+      "name_en": "Bip the robot",
+      "desc": "a friendly small round white robot with a blue screen face showing two dot eyes, short stubby arms, a single wheel and a little antenna with a red light",
+      "look": "Malý kulatý bílý robot s modrou obrazovkou místo obličeje, krátkými ručkami, jedním kolečkem a anténkou s červeným světýlkem."
+    }
+  },
+  "shots": [
+    {
+      "id": "01",
+      "chars": [
+        "tom"
+      ],
+      "action": "Ráno před velkou školní bránou. Tomík se dívá nahoru na budovu, polkne a sevře popruhy batohu.",
+      "keyframe": "Tommy stands in front of a big school gate in the morning, holding the straps of his huge orange backpack",
+      "motion": "Tommy looks up at the big school, swallows, and holds his backpack straps tighter",
+      "narration": "Tomík měl dnes první den ve škole.",
+      "narration_en": "Today was Tommy's first day at school.",
+      "camera": "zoom_in"
+    },
+    {
+      "id": "02",
+      "chars": [
+        "tom"
+      ],
+      "action": "Tomík pomalu vejde do dlouhé chodby s mnoha dveřmi, rozhlédne se a zastaví se.",
+      "keyframe": "Tommy walks into a long school hallway with many doors, looking lost",
+      "motion": "Tommy walks slowly into the hallway, looks left, then right, then stops",
+      "narration": "Chodba byla dlouhá a dveří tolik!",
+      "narration_en": "The hallway was long, with so many doors!"
+    },
+    {
+      "id": "03",
+      "chars": [
+        "tom"
+      ],
+      "action": "Tomík stojí uprostřed chodby a otáčí se ke všem dveřím, oči má čím dál větší. Chytí se popruhů a rty se mu zachvějí.",
+      "keyframe": "Tommy stands alone in the middle of the hallway, looking worried and biting his lip",
+      "motion": [
+        "Tommy turns around slowly, looking at all the doors, his eyes getting big",
+        "Tommy hugs his backpack straps, his lip trembles, then he stands still"
+      ],
+      "narration": "Kam mám jít? Tomík se bál, že se ztratil.",
+      "narration_en": "Where do I go? Tommy was afraid he was lost."
+    },
+    {
+      "id": "04",
+      "chars": [
+        "tom",
+        "bip"
+      ],
+      "action": "K Tomíkovi přijede robot Bip, zabliká anténkou a na obrazovce se mu objeví úsměv.",
+      "keyframe": "Bip the robot rolls up to Tommy in the school hallway, its antenna light blinking",
+      "motion": "the robot rolls up to Tommy, its red antenna light blinks and its screen shows a smile",
+      "narration": "Vtom přijel robot Bip a zablikal.",
+      "narration_en": "Then Bip the robot rolled up and blinked."
+    },
+    {
+      "id": "05",
+      "chars": [
+        "tom",
+        "bip"
+      ],
+      "action": "Bip ukáže ručkou do chodby. Tomík kývne a vydá se za ním.",
+      "keyframe": "Bip the robot points down the school hallway with its stubby arm, Tommy looks where it points",
+      "motion": "the robot points down the hallway, Tommy nods and starts walking after it",
+      "narration": "Pojď se mnou, pípl Bip.",
+      "narration_en": "Follow me, beeped Bip."
+    },
+    {
+      "id": "06",
+      "chars": [
+        "tom",
+        "bip"
+      ],
+      "action": "Tomík a Bip jdou vedle sebe slunnou chodbou. Tomík se trochu usmívá.",
+      "keyframe": "Tommy and Bip the robot walk together down the sunny school hallway",
+      "motion": "Tommy and the robot move down the hallway side by side, Tommy smiles a little",
+      "narration": "Šli spolu chodbou až ke třídě.",
+      "narration_en": "Together they went down the hall to class."
+    },
+    {
+      "id": "07",
+      "chars": [
+        "tom"
+      ],
+      "action": "Ve třídě si Tomík sedne do lavice, sundá batoh a podívá se na holčičku s červenými copánky. Anička mu zamává a on nesměle zamává zpátky.",
+      "keyframe": "Tommy sits at a school desk in a colorful classroom next to a smiling girl with red pigtails",
+      "motion": [
+        "Tommy sits down at the desk, takes off his backpack and looks at the girl next to him",
+        "the girl smiles and waves at Tommy, Tommy waves back shyly"
+      ],
+      "narration": "Ve třídě si sedl vedle Aničky. Anička mu zamávala.",
+      "narration_en": "In class he sat next to Annie. Annie waved hello."
+    },
+    {
+      "id": "08",
+      "chars": [
+        "tom"
+      ],
+      "action": "O přestávce nabídne Tomík Aničce jablíčka ze svačiny. Vezme si a oba se smějí.",
+      "keyframe": "Tommy shares apple slices from his lunchbox with the girl with red pigtails at the school desk",
+      "motion": "Tommy holds out his lunchbox with apple slices, the girl takes one and they both laugh",
+      "narration": "O přestávce se rozdělili o jablíčko.",
+      "narration_en": "At break they shared his apple slices."
+    },
+    {
+      "id": "09",
+      "chars": [
+        "tom"
+      ],
+      "action": "Na slunném dvoře tančí Tomík robotí tanec: trhané, strojové pohyby rukama.",
+      "keyframe": "Tommy stands in the sunny schoolyard, smiling",
+      "motion": "Tommy dances the robot dance on the spot, moving his arms in stiff sharp steps like a robot, same green hoodie, same schoolyard",
+      "narration": "Na dvoře Tomík tančil jako robot.",
+      "narration_en": "In the yard, Tommy danced like a robot.",
+      "control": "robot"
+    },
+    {
+      "id": "10",
+      "chars": [
+        "tom",
+        "bip"
+      ],
+      "action": "Bip se radostí zatočí na kolečku a anténka bliká. Tomík tleská a směje se.",
+      "keyframe": "Bip the robot spins around happily in the schoolyard next to laughing Tommy",
+      "motion": "the robot spins around once on its wheel, its antenna blinks, Tommy claps and laughs",
+      "narration": "Bip se točil a všichni se smáli.",
+      "narration_en": "Bip spun around and everyone laughed."
+    },
+    {
+      "id": "11",
+      "chars": [
+        "tom"
+      ],
+      "action": "Odpoledne vycházejí Tomík s Aničkou ze školní brány, houpají rukama a mávají škole na rozloučenou.",
+      "keyframe": "Tommy and the girl with red pigtails walk out of the school gate in the afternoon sun, waving",
+      "motion": "Tommy and the girl walk out of the gate swinging their arms and wave goodbye to the school",
+      "narration": "Domů už šel s novou kamarádkou.",
+      "narration_en": "He walked home with a new friend."
+    },
+    {
+      "id": "12",
+      "chars": [
+        "tom"
+      ],
+      "action": "Večer u psacího stolu dokreslí Tomík obrázek robota, zvedne ho a hrdě se usměje.",
+      "keyframe": "Tommy sits at his desk in his bedroom in the evening, drawing a picture of a small round white robot",
+      "motion": "Tommy finishes the drawing of the robot, holds up the picture and smiles proudly",
+      "narration": "Večer nakreslil Bipa. Zítra půjde rád.",
+      "narration_en": "That evening he drew Bip, happy for tomorrow.",
+      "camera": "zoom_out"
+    }
+  ]
+}

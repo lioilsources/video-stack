@@ -1,0 +1,175 @@
+{
+  "id": "lost_umbrella",
+  "order": 1,
+  "title": "Ztracený deštník",
+  "title_en": "The Lost Umbrella",
+  "desc": "Mia hledá svůj deštník po celém domě. Najde ho venku — na hlavě kocoura.",
+  "desc_en": "Mia searches the whole house for her umbrella and finds it outside, on a cat's head.",
+  "seed": 1001,
+  "lang": "cs",
+  "world": "a cozy small town on a rainy spring day, cobblestone street, warm glowing shop windows, puddles",
+  "setting": "Útulné městečko v deštivém jarním dni: dlážděná ulice, kaluže a teple svítící výlohy.",
+  "music": "gentle playful children's music, ukulele, glockenspiel and soft pizzicato strings, light rainy mood, warm and happy, instrumental, 90 bpm",
+  "characters": {
+    "mia": {
+      "name": "Mia",
+      "name_en": "Mia",
+      "desc": "a cheerful 7-year-old girl with a short black bob haircut and big brown eyes, wearing a bright yellow raincoat and red rubber boots",
+      "look": "Veselá sedmiletá holčička s černým mikádem a velkýma hnědýma očima, ve žluté pláštěnce a červených holínkách."
+    },
+    "cat": {
+      "name": "kocour Mourek",
+      "name_en": "Tom the cat",
+      "desc": "a chubby fluffy grey tabby cat with round green eyes and a white chest",
+      "look": "Baculatý chlupatý šedý mourovatý kocour s kulatýma zelenýma očima a bílou náprsenkou."
+    }
+  },
+  "shots": [
+    {
+      "id": "01",
+      "chars": [
+        "mia"
+      ],
+      "action": "Mia klečí na parapetu v pokojíčku a dívá se na déšť. Přitiskne nos na sklo, orosí ho dechem, pak se opře a usměje.",
+      "keyframe": "Mia kneels on the window seat in her cozy bedroom and looks out at the rain on the window glass",
+      "motion": "Mia presses her nose to the rainy window glass, her breath fogs it, then she leans back and smiles",
+      "narration": "Pršelo. Mia se na déšť moc těšila.",
+      "narration_en": "It was raining. Mia loved rainy days.",
+      "camera": "zoom_in"
+    },
+    {
+      "id": "02",
+      "chars": [
+        "mia"
+      ],
+      "action": "V předsíni stojí prázdný stojan na deštníky. Mia vyjekne a chytí se za tváře.",
+      "keyframe": "Mia stands in the hallway next to an empty umbrella stand, both hands on her cheeks, surprised",
+      "motion": "Mia looks at the empty umbrella stand, gasps with wide eyes and puts both hands on her cheeks, then stays still",
+      "narration": "Jenže stojan na deštníky byl prázdný!",
+      "narration_en": "But the umbrella stand was empty!"
+    },
+    {
+      "id": "03",
+      "chars": [
+        "mia"
+      ],
+      "action": "Mia leží na břiše a svítí baterkou pod postel. Pak si sedne, zavrtí hlavou a pokrčí rameny.",
+      "keyframe": "Mia lies on her tummy on the bedroom floor and looks under her bed with a small flashlight",
+      "motion": [
+        "Mia shines the flashlight under the bed and moves it slowly from side to side, then pulls her head back out",
+        "Mia sits up on the floor, shakes her head and shrugs with both hands, then sits still"
+      ],
+      "narration": "Hledala pod postelí. Byl tam jen míček a jedna ponožka.",
+      "narration_en": "She looked under the bed. Only a ball and one sock."
+    },
+    {
+      "id": "04",
+      "chars": [
+        "mia"
+      ],
+      "action": "Mia otevře velkou dřevěnou skříň, nakoukne mezi kabáty a zase ji zavře.",
+      "keyframe": "Mia opens a big wooden wardrobe full of coats and peeks inside",
+      "motion": "Mia pulls the wardrobe door open, peeks inside between the coats, then closes the door again",
+      "narration": "Ve skříni byly kabáty, ale deštník ne.",
+      "narration_en": "The wardrobe had coats, but no umbrella."
+    },
+    {
+      "id": "05",
+      "chars": [
+        "mia"
+      ],
+      "action": "V kuchyni Mia nadzvedne velkou konvici, podívá se za ni a vzdychne.",
+      "keyframe": "Mia in a bright kitchen looks behind a big teapot on the table",
+      "motion": "Mia lifts the teapot a little, looks behind it, puts it back down and sighs",
+      "narration": "V kuchyni voněl čaj. Deštník nikde.",
+      "narration_en": "The kitchen smelled of tea. No umbrella."
+    },
+    {
+      "id": "06",
+      "chars": [
+        "mia"
+      ],
+      "action": "Mia vyjde z domu na deštivou ulici bez deštníku, natáhne si kapuci a kouká do nebe.",
+      "keyframe": "Mia steps out of the front door onto the rainy street without an umbrella, raindrops on her hood",
+      "motion": "Mia steps out of the door, pulls her yellow hood up and looks up at the falling rain",
+      "narration": "Tak vyšla ven jen v pláštěnce.",
+      "narration_en": "So she went out in just her raincoat."
+    },
+    {
+      "id": "07",
+      "chars": [
+        "mia"
+      ],
+      "action": "Mia skáče do velké kaluže a voda stříká kolem červených holínek. Skočí ještě jednou a hihňá se.",
+      "keyframe": "Mia jumps into a big puddle on the cobblestone street, water splashing around her red boots",
+      "motion": [
+        "Mia jumps into the puddle with both feet, water splashes up around her red boots and she laughs",
+        "Mia jumps once more into the same puddle, water splashes, then she stands still and giggles"
+      ],
+      "narration": "Kaluže! Mia skákala, až voda stříkala na všechny strany.",
+      "narration_en": "Puddles! Mia jumped and water splashed everywhere."
+    },
+    {
+      "id": "08",
+      "chars": [
+        "mia",
+        "cat"
+      ],
+      "action": "Na nízkém plotě sedí kocour Mourek s Miiným červeným deštníkem na hlavě jako s kloboukem. Deštník se kýve, Mia na něj ukazuje a směje se.",
+      "keyframe": "Tom the cat sits on a low garden fence wearing Mia's small red umbrella on his head like a hat, Mia stands below and looks up at him",
+      "motion": "the cat on the fence tilts his head, the red umbrella on his head wobbles, Mia points up at him and laughs",
+      "narration": "Na plotě seděl kocour Mourek. S jejím deštníkem!",
+      "narration_en": "On the fence sat Tom. With her umbrella!"
+    },
+    {
+      "id": "09",
+      "chars": [
+        "mia"
+      ],
+      "action": "Mia na mokré ulici před plotem tančí kuřecí tanec: mává lokty jako křídly, podřepne a tleská.",
+      "keyframe": "Mia stands on the wet street in front of a garden fence, laughing, ready to dance",
+      "motion": "Mia dances the chicken dance on the spot, flapping her elbows like wings, wiggling down and clapping her hands, same yellow raincoat, same street",
+      "narration": "Mia se tak smála, že začala tancovat kuřecí tanec. Mourek jen koukal.",
+      "narration_en": "Mia laughed so hard she did the chicken dance. Tom just stared.",
+      "control": "chicken_dance",
+      "beats": 2
+    },
+    {
+      "id": "10",
+      "chars": [
+        "mia",
+        "cat"
+      ],
+      "action": "Mourek packou dostrká deštník k Mie. Mia ho zvedne a otevře.",
+      "keyframe": "Tom the cat sits on the pavement and pushes the red umbrella towards Mia with his paw",
+      "motion": "the cat pushes the red umbrella towards Mia with his paw, Mia picks it up and opens it",
+      "narration": "Mourek jí deštník vrátil. Hodný kocour.",
+      "narration_en": "Tom gave the umbrella back. What a kind cat."
+    },
+    {
+      "id": "11",
+      "chars": [
+        "mia",
+        "cat"
+      ],
+      "action": "Mia a Mourek sedí na lavičce pod otevřeným červeným deštníkem. Kocour se přitulí a Mia ho hladí.",
+      "keyframe": "Mia and Tom the cat sit together on a bench under the open red umbrella while rain falls around them",
+      "motion": "rain falls around the umbrella, the cat snuggles closer to Mia, Mia strokes his head and smiles",
+      "narration": "Pod deštníkem bylo místo pro oba.",
+      "narration_en": "There was room for both under the umbrella."
+    },
+    {
+      "id": "12",
+      "chars": [
+        "mia",
+        "cat"
+      ],
+      "action": "Mia jde s deštníkem ulicí ke kameře, Mourek cupitá vedle ní. Déšť ustane a nad střechami svítí duha.",
+      "keyframe": "Mia and Tom the cat walk home down the street under the red umbrella, a big rainbow in the sky above the roofs",
+      "motion": "Mia walks towards the camera holding the red umbrella, the cat trots beside her, the rain stops and the rainbow shines",
+      "narration": "Déšť přestal a nad městem svítila duha.",
+      "narration_en": "The rain stopped and a rainbow shone over town.",
+      "camera": "zoom_out"
+    }
+  ]
+}

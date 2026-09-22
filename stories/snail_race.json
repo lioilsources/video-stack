@@ -1,0 +1,173 @@
+{
+  "id": "snail_race",
+  "order": 7,
+  "title": "Závod se šnekem",
+  "title_en": "The Race with the Snail",
+  "desc": "Rychlý zajíc se v závodě nudí a usne. Pomalý šnek cestou najde poklad i kamaráda.",
+  "desc_en": "The fast hare gets bored and falls asleep mid-race. The slow snail finds treasure and a friend on the way.",
+  "seed": 1006,
+  "lang": "cs",
+  "world": "a sunny green meadow with a winding dirt path, wildflowers, a big oak tree, a finish line ribbon between two sticks",
+  "setting": "Slunná zelená louka s klikatou polní cestou, lučními květinami, velkým dubem a cílovou páskou mezi dvěma kolíky.",
+  "music": "playful sporty children's music, bouncy clarinet, pizzicato strings and light drums, humorous, instrumental, 110 bpm",
+  "characters": {
+    "hare": {
+      "name": "zajíc Rychlík",
+      "name_en": "Speedy",
+      "tag": "Speedy the hare",
+      "desc": "a tall slim white hare standing upright on two legs like a person, long ears, red sneakers and a blue sports shirt with the number 1",
+      "look": "Vysoký štíhlý bílý zajíc, chodí vzpřímeně jako člověk, má dlouhé uši, červené tenisky a modrý sportovní dres s číslem 1."
+    },
+    "snail": {
+      "name": "šnek Pomalík",
+      "name_en": "Slowpoke",
+      "tag": "Slowpoke the snail",
+      "desc": "a small cheerful yellow snail with a big swirly orange shell, tiny eyes on stalks and a green cap",
+      "look": "Malý veselý žlutý šnek s velkou zatočenou oranžovou ulitou, očky na stopkách a zelenou kšiltovkou."
+    }
+  },
+  "shots": [
+    {
+      "id": "01",
+      "chars": [
+        "hare",
+        "snail"
+      ],
+      "action": "Zajíc Rychlík a šnek Pomalík stojí na startovní čáře na louce. Zajíc si protahuje nohy, šnek pomalu kývne.",
+      "keyframe": "Speedy the hare and Slowpoke the snail stand at a start line on the meadow path",
+      "motion": "the hare stretches his long legs, the snail slowly nods, both look ahead down the path",
+      "narration": "Zajíc Rychlík a šnek Pomalík dali závod.",
+      "narration_en": "Speedy the hare raced Slowpoke the snail.",
+      "camera": "zoom_in"
+    },
+    {
+      "id": "02",
+      "chars": [
+        "hare"
+      ],
+      "action": "Rychlík vystřelí po cestě a za červenými teniskami se práší.",
+      "keyframe": "Speedy the hare sprints down the dirt path leaving a cloud of dust behind",
+      "motion": "the hare dashes away down the path, dust puffs up behind his red sneakers",
+      "narration": "Start! Rychlík vystřelil jako šíp.",
+      "narration_en": "Go! Speedy shot off like an arrow."
+    },
+    {
+      "id": "03",
+      "chars": [
+        "snail"
+      ],
+      "action": "Pomalík pomalu leze po cestě mezi květinami a očky na stopkách se rozhlíží.",
+      "keyframe": "Slowpoke the snail crawls slowly along the dirt path among wildflowers",
+      "motion": "the snail slowly crawls forward, his eye stalks looking left and right at the flowers",
+      "narration": "Pomalík lezl pomalu, ale vesele.",
+      "narration_en": "Slowpoke crawled slowly, but happily."
+    },
+    {
+      "id": "04",
+      "chars": [
+        "hare"
+      ],
+      "action": "Rychlík se zastaví u velkého dubu, ohlédne se po prázdné cestě a mohutně zívne. Sedne si ke kmeni, založí ruce a oči se mu zavřou.",
+      "keyframe": "Speedy the hare leans against a big oak tree by the path, yawning",
+      "motion": [
+        "the hare stops at the oak tree, looks back down the empty path and yawns widely",
+        "the hare sits down against the tree trunk, crosses his arms and his eyes slowly close"
+      ],
+      "narration": "Rychlík byl daleko napřed. Nudil se, zívl… a usnul.",
+      "narration_en": "Speedy was far ahead. He got bored, yawned… and fell asleep."
+    },
+    {
+      "id": "05",
+      "chars": [
+        "snail"
+      ],
+      "action": "Pomalík se zastaví u lesklého modrého kamínku a posadí si ho na ulitu.",
+      "keyframe": "Slowpoke the snail finds a shiny blue pebble on the dirt path",
+      "motion": "the snail stops, looks at the shiny blue pebble and puts it on top of his shell",
+      "narration": "Pomalík zatím našel lesklý kamínek.",
+      "narration_en": "Meanwhile, Slowpoke found a shiny pebble."
+    },
+    {
+      "id": "06",
+      "chars": [
+        "snail"
+      ],
+      "action": "Pomalík dojde k velké červené jahodě, spokojeně k ní přičichne a usměje se.",
+      "keyframe": "Slowpoke the snail finds a big red strawberry next to the path",
+      "motion": "the snail reaches the strawberry, sniffs it happily and smiles",
+      "narration": "Pak našel velkou červenou jahodu.",
+      "narration_en": "Then he found a big red strawberry."
+    },
+    {
+      "id": "07",
+      "chars": [
+        "snail"
+      ],
+      "action": "Pomalík opatrně postrčí brouka, který leží na zádech. Brouk se převrátí na nožičky a zamává.",
+      "keyframe": "Slowpoke the snail helps a little beetle lying on its back to turn over",
+      "motion": "the snail gently pushes the beetle, the beetle flips onto its feet and waves its legs",
+      "narration": "A pomohl broukovi na nožičky.",
+      "narration_en": "And he helped a beetle back on its feet."
+    },
+    {
+      "id": "08",
+      "chars": [
+        "hare"
+      ],
+      "action": "Pod dubem se Rychlík probudí, uši mu vystřelí nahoru a vyskočí na nohy.",
+      "keyframe": "Speedy the hare wakes up under the oak tree with a start, ears straight up",
+      "motion": "the hare opens his eyes, his ears shoot straight up and he jumps to his feet",
+      "narration": "Rychlík se probudil. Závod!",
+      "narration_en": "Speedy woke up. The race!"
+    },
+    {
+      "id": "09",
+      "chars": [
+        "snail"
+      ],
+      "action": "Pomalík s kamínkem a jahodou na ulitě pomalu protlačí cílovou pásku. Páska spadne a on se hrdě usměje.",
+      "keyframe": "Slowpoke the snail crosses the finish line ribbon carrying a blue pebble and a strawberry on his shell",
+      "motion": "the snail slowly pushes through the ribbon, the ribbon falls and he smiles proudly",
+      "narration": "Ale Pomalík už byl v cíli!",
+      "narration_en": "But Slowpoke was already at the finish!",
+      "camera": "zoom_in"
+    },
+    {
+      "id": "10",
+      "chars": [
+        "hare",
+        "snail"
+      ],
+      "action": "Rychlík se v cíli sehne a potřese Pomalíkovi ručkou, oba se usmívají.",
+      "keyframe": "Speedy the hare bends down and shakes hands with Slowpoke the snail at the finish line",
+      "motion": "the hare bends down and shakes the snail's tiny hand, both of them smile",
+      "narration": "Rychlík mu podal ruku a gratuloval.",
+      "narration_en": "Speedy shook his hand and said well done."
+    },
+    {
+      "id": "11",
+      "chars": [
+        "hare"
+      ],
+      "action": "Rychlík v cíli předvede moonwalk, nohy mu kloužou dozadu.",
+      "keyframe": "Speedy the hare stands at the finish line on the meadow, grinning",
+      "motion": "the hare does a moonwalk on the spot, sliding his feet backwards smoothly, same red sneakers, same meadow",
+      "narration": "Pak mu na oslavu předvedl moonwalk.",
+      "narration_en": "Then he did a moonwalk to celebrate.",
+      "control": "moonwalk"
+    },
+    {
+      "id": "12",
+      "chars": [
+        "hare",
+        "snail"
+      ],
+      "action": "Rychlík a Pomalík sedí pod dubem a ukusují z velké jahody.",
+      "keyframe": "Speedy the hare and Slowpoke the snail sit under the oak tree sharing a big strawberry",
+      "motion": "the hare and the snail take small bites of the strawberry and laugh together",
+      "narration": "A jahodu si rozdělili napůl.",
+      "narration_en": "And they shared the strawberry.",
+      "camera": "zoom_out"
+    }
+  ]
+}

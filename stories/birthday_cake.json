@@ -1,0 +1,174 @@
+{
+  "id": "birthday_cake",
+  "order": 10,
+  "title": "Nejlepší narozeninový dort",
+  "title_en": "The Best Birthday Cake",
+  "desc": "Kája s babičkou pečou dort pro tatínka a nic se nedaří. Tanec u trouby zachrání den.",
+  "desc_en": "Katie and Grandma bake a cake for Dad and everything goes wrong. A dance by the oven saves the day.",
+  "seed": 1010,
+  "lang": "cs",
+  "world": "a warm cozy old kitchen with a wooden table, an oven, jars of flour and sugar, a sunny window with flowers",
+  "setting": "Teplá útulná stará kuchyň s dřevěným stolem, troubou, sklenicemi s moukou a cukrem a prosluněným oknem s květinami.",
+  "music": "happy warm children's music, accordion, acoustic guitar and light percussion, playful kitchen mood, instrumental, 105 bpm",
+  "characters": {
+    "katie": {
+      "name": "Kája",
+      "name_en": "Katie",
+      "desc": "a lively 8-year-old girl with curly dark hair tied in a high ponytail and a big smile, wearing a yellow T-shirt, blue shorts and a red apron",
+      "look": "Živá osmiletá holčička s kudrnatými tmavými vlasy ve vysokém culíku a širokým úsměvem, ve žlutém tričku, modrých kraťasech a červené zástěře."
+    },
+    "grandma": {
+      "name": "babička",
+      "name_en": "Grandma",
+      "desc": "a cheerful plump grandmother with white hair in a bun, round glasses, rosy cheeks, a flowery blue dress and a white apron",
+      "look": "Veselá kyprá babička s bílými vlasy v drdolu, kulatými brýlemi a růžovými tvářemi, v modrých květovaných šatech a bílé zástěře."
+    }
+  },
+  "shots": [
+    {
+      "id": "01",
+      "chars": [
+        "katie",
+        "grandma"
+      ],
+      "action": "Kája s babičkou stojí u kuchyňského stolu nad velkou kuchařkou. Kája ukazuje na recept, babička kývá a usmívá se.",
+      "keyframe": "Katie and Grandma stand at the kitchen table reading a big recipe book together",
+      "motion": "Katie points at the recipe book, Grandma nods and smiles",
+      "narration": "Kája s babičkou pekly dort pro tatínka.",
+      "narration_en": "Katie and Grandma baked a cake for Dad.",
+      "camera": "zoom_in"
+    },
+    {
+      "id": "02",
+      "chars": [
+        "katie"
+      ],
+      "action": "Kája nakloní pytlík s moukou, vyvalí se velký bílý oblak a obalí jí obličej.",
+      "keyframe": "Katie pours flour into a big bowl on the kitchen table, a white cloud of flour puffs up",
+      "motion": "Katie tips the flour bag, a big cloud of flour puffs up and covers her face white",
+      "narration": "Mouka! Všude samá mouka.",
+      "narration_en": "Flour! Flour everywhere."
+    },
+    {
+      "id": "03",
+      "chars": [
+        "katie"
+      ],
+      "action": "Vajíčko Káje vyklouzne z prstů a rozplácne se na zemi. Kája si zakryje pusu.",
+      "keyframe": "an egg slips out of Katie's hand above the kitchen floor",
+      "motion": "the egg slips from Katie's fingers, falls and cracks on the floor, Katie covers her mouth",
+      "narration": "Vajíčko jí vyklouzlo. Plesk!",
+      "narration_en": "An egg slipped. Splat!"
+    },
+    {
+      "id": "04",
+      "chars": [
+        "katie"
+      ],
+      "action": "Těsto kyne a přetéká přes okraj mísy, Kája ho zkouší nabírat zpátky lžící. Přeteče ještě víc, Kája to vzdá a nervózně se zasměje.",
+      "keyframe": "cake batter bubbles over the edge of a bowl onto the kitchen table, Katie holds a spoon",
+      "motion": [
+        "the batter swells and flows over the edge of the bowl, Katie tries to scoop it back with a spoon",
+        "more batter flows over, Katie gives up and laughs nervously"
+      ],
+      "narration": "Těsto přeteklo přes mísu. Kája ho chytala lžící, ale marně.",
+      "narration_en": "The batter spilled over. Katie tried to catch it with a spoon."
+    },
+    {
+      "id": "05",
+      "chars": [
+        "katie"
+      ],
+      "action": "Z dvířek trouby se valí šedý kouř. Kája v chňapkách pootevře dvířka a odhání kouř.",
+      "keyframe": "grey smoke puffs out of the oven door, Katie stands in front of it wearing oven mitts",
+      "motion": "smoke puffs from the oven, Katie opens the door a little and waves the smoke away",
+      "narration": "A z trouby šel kouř!",
+      "narration_en": "And smoke came out of the oven!"
+    },
+    {
+      "id": "06",
+      "chars": [
+        "katie"
+      ],
+      "action": "Kája si v chňapkách sedne na zem, po tvářích jí tečou slzy a popotahuje.",
+      "keyframe": "Katie sits on the kitchen floor crying, oven mitts on her hands",
+      "motion": "Katie sits down on the floor, tears roll down her cheeks and she sniffles",
+      "narration": "Kája se rozplakala. Všechno se pokazilo.",
+      "narration_en": "Katie cried. Everything went wrong."
+    },
+    {
+      "id": "07",
+      "chars": [
+        "katie",
+        "grandma"
+      ],
+      "action": "Babička otočí knoflíkem starého rádia na poličce, začne hrát hudba a mrkne na Káju.",
+      "keyframe": "Grandma turns on an old radio on the kitchen shelf and winks at Katie sitting on the floor",
+      "motion": "Grandma turns the knob of the radio, music starts and she winks at Katie",
+      "narration": "Babička pustila rádio a mrkla na ni.",
+      "narration_en": "Grandma turned on the radio and winked."
+    },
+    {
+      "id": "08",
+      "chars": [
+        "grandma"
+      ],
+      "action": "Babička tančí uprostřed kuchyně u trouby salsu: křížené kroky, ruka v bok a malá otočka.",
+      "keyframe": "Grandma stands in the middle of the kitchen by the oven, smiling, ready to dance",
+      "motion": "Grandma dances salsa on the spot with crossing steps, one hand on her hip and a little turn, same flowery dress, same kitchen",
+      "narration": "Když se nedaří, pomůže tanec! A babička tančila salsu.",
+      "narration_en": "When things go wrong, a dance helps! And Grandma danced salsa.",
+      "control": "salsa",
+      "beats": 2
+    },
+    {
+      "id": "09",
+      "chars": [
+        "katie"
+      ],
+      "action": "Kája s moukou na nose se rozesměje a tančí u trouby salsu s babičkou.",
+      "keyframe": "Katie stands next to the oven with flour on her nose, laughing",
+      "motion": "Katie dances salsa on the spot with crossing steps, one hand on her hip and a little turn, same red apron, same kitchen",
+      "narration": "Kája se rozesmála a tančila s ní. Pak to zkusily znovu.",
+      "narration_en": "Katie laughed and danced along. Then they tried again.",
+      "control": "salsa",
+      "beats": 2
+    },
+    {
+      "id": "10",
+      "chars": [
+        "katie",
+        "grandma"
+      ],
+      "action": "Babička vytáhne z trouby kulatý, trochu nakřivo upečený dort. Kája se nakloní, přičichne a usměje se.",
+      "keyframe": "Katie and Grandma take a round cake out of the oven, the cake is a little lopsided",
+      "motion": "Grandma pulls the cake out of the oven, Katie leans in, sniffs and smiles",
+      "narration": "Dort byl trochu křivý, ale voněl.",
+      "narration_en": "The cake was a bit wonky, but smelled great."
+    },
+    {
+      "id": "11",
+      "chars": [
+        "katie"
+      ],
+      "action": "Kája postaví na křivý dort jednu svíčku a vedle ní jahodu, pak hrdě couvne.",
+      "keyframe": "Katie puts a single candle on a lopsided cake decorated with strawberries",
+      "motion": "Katie places the candle on top and a strawberry beside it, then steps back proudly",
+      "narration": "Kája na něj dala svíčku a jahody.",
+      "narration_en": "Katie added a candle and strawberries."
+    },
+    {
+      "id": "12",
+      "chars": [
+        "katie",
+        "grandma"
+      ],
+      "action": "Tatínek sfoukne svíčku na křivém dortu, Kája s babičkou tleskají a obejmou se.",
+      "keyframe": "Katie and Grandma clap at the kitchen table while the candle on the lopsided cake is blown out",
+      "motion": "the candle flame goes out, Katie and Grandma clap and hug each other",
+      "narration": "Tatínek řekl: Nejlepší dort na světě!",
+      "narration_en": "Dad said: The best cake in the world!",
+      "camera": "zoom_out"
+    }
+  ]
+}

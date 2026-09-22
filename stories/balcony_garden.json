@@ -1,0 +1,171 @@
+{
+  "id": "balcony_garden",
+  "order": 6,
+  "title": "Zahrádka na balkóně",
+  "title_en": "The Balcony Garden",
+  "desc": "Lenka zasadí jedno semínko a učí se čekat. Z poupěte je nakonec květ — a přiletí motýl.",
+  "desc_en": "Lena plants a single seed and learns to wait. The bud turns into a flower, and a butterfly comes.",
+  "seed": 1004,
+  "lang": "cs",
+  "world": "a small sunny balcony high in a city apartment building, flower pots, a watering can, rooftops and blue sky behind",
+  "setting": "Malý slunný balkon vysoko v městském domě: květináče, konvička, za zábradlím střechy a modré nebe.",
+  "music": "gentle springtime children's music, acoustic guitar, flute and light bells, calm and hopeful, instrumental, 85 bpm",
+  "characters": {
+    "lena": {
+      "name": "Lenka",
+      "name_en": "Lena",
+      "desc": "a sweet 7-year-old girl with long light brown hair in two braids, freckles and a big smile, wearing a pink dress with a white apron and green rubber boots",
+      "look": "Milá sedmiletá holčička s dlouhými světle hnědými vlasy ve dvou copech a pihami, v růžových šatech s bílou zástěrou a zelených holínkách."
+    },
+    "butterfly": {
+      "name": "motýl",
+      "name_en": "the butterfly",
+      "desc": "a big friendly blue butterfly with shiny sky-blue wings with white spots and a cute smiling face",
+      "look": "Velký přátelský modrý motýl s lesklými blankytnými křídly s bílými tečkami a usměvavou tvářičkou."
+    }
+  },
+  "shots": [
+    {
+      "id": "01",
+      "chars": [
+        "lena"
+      ],
+      "action": "Lenka na balkoně drží v otevřené dlani jediné semínko a s úžasem si ho prohlíží.",
+      "keyframe": "Lena on the balcony holds a single seed in her open palm and looks at it with wonder",
+      "motion": "Lena opens her palm, looks closely at the tiny seed and smiles",
+      "narration": "Lenka dostala od babičky jedno semínko.",
+      "narration_en": "Grandma gave Lena one tiny seed.",
+      "camera": "zoom_in"
+    },
+    {
+      "id": "02",
+      "chars": [
+        "lena"
+      ],
+      "action": "Lenka zamáčkne semínko prstem do hlíny v hliněném květináči a hlínu uhladí.",
+      "keyframe": "Lena presses a seed into the soil of a small clay pot on the balcony",
+      "motion": "Lena pushes the seed into the soil with one finger, pats the soil flat and sits back",
+      "narration": "Zasadila ho do květináče.",
+      "narration_en": "She planted it in a little pot."
+    },
+    {
+      "id": "03",
+      "chars": [
+        "lena"
+      ],
+      "action": "Lenka zalévá květináč malou zelenou konvičkou a pak ji postaví vedle.",
+      "keyframe": "Lena waters a small clay pot on the balcony with a green watering can",
+      "motion": "Lena tips the watering can, water sprinkles on the soil, then she sets the can down",
+      "narration": "Každý den ho zalévala.",
+      "narration_en": "Every day she watered it."
+    },
+    {
+      "id": "04",
+      "chars": [
+        "lena"
+      ],
+      "action": "Lenka sedí u okna s bradou v dlaních a dívá se, jak teplý déšť kropí květináč.",
+      "keyframe": "Lena sits by the window and watches warm rain fall on her clay pot on the balcony",
+      "motion": "Lena watches the rain through the window, raindrops fall on the pot, she rests her chin on her hands",
+      "narration": "Pršelo. Semínko pilo vodu.",
+      "narration_en": "It rained. The seed drank the water."
+    },
+    {
+      "id": "05",
+      "chars": [
+        "lena"
+      ],
+      "action": "Lenka leží na balkoně na sluníčku vedle květináče, protáhne se a se zavřenýma očima se usmívá.",
+      "keyframe": "Lena lies on the balcony floor in bright sunshine next to the clay pot, smiling at the sun",
+      "motion": "the sun shines, Lena stretches her arms, closes her eyes and smiles",
+      "narration": "Pak hřálo sluníčko.",
+      "narration_en": "Then the warm sun came out."
+    },
+    {
+      "id": "06",
+      "chars": [
+        "lena"
+      ],
+      "action": "Lenka klečí u květináče s holou hlínou, poklepe na něj a zamračí se. Povzdechne si, opře bradu o kolena a čeká dál.",
+      "keyframe": "Lena kneels next to a clay pot of bare soil, looking sad and impatient",
+      "motion": [
+        "Lena looks at the bare soil, taps the pot gently and frowns",
+        "Lena sighs, puts her chin on her knees and keeps waiting"
+      ],
+      "narration": "Ale nic nerostlo. Lenka čekala a čekala a čekala.",
+      "narration_en": "But nothing grew. Lena waited, and waited, and waited."
+    },
+    {
+      "id": "07",
+      "chars": [
+        "lena"
+      ],
+      "action": "Z hlíny vykoukne drobný zelený klíček a rozvine dva lístky. Lenka vykulí oči a zakryje si pusu.",
+      "keyframe": "a tiny green sprout peeks out of the soil in the clay pot, Lena gasps in surprise behind it",
+      "motion": "the tiny sprout slowly unfolds two little leaves, Lena's eyes grow wide and she covers her mouth",
+      "narration": "Jednoho rána vykoukl zelený lístek!",
+      "narration_en": "One morning, a little green leaf peeked out!",
+      "camera": "zoom_in"
+    },
+    {
+      "id": "08",
+      "chars": [
+        "lena"
+      ],
+      "action": "V květináči roste vysoký stonek s poupětem. Lenka si ho měří dlaní a poupě se kývá ve vánku.",
+      "keyframe": "a tall green stem with a closed flower bud grows in the clay pot, Lena measures it with her hand",
+      "motion": "Lena holds her hand next to the stem to measure it, the bud sways a little in the breeze",
+      "narration": "Rostl a rostl, až měl poupě.",
+      "narration_en": "It grew and grew, and then a bud appeared."
+    },
+    {
+      "id": "09",
+      "chars": [
+        "lena",
+        "butterfly"
+      ],
+      "action": "Na poupě přiletí modrý motýl. Lenka se nakloní blíž a usměje se.",
+      "keyframe": "the blue butterfly lands on the closed flower bud in the clay pot while Lena watches with delight",
+      "motion": "the butterfly flutters down and lands on the bud, Lena leans in closer and smiles",
+      "narration": "Přiletěl modrý motýl a sedl si na poupě.",
+      "narration_en": "A blue butterfly came and sat on the bud."
+    },
+    {
+      "id": "10",
+      "chars": [
+        "lena",
+        "butterfly"
+      ],
+      "action": "Poupě se pomalu rozvine ve velký růžový květ, motýl vzlétne a Lenka tleská.",
+      "keyframe": "the bud opens into a big pink flower, the blue butterfly flutters above it, Lena claps",
+      "motion": "the bud slowly opens into a big pink flower, the butterfly lifts off and Lena claps her hands",
+      "narration": "Poupě se rozvinulo v krásný růžový květ.",
+      "narration_en": "The bud opened into a lovely pink flower."
+    },
+    {
+      "id": "11",
+      "chars": [
+        "lena"
+      ],
+      "action": "Lenka tančí vedle růžového květu pomalou radostnou rumbu.",
+      "keyframe": "Lena stands on the balcony next to the pink flower, happy, ready to dance",
+      "motion": "Lena dances a slow happy rumba on the spot, swaying her hips and moving her arms gracefully, same pink dress, same balcony",
+      "narration": "Lenka tančila kolem svého prvního kvítku.",
+      "narration_en": "Lena danced around her very first flower.",
+      "control": "rumba",
+      "beats": 2
+    },
+    {
+      "id": "12",
+      "chars": [
+        "lena"
+      ],
+      "action": "Balkon je plný kvetoucích květin všech barev. Lenka je zalévá, kolem létají motýli a ona se usměje do kamery.",
+      "keyframe": "the balcony is full of blooming flowers of every color, Lena waters them, butterflies fly around her",
+      "motion": "Lena waters the flowers, butterflies float around her, she looks at the camera and smiles",
+      "narration": "Za rok byl celý balkon plný květin.",
+      "narration_en": "A year later, the balcony was full of flowers.",
+      "camera": "zoom_out"
+    }
+  ]
+}

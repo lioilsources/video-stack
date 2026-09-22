@@ -1,0 +1,182 @@
+{
+  "id": "flying_fish",
+  "order": 9,
+  "title": "Ryba, která chtěla létat",
+  "title_en": "The Fish Who Wanted to Fly",
+  "desc": "Rybka Finka touží létat jako ptáci. Labuť Bělka ji vezme na záda a ukáže jí jezero shora.",
+  "desc_en": "Finn the fish longs to fly like the birds. Bella the swan takes her on her back to see the lake from above.",
+  "seed": 1009,
+  "lang": "cs",
+  "world": "a clear blue lake surrounded by green hills and reeds, a sunny sky with fluffy clouds",
+  "setting": "Průzračné modré jezero mezi zelenými kopci a rákosím, slunečná obloha s nadýchanými mráčky.",
+  "music": "dreamy gentle children's music, harp, flute and soft strings, floating and wondrous, instrumental, 80 bpm",
+  "characters": {
+    "finn": {
+      "name": "rybka Finka",
+      "name_en": "Finn",
+      "tag": "Finn the fish",
+      "desc": "a small round bright orange fish with big sparkly blue eyes, flowing fins and a happy face",
+      "look": "Malá kulatá zářivě oranžová rybka s velkýma třpytivýma modrýma očima, vlajícími ploutvemi a veselou tvářičkou."
+    },
+    "bella": {
+      "name": "labuť Bělka",
+      "name_en": "Bella",
+      "tag": "Bella the swan",
+      "desc": "a gentle graceful white swan with a long neck, an orange beak and kind dark eyes",
+      "look": "Něžná ladná bílá labuť s dlouhým krkem, oranžovým zobákem a laskavýma tmavýma očima."
+    }
+  },
+  "shots": [
+    {
+      "id": "01",
+      "chars": [
+        "finn"
+      ],
+      "action": "Pod hladinou plave rybka Finka mezi vodními rostlinami a shora prosvítají sluneční paprsky. Podívá se nahoru.",
+      "keyframe": "underwater view of Finn the fish swimming among water plants, sunlight rays coming from the surface",
+      "motion": "Finn swims slowly among the water plants, sunlight flickers and she looks up",
+      "narration": "V jezeře žila malá rybka Finka.",
+      "narration_en": "In the lake lived a little fish named Finn.",
+      "camera": "zoom_in"
+    },
+    {
+      "id": "02",
+      "chars": [
+        "finn"
+      ],
+      "action": "Finka se vznáší těsně pod hladinou a pozoruje ptáky, jak přelétají po nebi.",
+      "keyframe": "Finn the fish floats just below the water surface and looks up at birds flying in the sky",
+      "motion": "Finn floats just below the surface and watches the birds fly across the sky",
+      "narration": "Celé dny se dívala na ptáky.",
+      "narration_en": "All day long she watched the birds."
+    },
+    {
+      "id": "03",
+      "chars": [
+        "finn"
+      ],
+      "action": "Finka se rozplave a vyskočí z vody, plácá ploutvemi jako křídly. Spadne zpátky s velkým šplouchnutím a po hladině se rozejdou kruhy.",
+      "keyframe": "Finn the fish leaps out of the lake into the air, water drops sparkling around her",
+      "motion": [
+        "Finn swims fast and leaps out of the water, flapping her fins like wings",
+        "Finn falls back into the lake with a big splash and ripples spread"
+      ],
+      "narration": "Chtěla létat! Vyskočila z vody… a žbluňk, zase dolů.",
+      "narration_en": "She wanted to fly! She leapt up… and splash, back down."
+    },
+    {
+      "id": "04",
+      "chars": [
+        "finn"
+      ],
+      "action": "Finka pomalu klesá ke dnu, ploutve jí svěsí a zůstane ležet u kulatého kamene.",
+      "keyframe": "Finn the fish rests sadly near the lake bottom next to a round stone",
+      "motion": "Finn sinks slowly, her fins droop, and she rests next to the stone",
+      "narration": "Finka byla smutná. Ryby přece nelétají.",
+      "narration_en": "Finn was sad. Fish can't fly, after all."
+    },
+    {
+      "id": "05",
+      "chars": [
+        "finn",
+        "bella"
+      ],
+      "action": "Po hladině připluje labuť Bělka, skloní hlavu k vodě a podívá se na rybku.",
+      "keyframe": "Bella the swan glides on the lake surface and looks down at Finn the fish in the water below her",
+      "motion": "the swan glides over, dips her head towards the water and looks at the little fish",
+      "narration": "Vtom kolem plula labuť Bělka.",
+      "narration_en": "Just then, Bella the swan glided by."
+    },
+    {
+      "id": "06",
+      "chars": [
+        "finn",
+        "bella"
+      ],
+      "action": "Labuť skloní dlouhý krk, rybka vystrčí hlavu z vody a dívají se na sebe. Labuť kývne a roztáhne křídlo, rybce se rozzáří oči.",
+      "keyframe": "Bella the swan bends her long neck down to Finn the fish peeking out of the water",
+      "motion": [
+        "the swan bends her long neck down, the fish pokes her head out of the water and they look at each other",
+        "the swan nods and gently spreads one wing, the fish's eyes light up"
+      ],
+      "narration": "Proč jsi smutná? Chci létat. Tak poleť se mnou, řekla labuť.",
+      "narration_en": "Why so sad? I want to fly. Then fly with me, said the swan."
+    },
+    {
+      "id": "07",
+      "chars": [
+        "finn",
+        "bella"
+      ],
+      "action": "Finka se usadí v lesklé kapce vody v měkkém peří na labutích zádech. Labuť se usměje a roztáhne křídla.",
+      "keyframe": "Finn the fish sits inside a shiny bubble of water in the soft white feathers on the back of Bella the swan",
+      "motion": "the fish settles into the shiny water bubble on the swan's back, the swan smiles and spreads her wings",
+      "narration": "Finka se usadila v kapce na labutích zádech.",
+      "narration_en": "Finn rode in a bubble on the swan's back."
+    },
+    {
+      "id": "08",
+      "chars": [
+        "finn",
+        "bella"
+      ],
+      "action": "Labuť se rozběhne po hladině, mává křídly a vznese se do vzduchu. Kolem létají kapky.",
+      "keyframe": "Bella the swan takes off from the lake with Finn the fish in a water bubble on her back, water drops flying",
+      "motion": "the swan runs across the water flapping her wings and lifts into the air",
+      "narration": "Raz, dva, tři… a labuť vzlétla!",
+      "narration_en": "One, two, three… and the swan took off!"
+    },
+    {
+      "id": "09",
+      "chars": [
+        "finn",
+        "bella"
+      ],
+      "action": "Labuť klidně letí vysoko nad jezerem a zelenými kopci, rybka se dívá dolů na stromy.",
+      "keyframe": "Bella the swan flies high above the lake and green hills with Finn the fish in a water bubble on her back",
+      "motion": "the swan flies calmly over the lake, the fish looks down at the hills and trees",
+      "narration": "Shora bylo jezero jako modré zrcadlo.",
+      "narration_en": "From above, the lake looked like a blue mirror."
+    },
+    {
+      "id": "10",
+      "chars": [
+        "finn",
+        "bella"
+      ],
+      "action": "Labuť proplouvá nadýchaným mrakem, kolem víří mlha a rybka se směje.",
+      "keyframe": "Bella the swan flies through fluffy white clouds with Finn the fish laughing on her back",
+      "motion": "the swan glides through a fluffy cloud, the fish laughs as mist swirls around them",
+      "narration": "Letěly mezi mráčky. Finka se smála.",
+      "narration_en": "They flew through the clouds. Finn laughed.",
+      "camera": "zoom_in"
+    },
+    {
+      "id": "11",
+      "chars": [
+        "finn"
+      ],
+      "action": "Zpátky v jezeře krouží Finka mezi rybkami a nadšeně mává ploutvemi, jak vypráví. Pak radostí vyskočí z vody v malé smyčce a zase se ponoří.",
+      "keyframe": "Finn the fish back in the lake tells other little fish about the sky, making big excited movements",
+      "motion": [
+        "Finn swims in circles and waves her fins excitedly while she tells her story",
+        "Finn leaps happily out of the water in a little loop and dives back in"
+      ],
+      "narration": "Doma pak rybkám vyprávěla, jak vypadá svět shora.",
+      "narration_en": "Back home she told the other fish how the world looks from above."
+    },
+    {
+      "id": "12",
+      "chars": [
+        "finn",
+        "bella"
+      ],
+      "action": "Při západu slunce pluje labuť po zlatém jezeře a Finka vedle ní vyskočí. Labuť skloní hlavu a slunce zapadá.",
+      "keyframe": "at sunset Bella the swan floats on the golden lake and Finn the fish jumps up beside her",
+      "motion": "Finn jumps up beside the swan, the swan bows her head, the sun slowly sets",
+      "narration": "A každý večer si daly dobrou noc.",
+      "narration_en": "And every evening, they said good night.",
+      "camera": "zoom_out"
+    }
+  ]
+}
