@@ -1,0 +1,40 @@
+# video-api jako UŽIVATELSKÁ systemd služba — správa bez sudo.
+#
+#   scp deploy/video-api.user.service spark:.config/systemd/user/video-api.service
+#   ssh spark 'systemctl --user daemon-reload && systemctl --user enable --now video-api'
+#   ssh spark 'systemctl --user restart video-api'      # po každém git pull
+#
+# Proč user scope: na SPARKu není sudo bez hesla, takže systémový unit
+# (deploy/video-api.service) se nedal ani nainstalovat, ani restartovat —
+# server proto od 13. 9. 2026 běžel ručně přes nohup mimo systemd a po
+# restartu stroje by nenaskočil. Stejný závěr a stejné řešení jako
+# u library-chat ve WorldLibraryProject. Linger je zapnutý
+# (`loginctl show-user ol1n` → Linger=yes), takže služba jede i bez
+# přihlášeného sezení a naskočí po rebootu.
+#
+# Log jde do journalu: `journalctl --user -u video-api -f`
+# (ruční běh psal do /tmp/video-api.log).
+
+[Unit]
+Description=video-api — joby nad chain.py (Rozhýbat, StoryStudio; port 8096)
+# Bez ComfyUI job stejně spadne na vram_free; pořadí při startu stroje.
+After=network-online.target comfyui.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/Code/video-stack
+ExecStart=%h/Code/ComfyUI/.venv/bin/python %h/Code/video-stack/serve.py
+Restart=always
+RestartSec=10
+# KillMode=mixed: SIGTERM dostane jen serve.py, běžící chain.py / story.py
+# ne. Na tom stojí resume — server se po startu k živému renderu zase
+# připojí (job_pid v serve.py), místo aby hodinový job umřel s restartem.
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=30
+# Environment=VIDEO_API_PORT=8096
+# Environment=VIDEO_PROMPT_MODEL=shop
+
+[Install]
+WantedBy=default.target

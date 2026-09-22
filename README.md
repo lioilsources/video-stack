@@ -101,9 +101,19 @@ v `jobs/<id>.json`, výsledek je durable `output/<id>/<id>_32fps.mp4`. Před
 startem jobu se kontroluje `vram_free` — pod 12 GB job skončí chybou místo
 hodiny na CPU. TODO: úklid `input/<id>_src.png`, `output/<id>/`, `jobs/` po TTL.
 
-Deploy: `git pull` na SPARKu, `sudo cp deploy/video-api.service /etc/systemd/system/
-&& sudo systemctl daemon-reload && sudo systemctl enable --now video-api`;
-po změně `serve.py` `sudo systemctl restart video-api` (scény se čtou při startu).
+Deploy (uživatelská služba, bez sudo — na SPARKu není sudo bez hesla, takže
+systémový `deploy/video-api.service` se nedal ani nainstalovat):
+
+```bash
+scp deploy/video-api.user.service spark:.config/systemd/user/video-api.service
+ssh spark 'systemctl --user daemon-reload && systemctl --user enable --now video-api'
+ssh spark 'cd Code/video-stack && git pull && systemctl --user restart video-api'
+```
+
+Restart je potřeba po každé změně `serve.py` i po přidání scény nebo příběhu
+(katalog se čte při startu). Log: `journalctl --user -u video-api -f`.
+`KillMode=mixed` nechá běžící `chain.py` / `story.py` naživu, takže restart
+serveru hodinový render nezabije — po startu se k němu zase připojí.
 
 ### Příběhy pro StoryStudio
 
