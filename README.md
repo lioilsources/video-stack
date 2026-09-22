@@ -85,6 +85,15 @@ GET  /v1/video/jobs/<id>            {status: queued|running|done|error, position
 GET  /v1/video/jobs/<id>/result     video/mp4
 ```
 
+Místo scény jde poslat vlastní pohyb: `{prompt, beats: 1–3, image, seed?}`.
+Server text přes LLM gateway AiStacku (`VIDEO_PROMPT_MODEL`, default `shop`,
+few-shot) přeloží a přepíše do anglického promptu pohybu (oblouk s koncovou
+pózou, bez kamery); když LLM neodpoví nebo odpoví česky, jde text beze změny.
+Manifest je `CUSTOM_TPL` v `serve.py` — bez `photorealistic` a bez oživení
+tváře, obrázek může být anime. `GET /scenes` k tomu vrací `custom` s mezemi
+(max beatů, délka promptu, sekundy a minuty na beat); appka podle něj
+nabídku zobrazí. Odpověď na `POST` nese i `prompt`, který skutečně jel.
+
 Scény jsou v `scenes/<id>.json` — kus manifestu (`style_tail`, `negative`,
 `scenes[]` s beaty) + `id`/`label`/`desc`; server doplní `name`/`source`/`seed`.
 Prompty se ladí tady, bez release appky. Jeden worker (GPU je sériová), stav

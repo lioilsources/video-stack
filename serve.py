@@ -2,8 +2,9 @@
 """serve.py — HTTP job server nad chain.py pro Ol1nLLM Image Studio („Rozhýbat").
 
     GET  /health
-    GET  /v1/video/scenes                  katalog scén ze scenes/*.json
+    GET  /v1/video/scenes                  katalog scén ze scenes/*.json (+ custom: meze vlastního promptu)
     POST /v1/video/jobs                    {scene, image: base64, seed?} → 202 {job_id, …}
+                                           {prompt, beats?, image, seed?} = vlastní pohyb místo scény
     GET  /v1/video/jobs/<id>               {status, position, beat, beats, phase, error}
     GET  /v1/video/jobs/<id>/result        video/mp4
 
@@ -61,6 +62,70 @@ SEC_KEYFRAME = 50
 SEC_STORY_AUDIO = 180
 SEC_PER_BEAT_HD = 330     # Wan hd ~1 Mpx / 81 snímků
 MAX_BODY = 32 << 20
+
+# Vlastní pohyb („Rozhýbat promptem"): scéna poskládaná z promptu uživatele.
+# Bez `photorealistic` a bez oživení tváře — obrázek může být anime a PuLID by
+# tvář přemaloval na fotku. Stejný prompt na každý beat; Wan ho roztáhne na
+# délku beatu, takže víc beatů = pohyb se zopakuje nebo pokračuje.
+CUSTOM_MAX_BEATS = 3
+CUSTOM_MAX_PROMPT = 500
+CUSTOM_TPL = {
+    "length": 81, "fps": 16, "crf": 18, "transition": "fade", "crossfade": 6, "bands": 12,
+    "style_tail": ", static camera, one slow continuous movement at a calm steady tempo, highly detailed",
+    "negative": "blurry, low quality, watermark, text, distorted face, extra fingers, extra limbs, "
+                "deformed hands, morphing",
+    "colormatch": {"method": "mkl", "strength": 0.6},
+}
+# Český (i jiný) prompt → anglický popis pohybu ve tvaru, který Wan drží:
+# oblouk s koncovou pózou, bez kamery a bez popisu obrázku (bin/README.md).
+# LLM na gateway AiStacku; když neběží, jde prompt dál tak, jak ho uživatel napsal.
+LLM_GATEWAY = os.environ.get("LLM_GATEWAY", "http://localhost:8080/v1/chat/completions")
+PROMPT_MODEL = os.environ.get("VIDEO_PROMPT_MODEL", "shop")
+# Příklady drží i malý model gateway (mimo denní režim odpovídá `fallback`):
+# bez nich nechával češtinu nebo měnil slovesa („zívne" → „sneezes").
+MOTION_SYSTEM = (
+    "You write English prompts for an image-to-video model that animates a still image. "
+    "Step 1: translate the request into English (it is often Czech) — keep the exact meaning of every verb. "
+    "Step 2: describe only the motion as one continuous arc that ends in a still pose. "
+    "Never describe the image, style, lighting or camera. Answer with one English sentence, "
+    "at most 40 words, nothing else."
+)
+MOTION_SHOTS = [
+    ("pes zavrtí ocasem a vyskočí", "The dog wags its tail, jumps up once, lands and stands still."),
+    ("dívka se otočí a usměje",
+     "The girl slowly turns her head toward the viewer, smiles warmly and holds the smile."),
+    ("drak roztáhne křídla", "The dragon slowly spreads its wings wide, holds them open, then stays still."),
+]
+_CZECH = re.compile("[ěščřžůňťď]", re.I)
+
+
+def motion_prompt(text):
+    """Prompt uživatele → anglický prompt pohybu; při chybě LLM (nebo když
+    odpověď zůstala česky) jde dál původní text — umT5 ve Wanu je vícejazyčný."""
+    msgs = [{"role": "system", "content": MOTION_SYSTEM}]
+    for u, a in MOTION_SHOTS:
+        msgs += [{"role": "user", "content": u}, {"role": "assistant", "content": a}]
+    msgs.append({"role": "user", "content": text})
+    body = {"model": PROMPT_MODEL, "max_tokens": 120, "temperature": 0.1, "messages": msgs}
+    try:
+        req = urllib.request.Request(LLM_GATEWAY, json.dumps(body).encode(),
+                                     {"Content-Type": "application/json"})
+        d = json.load(urllib.request.urlopen(req, timeout=20))
+        out = d["choices"][0]["message"]["content"].strip().strip('"\u201e\u201c').strip()
+        if out and len(out) <= 600 and not _CZECH.search(out):
+            return out
+        log("prompt: LLM vrátilo %r, beru text uživatele" % out[:80])
+    except Exception as e:                                 # noqa: BLE001 — bez LLM jede původní text
+        log("prompt: LLM nedostupné (%s), beru text uživatele" % e)
+    return text
+
+
+def custom_scene(beats):
+    """Pseudoscéna pro frontu a odhad — stejný tvar jako položka SCENE_CATALOG."""
+    k = CUSTOM_TPL["crossfade"]
+    frames = 81 * beats - k * (beats - 1)
+    return {"id": "custom", "beats": beats, "seconds": round(frames / CUSTOM_TPL["fps"], 1),
+            "minutes_est": max(1, round(SEC_PER_BEAT * beats / 60))}
 
 
 def log(*a):
@@ -545,7 +610,11 @@ class Handler(BaseHTTPRequestHandler):
             # 100 a pak abecedně jako dřív.
             items = sorted(SCENE_CATALOG.values(),
                            key=lambda s: (s["_tpl"].get("order", 100), s["id"]))
-            return self._json(200, {"scenes": [public(s) for s in items]})
+            return self._json(200, {"scenes": [public(s) for s in items],
+                                    "custom": {"max_beats": CUSTOM_MAX_BEATS,
+                                               "max_prompt": CUSTOM_MAX_PROMPT,
+                                               "seconds_per_beat": custom_scene(1)["seconds"],
+                                               "minutes_per_beat": custom_scene(1)["minutes_est"]}})
         if path == PREFIX + "/stories":
             items = sorted(STORY_CATALOG.values(), key=lambda s: (s["_order"], s["id"]))
             return self._json(200, {"stories": [public_story(s) for s in items]})
@@ -603,10 +672,13 @@ class Handler(BaseHTTPRequestHandler):
             body = json.loads(self.rfile.read(n))
         except ValueError:
             return self._err(400, "tělo není JSON")
+        prompt = (body.get("prompt") or "").strip() if isinstance(body.get("prompt"), str) else ""
         scene = SCENE_CATALOG.get(body.get("scene"))
-        if not scene:
-            return self._err(400, "neznámá scéna %r (znám: %s)"
+        if not scene and not prompt:
+            return self._err(400, "neznámá scéna %r (znám: %s) a chybí prompt"
                              % (body.get("scene"), ", ".join(SCENE_CATALOG)))
+        if not scene and len(prompt) > CUSTOM_MAX_PROMPT:
+            return self._err(400, "prompt je delší než %d znaků" % CUSTOM_MAX_PROMPT)
         img = body.get("image") or ""
         if "," in img[:40] and img.startswith("data:"):
             img = img.split(",", 1)[1]                    # data URI → holý base64
@@ -622,14 +694,25 @@ class Handler(BaseHTTPRequestHandler):
         jid = JOBSTORE.new_id()
         # zdroj jako PNG bez ohledu na to, co přišlo — chain.py source nezávisí na příponě
         im.convert("RGB").save(os.path.join(IN, "%s_src.png" % jid))
-        m = {k: v for k, v in scene["_tpl"].items() if k not in ("id", "label", "desc")}
-        m.update(name=jid, source="%s_src.png" % jid, seed=seed, _scene=scene["id"])
+        used = None
+        if scene:
+            m = {k: v for k, v in scene["_tpl"].items() if k not in ("id", "label", "desc")}
+            m.update(name=jid, source="%s_src.png" % jid, seed=seed, _scene=scene["id"])
+        else:
+            beats = body.get("beats")
+            beats = min(max(beats if isinstance(beats, int) else 1, 1), CUSTOM_MAX_BEATS)
+            used = motion_prompt(prompt)
+            scene = custom_scene(beats)
+            m = dict(json.loads(json.dumps(CUSTOM_TPL)), name=jid, source="%s_src.png" % jid, seed=seed,
+                     _scene="custom", _prompt=prompt,
+                     scenes=[{"name": "custom", "beats": [{"prompt": used} for _ in range(beats)]}])
         os.makedirs(CHAINS, exist_ok=True)
         json.dump(m, open(os.path.join(CHAINS, jid + ".json"), "w"), indent=2, ensure_ascii=False)
         JOBSTORE.submit(jid, scene, seed)
-        log("job", jid, "přijat: scéna", scene["id"], "%dx%d" % im.size, "seed", seed)
+        log("job", jid, "přijat: scéna", scene["id"], "%dx%d" % im.size, "seed", seed,
+            "prompt %r → %r" % (prompt, used) if used else "")
         self._json(202, {"job_id": jid, "beats": scene["beats"], "seconds": scene["seconds"],
-                         "minutes_est": scene["minutes_est"]})
+                         "minutes_est": scene["minutes_est"], "prompt": used})
 
     def _post_story(self):
         """Nový příběh. Postavy: base64 obrázky podle rolí; co chybí, doplní
