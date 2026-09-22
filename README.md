@@ -96,6 +96,37 @@ Deploy: `git pull` na SPARKu, `sudo cp deploy/video-api.service /etc/systemd/sys
 && sudo systemctl daemon-reload && sudo systemctl enable --now video-api`;
 po změně `serve.py` `sudo systemctl restart video-api` (scény se čtou při startu).
 
+### Příběhy pro StoryStudio
+
+Stejný server nese i minutové příběhy (`tools/story.py`, viz níž). Klient
+pošle příběh z katalogu a obrázky postav podle rolí; co nepošle, doplní server
+z výchozích postav, které vznikly přes `story.py sheet`/`cast`.
+
+```
+GET  /v1/video/stories                 {stories: [{id, title, title_en, desc, desc_en, shots, beats, seconds,
+                                         minutes_est, minutes_est_hd, languages, characters: [{role, name,
+                                         name_en, desc, hero, default}]}]}
+POST /v1/video/stories/jobs            {story, characters?: {role: base64}, seed?, lang?: cs|en,
+                                        review?: bool, hd?: bool} → 202 {job_id, shots, beats, seconds, minutes_est}
+GET  /v1/video/jobs/<id>               {kind: "story", story, stage, status, phase, keyframe, keyframes,
+                                        beat, beats, lang, review, hd, error, position?}
+GET  /v1/video/jobs/<id>/keyframes     {shots: [{id, chars, keyframe, narration, narration_en, control,
+                                        camera, ready, url}], contact}
+GET  /v1/video/jobs/<id>/keyframes/NN  image/jpeg
+GET  /v1/video/jobs/<id>/contact       image/jpeg (kontaktní arch)
+POST /v1/video/jobs/<id>/approve       {} → render; {redo: ["03"], keyframe: {"07": "nový popis"}} → přegenerovat
+GET  /v1/video/jobs/<id>/result        video/mp4 s vypravěčem a hudbou; ?variant=sub | 16x9
+```
+
+Životní cyklus: `queued → running (phase keyframes) → review` (jen s
+`review: true`) `→ /approve → queued → running (phase compile, render,
+assemble, rife, voice, music, mix) → done`. Bez `review` jede job rovnou až do
+`done`. `redo` vrátí job do `running` jen pro vybrané záběry (nový seed, nebo
+nový popis z `keyframe`) a pak znovu do `review`. `status: "review"` je pro
+scény neznámý stav — `VideoService` v Ol1nLLM ho neumí, StoryStudio ho musí
+obsloužit. Postup: `keyframe/keyframes` ve fázi keyframes, `beat/beats` při
+renderu; celý job je v minutách, klient polluje stejně jako u scén.
+
 ## chain.py — dlouhý klip z jednoho obrázku
 
 Wan 2.2 umí najednou nejvýš **81 snímků** (5.06 s @ 16 fps) a `length` musí být
@@ -178,6 +209,108 @@ Segment N+1 začíná přesně tím snímkem, kterým segment N končí, takže
 `--assemble` ho zahazuje (`select=gte(n\,1)`) — jinak by každý spoj zadrhl
 o zdvojený snímek. RIFE se pouští `--smooth` přes **celý** slepený klip, ne po
 segmentech, aby vyhladil i spoje.
+
+### Scéna s vlastním obrázkem, `--only` a kamera
+
+Scéna může mít vlastní `source`. Řetěz se na ní přeruší: první beat scény
+startuje z jejího obrázku a ten je referencí (colormatch, VACE, `beat_ref`)
+pro všechny beaty scény. Z toho se skládají příběhy — záběr = scéna s
+keyframem — a drift se nekumuluje přes celou minutu, jen uvnitř záběru.
+
+| klíč | co dělá |
+|---|---|
+| `scenes[].source` | obrázek scény (cesta, jméno v output/ nebo input/) |
+| `cut_transition` | přechod na scénu s vlastním obrázkem: `cut`, `fade` (default), `slices` |
+| `cut_crossfade` | délka toho přechodu ve snímcích, default 8 (0,5 s) |
+| `camera` | beat přes Wan Fun Camera: `zoom_in`, `zoom_out`, `pan_left/right/up/down`, `cw`, `acw` |
+| `camera_speed` | rychlost kamery, default 0.5 |
+
+`--only shot03` přegeneruje jen scénu a to, co na ní visí až do další scény
+s vlastním obrázkem; `--resume` přeskakuje hotové úseky za takovým střihem.
+Bez scén s vlastním obrázkem se chová všechno jako dřív (stejné otisky ve
+`state.json`, stejná montáž). Kamerová báze
+(`workflows/camera_beat_14b_lightning_portrait.json`) má stejná ID nodů jako
+I2V báze, takže `motion`/`boundary`/`shift` platí beze změny; s `control` ani
+s LTX nejde.
+
+## tools/story.py — minutový anime příběh
+
+Z postaviček (vlastní obrázek nebo vygenerovaný) udělá ~65 s příběh: 12 záběrů
+s keyframy, pohyb z Wan 2.2, tanec z koster, český nebo anglický vypravěč,
+hudba, titulky. Katalog je v `stories/*.json` (deset dětských příběhů),
+kontrola bez GPU `tools/check_stories.py`. Běží na SPARKu z venv ComfyUI;
+z Macu přes `spark-video story …`.
+
+```bash
+spark-video story plan lost_umbrella                 # časová osa, odhad, délka narace
+spark-video story cast lost_umbrella mia ~/anime/mia.png   # vlastní postavička
+spark-video story sheet lost_umbrella cat             # nebo 4 kandidáti (Illustrious) → arch
+spark-video story sheet lost_umbrella cat --pick 2
+spark-video story keyframes lost_umbrella             # 12 keyframů (FLUX Kontext) → kontaktní arch
+spark-video story keyframes lost_umbrella --shot 03,07 --reroll
+spark-video story approve lost_umbrella               # brána: bez ní se nerenderuje
+spark-video story run lost_umbrella                   # render → vypravěč → hudba → mix, stáhne videa
+spark-video story run lost_umbrella --hd --lang en
+spark-video story batch --auto-cast                   # přes noc: všechny příběhy v draftu
+```
+
+Jak to drží pohromadě:
+
+- **Záběr = keyframe z obrázku postavy.** FLUX Kontext dostane referenci
+  postavy (u dvou postav slepené vedle sebe) a popis záběru; `--method
+  ipadapter` jde přes Illustrious + IPAdapter a drží jen hrdinu. Otisk
+  (prompt, reference, metoda, seed) je v `kf/NN.json` — změna promptu
+  přegeneruje jen ten záběr se stejným seedem, `--reroll` dá nový.
+- **Kontaktní arch je brána.** `approve` uloží sha keyframů; když se keyframe
+  změní, `compile` odmítne, dokud se neschválí znovu. `--no-review` bránu
+  obejde (batch draft, server bez `review`).
+- **Manifest se generuje** do `chains/<work>.json` — úpravy dělej ve
+  `stories/`, ne tam. Uvnitř záběru prolnutí 4 snímky přes navazovací snímek,
+  mezi záběry fade 8 snímků. Tanec startuje kostru od začátku v každém záběru.
+- **Oživení tváře (`identity: face`) se nepoužívá** — PuLID/InsightFace je na
+  fotky, anime tvář by přemaloval. Identitu drží keyframe každého záběru.
+- **Vypravěč**: Piper (`tools/get_piper.sh`, CPU, vlastní venv), hlasy
+  `cs_CZ-jirka-medium` a `en_US-lessac-medium`. Věta záběru začíná 0,2 s po
+  dokončení prolnutí; delší než záběr se zrychlí až na 1,2×, jinak varování.
+  `check_stories.py` hlídá délku textu předem (~2 slova/s česky).
+- **Hudba**: ACE-Step přes AiStack `services/audio` (`AUDIO_URL`, default
+  `localhost:8093`) na celou délku; když neběží (noční režim 00–07), zaskočí
+  LTX dárce z `chain.py` (19 s smyčka), jinak bez hudby. Pod vypravěčem se
+  ztlumí sidechainem, na konci `loudnorm` −16 LUFS.
+- **Výstup** v `output/<work>/`: `<work>_story_<lang>.mp4` (9:16),
+  `_sub.mp4` (vypálené titulky, potřebuje libass), `_16x9.mp4` (rozmazané
+  pozadí), `story/<lang>.srt`.
+
+Formát příběhu (zkráceně):
+
+```json
+{
+  "id": "lost_umbrella", "title": "Ztracený deštník", "title_en": "The Lost Umbrella",
+  "desc": "…", "desc_en": "…", "seed": 1001, "lang": "cs",
+  "world": "a cozy small town on a rainy spring day, …",
+  "music": "gentle playful children's music, ukulele, …, instrumental, 90 bpm",
+  "characters": {
+    "mia": {"name": "Mia", "name_en": "Mia", "desc": "a cheerful 7-year-old girl … yellow raincoat …"},
+    "cat": {"name": "kocour Mourek", "name_en": "Tom the cat", "desc": "a chubby fluffy grey tabby cat …"}
+  },
+  "shots": [
+    {"id": "01", "chars": ["mia"], "keyframe": "Mia kneels on the window seat …",
+     "motion": "Mia presses her nose to the rainy window glass …, then she leans back and smiles",
+     "narration": "Pršelo. Mia se na déšť moc těšila.", "narration_en": "It was raining. …", "camera": "zoom_in"},
+    {"id": "03", "motion": ["první beat …", "druhý beat …"], "…": "…"},
+    {"id": "09", "control": "chicken_dance", "beats": 2, "motion": "Mia dances the chicken dance …", "…": "…"}
+  ]
+}
+```
+
+První postava je hrdina (default `chars`). `desc` a `keyframe` jsou anglicky
+(prompty), `name`/`narration` česky, `_en` anglicky. Volitelně: `sheet`
+u postavy (pevný obrázek), `keyframe_method`, `engine`, `wan` (shift/motion/
+boundary pro celý příběh), `music_engine` (`ace`|`ltx`|`none`),
+`music_volume`, `voice` ({cs, en} jména hlasů), `length_scale`.
+
+Nasazení na SPARK: `git pull`, `tools/get_piper.sh` (jednou) a
+`sudo systemctl restart video-api` (katalog příběhů se čte při startu).
 
 ## Druhý engine: LTX-2.3 (experimentální)
 
