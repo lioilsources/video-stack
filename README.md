@@ -89,6 +89,10 @@ Místo scény jde poslat vlastní pohyb: `{prompt, beats: 1–3, image, seed?}`.
 Server text přes LLM gateway AiStacku (`VIDEO_PROMPT_MODEL`, default `shop`,
 few-shot) přeloží a přepíše do anglického promptu pohybu (oblouk s koncovou
 pózou, bez kamery); když LLM neodpoví nebo odpoví česky, jde text beze změny.
+Přepis dělá **worker těsně před renderem**, ne obsluha POSTu: gateway sdílí
+GPU s ComfyUI a za běžícího renderu odpovídala i 30 s, takže appce vypršel
+timeout, přestože job vznikl a doběhl. `_prompt` v manifestu je text
+uživatele, `_prompt_used` to, co skutečně jelo.
 Manifest je `CUSTOM_TPL` v `serve.py` — bez `photorealistic` a bez oživení
 tváře, obrázek může být anime. `GET /scenes` k tomu vrací `custom` s mezemi
 (max beatů, délka promptu, sekundy a minuty na beat); appka podle něj

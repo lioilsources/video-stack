@@ -101,7 +101,12 @@ _CZECH = re.compile("[ěščřžůňťď]", re.I)
 
 def motion_prompt(text):
     """Prompt uživatele → anglický prompt pohybu; při chybě LLM (nebo když
-    odpověď zůstala česky) jde dál původní text — umT5 ve Wanu je vícejazyčný."""
+    odpověď zůstala česky) jde dál původní text — umT5 ve Wanu je vícejazyčný.
+
+    Volá se z workeru, ne z obsluhy POSTu: gateway sdílí GPU s ComfyUI a při
+    běžícím renderu odpovídala i 30 s. Appka mezitím spadla na svůj timeout
+    (60 s včetně nahrání obrázku), i když job na serveru normálně vznikl
+    a doběhl — uživatel viděl chybu a video zůstalo osiřelé."""
     msgs = [{"role": "system", "content": MOTION_SYSTEM}]
     for u, a in MOTION_SHOTS:
         msgs += [{"role": "user", "content": u}, {"role": "assistant", "content": a}]
@@ -469,6 +474,7 @@ class Jobs:
                 cmd += (["--resume"] if resume else [])
             self.update(jid, keyframe=0)
         else:
+            rewrite_prompt(jid)
             cmd = [sys.executable, os.path.join(HERE, "chain.py"),
                    os.path.join("chains", jid + ".json"), "--all"] + (["--resume"] if resume else [])
         log("job", jid, "start:", " ".join(cmd[1:]))
@@ -514,6 +520,30 @@ class Jobs:
                 or (tail[-1] if tail else "chain.py skončil s kódem %d" % rc)
             log("job", jid, "chyba:", err)
             self.update(jid, status="error", error=err[:300], finished=time.time())
+
+
+def rewrite_prompt(jid):
+    """Vlastní pohyb: prompt uživatele v manifestu → anglický prompt pohybu.
+    Až tady, protože LLM za běžícího renderu odpovídá i desítky sekund a POST
+    musí vrátit job_id hned. Jednou — `_prompt_used` drží, co jelo, takže
+    --resume ani opakovaný start nepřepisují znovu."""
+    path = os.path.join(CHAINS, jid + ".json")
+    try:
+        m = json.load(open(path))
+    except (OSError, ValueError):
+        return
+    raw = m.get("_prompt")
+    if not raw or m.get("_prompt_used"):
+        return
+    used = motion_prompt(raw)
+    m["_prompt_used"] = used
+    for sc in m.get("scenes", []):
+        for b in sc.get("beats", []):
+            b["prompt"] = used
+    tmp = path + ".tmp"
+    json.dump(m, open(tmp, "w"), indent=2, ensure_ascii=False)
+    os.replace(tmp, path)
+    log("job", jid, "prompt %r → %r" % (raw, used))
 
 
 def job_pid(jid):
@@ -694,25 +724,25 @@ class Handler(BaseHTTPRequestHandler):
         jid = JOBSTORE.new_id()
         # zdroj jako PNG bez ohledu na to, co přišlo — chain.py source nezávisí na příponě
         im.convert("RGB").save(os.path.join(IN, "%s_src.png" % jid))
-        used = None
         if scene:
             m = {k: v for k, v in scene["_tpl"].items() if k not in ("id", "label", "desc")}
             m.update(name=jid, source="%s_src.png" % jid, seed=seed, _scene=scene["id"])
         else:
             beats = body.get("beats")
             beats = min(max(beats if isinstance(beats, int) else 1, 1), CUSTOM_MAX_BEATS)
-            used = motion_prompt(prompt)
             scene = custom_scene(beats)
+            # Prompt jde do manifestu tak, jak ho uživatel napsal; do angličtiny
+            # ho přepíše worker těsně před renderem (viz motion_prompt).
             m = dict(json.loads(json.dumps(CUSTOM_TPL)), name=jid, source="%s_src.png" % jid, seed=seed,
                      _scene="custom", _prompt=prompt,
-                     scenes=[{"name": "custom", "beats": [{"prompt": used} for _ in range(beats)]}])
+                     scenes=[{"name": "custom", "beats": [{"prompt": prompt} for _ in range(beats)]}])
         os.makedirs(CHAINS, exist_ok=True)
         json.dump(m, open(os.path.join(CHAINS, jid + ".json"), "w"), indent=2, ensure_ascii=False)
         JOBSTORE.submit(jid, scene, seed)
         log("job", jid, "přijat: scéna", scene["id"], "%dx%d" % im.size, "seed", seed,
-            "prompt %r → %r" % (prompt, used) if used else "")
+            "prompt %r" % prompt if prompt else "")
         self._json(202, {"job_id": jid, "beats": scene["beats"], "seconds": scene["seconds"],
-                         "minutes_est": scene["minutes_est"], "prompt": used})
+                         "minutes_est": scene["minutes_est"]})
 
     def _post_story(self):
         """Nový příběh. Postavy: base64 obrázky podle rolí; co chybí, doplní
