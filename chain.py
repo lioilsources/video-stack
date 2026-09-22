@@ -18,6 +18,15 @@ beatů. `id` a `seed` se dopočítají (seed = kořenový `seed` + pořadí beat
 scéna může přepsat `style_tail` a `negative`. Číslování segNN/seedNN je
 globální přes celý řetěz, scény ho nemění.
 
+Scéna může mít vlastní `source`: řetěz se na ní přeruší, první beat scény
+startuje z jejího obrázku a ten je pak referencí (colormatch, VACE, beat_ref)
+pro všechny beaty scény, dokud další scéna nepřinese vlastní. Tak se skládají
+příběhy ze záběrů (tools/story.py) — záběr = scéna s keyframem. Přechod mezi
+takovými scénami řídí `cut_transition` (cut | fade | slices, default fade)
+a `cut_crossfade` (default 8 snímků); uvnitř scény dál `transition`.
+Beat může mít `camera` (zoom_in, pan_left… + `camera_speed`) — pak jede přes
+Wan Fun Camera místo I2V báze.
+
     ./chain.py chains/idle01.json --plan       # časová osa a odhad, bez GPU
     ./chain.py chains/idle01.json --validate   # kontrola proti /object_info
     ./chain.py chains/idle01.json --materialize # zapiš beatNN.json k ruční úpravě
@@ -26,6 +35,7 @@ globální přes celý řetěz, scény ho nemění.
     ./chain.py chains/idle01.json --from 02    # od beatu (nebo scény) dál
     ./chain.py chains/idle01.json --until idle # skonči po beatu/scéně — náhled
     ./chain.py chains/idle01.json --resume     # od prvního nehotového beatu
+    ./chain.py chains/story.json --only shot03 # jen scéna + co na ní visí do dalšího střihu
     ./chain.py chains/idle01.json --hd         # větší rozlišení
     ./chain.py chains/idle01.json --assemble   # slepení (ffmpeg, bez GPU)
     ./chain.py chains/idle01.json --smooth     # RIFE 16 -> 32 fps po scénách
@@ -61,6 +71,13 @@ DRIVE = os.path.join(HERE, "drive")
 # reference se enkóduje s downscale 1 místo trénovaných 0.5 (viz
 # reports/phase5_ltx.md); pořádné IC-LoRA zapojení chce novější ComfyUI.
 LTX_BASE = {"i2v": "ltx_i2v_portrait", "control": "ltx_control_portrait"}
+
+# Kamera: Wan 2.2 Fun Camera se stejnými ID nodů jako I2V báze (+ node 17
+# WanCameraEmbedding), takže knoby motion/boundary/shift platí beze změny.
+CAMERA_BASE = "camera_beat_14b_lightning_portrait"
+CAMERA_POSES = {"zoom_in": "Zoom In", "zoom_out": "Zoom Out", "pan_left": "Pan Left",
+                "pan_right": "Pan Right", "pan_up": "Pan Up", "pan_down": "Pan Down",
+                "acw": "Anti Clockwise (ACW)", "cw": "ClockWise (CW)", "static": "Static"}
 
 
 def pose_path(cid):
@@ -100,6 +117,8 @@ def load_dict(m):
     m.setdefault("crossfade", 1)
     m.setdefault("transition", "fade")
     m.setdefault("bands", 12)
+    m.setdefault("cut_transition", "fade")
+    m.setdefault("cut_crossfade", 8)
     check_length(m["length"], "manifest", m["engine"])
     if not isinstance(m["crossfade"], int) or not 1 <= m["crossfade"] <= 16:
         die("crossfade %r: čekám 1–16 snímků (1 = tvrdý střih)" % m["crossfade"])
@@ -109,6 +128,14 @@ def load_dict(m):
         m["crossfade"] = 1
     elif m["crossfade"] < 2:
         m["transition"] = "cut"                      # 1 snímek se prolnout nedá
+    # Střih na scénu s vlastním obrázkem nemá sdílený snímek — tvrdý střih tu
+    # nic nezahazuje (overlap 0), prolínačka míchá konec záběru se začátkem dalšího.
+    if m["cut_transition"] not in ("cut", "fade", "slices"):
+        die("cut_transition %r: čekám cut, fade nebo slices" % m["cut_transition"])
+    if not isinstance(m["cut_crossfade"], int) or not 0 <= m["cut_crossfade"] <= 32:
+        die("cut_crossfade %r: čekám 0–32 snímků" % m["cut_crossfade"])
+    if m["cut_transition"] == "cut" or m["cut_crossfade"] < 2:
+        m["cut_transition"], m["cut_crossfade"] = "cut", 0
 
     # Scény se zploští do m["beats"]; plochý manifest je jedna bezejmenná scéna,
     # takže dál jede všechno jednou cestou. Co beat nemá, zdědí ze scény, pak
@@ -119,15 +146,36 @@ def load_dict(m):
             die("manifest nemá žádné beats ani scenes")
         scenes = [{"name": "", "beats": m["beats"]}]
     beats, m["scenes"] = [], []
+    # Kotva = obrázek, ke kterému se beat vztahuje (start scény, colormatch,
+    # VACE reference, beat_ref). None = kořenový `source`; scéna s vlastním
+    # `source` ji přepne pro sebe i pro další scény bez vlastního obrázku.
+    anchor, anchor_id = None, None
     for k, s in enumerate(scenes):
         name = s.get("name") or ("scene%d" % (k + 1) if m.get("scenes") else "")
         if not s.get("beats"):
             die("scéna %r nemá žádné beats" % name)
         first = len(beats)
+        if s.get("source"):
+            anchor = s["source"]
         for b in s["beats"]:
             i = len(beats)
             b.setdefault("id", "%02d" % (i + 1))
             b.setdefault("seed", m["seed"] + i)
+            cut = bool(s.get("source")) and i == first
+            if cut:
+                anchor_id = b["id"]
+            b["cut"], b["anchor"], b["anchor_id"] = cut, anchor, anchor_id
+            for k2 in ("camera", "camera_speed"):
+                if k2 in s:
+                    b.setdefault(k2, s[k2])
+            if b.get("camera"):
+                cam = CAMERA_POSES.get(b["camera"]) or \
+                    (b["camera"] if b["camera"] in CAMERA_POSES.values() else None)
+                if not cam:
+                    die("beat %s: camera %r — znám %s" % (b["id"], b["camera"], ", ".join(CAMERA_POSES)))
+                if b.get("control") or ltx:
+                    die("beat %s: camera jde jen s Wan I2V beatem (bez control, bez LTX)" % b["id"])
+                b["camera"] = cam
             b.setdefault("style_tail", s.get("style_tail", m["style_tail"]))
             b.setdefault("negative", s.get("negative", m["negative"]))
             # tempo se ladí po beatech: délka a knoby pohybu dědí beat ← scéna ← kořen
@@ -145,7 +193,8 @@ def load_dict(m):
                 # Tanec z jedné kostry: beat se stejnou kostrou jako předchozí pokračuje,
                 # kde ten skončil — o překryv střihu dřív, ať prolínačka míchá tentýž
                 # okamžik pohybu. Jinak kostra od začátku.
-                prev = beats[-1] if beats else None
+                # Na střihu (scéna s vlastním obrázkem) jde tanec od začátku.
+                prev = beats[-1] if beats and not cut else None
                 if "control_start" not in b:
                     b["control_start"] = (prev["control_start"] + prev["length"] - m["crossfade"]
                                           if prev and prev.get("control") == b["control"] else 0)
@@ -182,15 +231,41 @@ def check_length(L, what, engine="wan"):
         die("%s: length %d > 81 — za trénovacím oknem Wan 2.2, klip driftuje" % (what, L))
 
 
+def join(m, i):
+    """Přechod před beatem i (i ≥ 1) jako (druh, snímky):
+    ("shared", 1) tvrdý střih přes sdílený navazovací snímek (zahodí se),
+    ("butt", 0)   tvrdý střih na scénu s vlastním obrázkem (nic se nezahazuje),
+    ("fade"|"slices", k) prolnutí přes k snímků."""
+    if m["beats"][i].get("cut"):
+        t, k = m["cut_transition"], m["cut_crossfade"]
+        return ("butt", 0) if t == "cut" else (t, k)
+    t, k = m["transition"], m["crossfade"]
+    return ("shared", 1) if t == "cut" else (t, k)
+
+
+def overlap(m, i):
+    """O kolik snímků je beat i ve slepeném klipu kratší než jeho délka."""
+    return join(m, i)[1] if i else 0
+
+
 def frames_upto(m, upto):
     """Počet snímků slepeného klipu po prvních `upto` beatech: první celý,
     každý další kratší o překryv střihu — 1 snímek (sdílený navazovací) při
-    tvrdém střihu, `crossfade` snímků při prolínačce."""
-    k = m["crossfade"]
+    tvrdém střihu, `crossfade` snímků při prolínačce, 0 při tvrdém střihu na
+    scénu s vlastním obrázkem."""
     n = 0
     for i, b in enumerate(m["beats"][:upto]):
-        n += b["length"] if i == 0 else b["length"] - k
+        n += b["length"] - overlap(m, i)
     return n
+
+
+def next_cut(m, i):
+    """Index prvního beatu za i, který startuje z vlastního obrázku — tam
+    závislost řetězu končí. Když žádný není, počet beatů."""
+    for j in range(i + 1, len(m["beats"])):
+        if m["beats"][j].get("cut"):
+            return j
+    return len(m["beats"])
 
 
 def resolve(m, token, end=False):
@@ -207,7 +282,11 @@ def resolve(m, token, end=False):
 
 def source_path(m):
     """Zdrojový obrázek: 'latest:<glob>' se hledá v output/, jinak cesta/jméno."""
-    s = m["source"]
+    return find_image(m["source"])
+
+
+def find_image(s):
+    """Obrázek podle cesty, jména v output/ nebo input/, nebo 'latest:<glob>' v output/."""
     if s.startswith("latest:"):
         hits = glob.glob(os.path.join(OUT, s[7:]))
         if not hits:
@@ -273,7 +352,8 @@ def build(m, beat, idx, seed_img, orig_img, w, h):
         cmodel = beat.get("control_model") or "vace"
         if cmodel not in CONTROL_BASE:
             die("control_model %r: čekám fun nebo vace" % cmodel)
-        g = json.load(open(os.path.join(HERE, "workflows", (CONTROL_BASE[cmodel] if control else m["base"]) + ".json")))
+        base = CONTROL_BASE[cmodel] if control else (CAMERA_BASE if beat.get("camera") else m["base"])
+        g = json.load(open(os.path.join(HERE, "workflows", base + ".json")))
     L, name = beat["length"], m["name"]
     cm = m["colormatch"]
     if control and ltx:
@@ -302,6 +382,10 @@ def build(m, beat, idx, seed_img, orig_img, w, h):
         or beat.get("beat_ref") == "original"
     g["10"]["inputs"]["image"] = orig_img if from_original else seed_img
     g["12"]["inputs"].update(width=w, height=h, length=L)
+    if beat.get("camera"):
+        # WanCameraImageToVideo bere rozměry z embeddingu — obojí musí sedět
+        g["17"]["inputs"].update(camera_pose=beat["camera"], width=w, height=h, length=L,
+                                 speed=float(beat.get("camera_speed") or 0.5))
     if g["12"]["class_type"] == "WanVaceToVideo" and "50" in g:
         # VACE I2V báze: control_video = [navazovací snímek, šedé×(L−1)], masky [0, 1×(L−1)];
         # reference_image = originál (node 30 níže) — identita v každém snímku
@@ -539,7 +623,26 @@ def beat_hash(m, b, w, h):
            b.get("identity"), b.get("face_denoise"), m["colormatch"], b.get("control"),
            b.get("control_ref"), b.get("control_model"), b.get("beat_ref"),
            (os.path.getmtime(pose_path(b["control"])), b["control_start"]) if b.get("control") else None)
+    extra = {}
+    if b.get("anchor"):
+        extra["anchor"] = file_sha(find_image(b["anchor"]))
+    if b.get("camera"):
+        extra["camera"] = [b["camera"], b.get("camera_speed")]
+    if extra:
+        key = key + (extra,)
     return hashlib.sha1(json.dumps(key, sort_keys=True).encode()).hexdigest()[:12]
+
+
+_SHA = {}
+
+
+def file_sha(path):
+    """sha1 obsahu (cache podle cesty a mtime) — keyframe přegenerovaný do
+    stejného jména musí beat zneplatnit, i kdyby měl stejnou velikost."""
+    key = (path, os.path.getmtime(path))
+    if key not in _SHA:
+        _SHA[key] = hashlib.sha1(open(path, "rb").read()).hexdigest()[:12]
+    return _SHA[key]
 
 
 def load_state(m):
@@ -554,16 +657,59 @@ def save_state(m, st):
     json.dump(st, open(state_path(m), "w"), indent=1)
 
 
-def resume_index(m, w, h):
-    """První beat, který není hotový: chybí segment, chybí navazovací snímek,
-    nebo se od renderu změnilo zadání (otisk ve state.json)."""
-    st = load_state(m)
-    for i, b in enumerate(m["beats"]):
+def todo_resume(m, w, h, stop):
+    """Beaty [0, stop), které je potřeba renderovat: chybí segment, chybí
+    navazovací snímek, nebo se od renderu změnilo zadání (otisk ve
+    state.json) — a všechno, co na takovém beatu visí, až do dalšího beatu
+    s vlastním obrázkem. Bez scén s vlastním `source` je to první nehotový
+    beat a všechno za ním, jako dřív."""
+    st, todo, dirty = load_state(m), [], False
+    for i, b in enumerate(m["beats"][:stop]):
+        if b.get("cut"):
+            dirty = False                   # startuje z obrázku scény, na předchozích nezávisí
         seg = glob.glob(os.path.join(OUT, m["name"], "seg%s_*.webm" % b["id"]))
         nxt = os.path.join(IN, "%s_seed%02d.png" % (m["name"], i + 1))
-        if not seg or not os.path.exists(nxt) or st.get(b["id"]) != beat_hash(m, b, w, h):
-            return i
-    return len(m["beats"])
+        done = seg and os.path.exists(nxt) and st.get(b["id"]) == beat_hash(m, b, w, h)
+        if dirty or not done:
+            todo.append(i)
+            dirty = True
+    return todo
+
+
+def anchor_img(m, b):
+    """Jméno kotvy beatu v input/: originál manifestu, nebo obrázek scény."""
+    return "%s_anchor%s.png" % (m["name"], b["anchor_id"]) if b.get("anchor") else "%s_seed00.png" % m["name"]
+
+
+def beat_inputs(m, i):
+    """(vstupní snímek, reference) beatu i jako jména v input/. Vstup je
+    navazovací snímek předchozího beatu, u prvního beatu scény s vlastním
+    obrázkem ten obrázek; reference je kotva (colormatch, VACE, beat_ref)."""
+    b = m["beats"][i]
+    orig = anchor_img(m, b)
+    return (orig if b.get("cut") else "%s_seed%02d.png" % (m["name"], i)), orig
+
+
+def stage_anchors(m, src):
+    """Originál a obrázky scén do input/ pod jmény, která čekají grafy."""
+    shutil.copy(src, os.path.join(IN, "%s_seed00.png" % m["name"]))
+    for b in m["beats"]:
+        if b.get("cut"):
+            shutil.copy(find_image(b["anchor"]), os.path.join(IN, anchor_img(m, b)))
+
+
+def span(m, idx):
+    """Indexy beatů → '03–05, 09' pro výpis."""
+    runs, out = [], []
+    for i in idx:
+        if runs and i == runs[-1][1] + 1:
+            runs[-1][1] = i
+        else:
+            runs.append([i, i])
+    for a, b in runs:
+        ia, ib = m["beats"][a]["id"], m["beats"][b]["id"]
+        out.append(ia if a == b else "%s–%s" % (ia, ib))
+    return ", ".join(out)
 
 
 # ---------------------------------------------------------------- příkazy
@@ -578,27 +724,36 @@ def cmd_plan(m, src, w, h):
           % ("/".join(sorted({str(b["length"]) for b in m["beats"]})), fps, per_frame * 81))
     for s in m["scenes"]:
         beats = m["beats"][s["first"]:s["last"] + 1]
+        own = "  ← %s" % os.path.basename(beats[0]["anchor"]) if beats[0].get("cut") else ""
         if s["name"]:
             t0, t1 = frames_upto(m, s["first"]) / fps, frames_upto(m, s["last"] + 1) / fps
-            print("\n%-10s %s–%s  %.1f–%.1f s  ~%.0f min GPU"
-                  % (s["name"], beats[0]["id"], beats[-1]["id"], t0, t1, est(beats) / 60))
+            print("\n%-10s %s–%s  %.1f–%.1f s  ~%.0f min GPU%s"
+                  % (s["name"], beats[0]["id"], beats[-1]["id"], t0, t1, est(beats) / 60, own))
         else:
-            print()
+            print(own)
         for i in range(s["first"], s["last"] + 1):
             b = m["beats"][i]
             start = frames_upto(m, i) / fps
-            print("  beat %-4s %6.2f–%5.2f s  %2d sn  seed%02d → seed%02d  %s%s"
+            tags = ("[control %s] " % b["control"] if b.get("control") else "") + \
+                   ("[kamera %s] " % b["camera"] if b.get("camera") else "")
+            print("  beat %-4s %6.2f–%5.2f s  %2d sn  %s → seed%02d  %s%s"
                   % (b["id"], start, frames_upto(m, i + 1) / fps, b["length"],
-                     i, i + 1, "[control %s] " % b["control"] if b.get("control") else "",
+                     "obr.scény" if b.get("cut") else "seed%02d   " % i, i + 1, tags,
                      b["prompt"][:52]))
     n = len(m["beats"])
     frames = frames_upto(m, n)
     print("\ncelkem     %d snímků = %.2f s @ %d fps" % (frames, frames / fps, fps))
     print("odhad GPU  %.0f min (bez fronty; --cache-none načítá modely znovu)"
           % (est(m["beats"]) / 60))
-    if n > 6:
+    # nejdelší řetěz generací bez obrázku scény — ten rozhoduje o driftu
+    run = longest = end = 0
+    for i, b in enumerate(m["beats"]):
+        run = 1 if (i == 0 or b.get("cut")) else run + 1
+        if run > longest:
+            longest, end = run, i + 1
+    if longest > 6:
         print("  ! %d beatů = %d generací za sebou. Colormatch drží barvy, ne identitu — "
-              "po renderu porovnej input/%s_seed%02d.png s originálem." % (n, n, m["name"], n))
+              "po renderu porovnej input/%s_seed%02d.png s originálem." % (longest, longest, m["name"], end))
 
 
 def beat_path(m, beat):
@@ -614,14 +769,15 @@ def cmd_materialize(m, src, w, h):
     takže co si v ComfyUI doladíš ručně, to se pak i vyrenderuje."""
     d = os.path.dirname(beat_path(m, m["beats"][0]))
     os.makedirs(d, exist_ok=True)
-    orig = "%s_seed00.png" % m["name"]
     for i, b in enumerate(m["beats"]):
-        g = build(m, b, i, "%s_seed%02d.png" % (m["name"], i), orig, w, h)
+        seed_img, orig = beat_inputs(m, i)
+        g = build(m, b, i, seed_img, orig, w, h)
         path = beat_path(m, b)
         with open(path, "w") as fh:
             json.dump(g, fh, indent=1, ensure_ascii=False)
         print("  %-34s %d×%d  %s" % (os.path.relpath(path, HERE), w, h, b["prompt"][:40]))
-    print("  vstupní obrázek se čeká v ComfyUI input/ jako %s" % orig)
+    print("  vstupní obrázky se čekají v ComfyUI input/ jako %s"
+          % ", ".join(sorted({anchor_img(m, b) for b in m["beats"]})))
 
 
 def cmd_validate(m, src, w, h):
@@ -641,26 +797,29 @@ def cmd_validate(m, src, w, h):
     return bad == 0
 
 
-def cmd_render(m, src, w, h, start, stop, hd):
-    """Beaty [start, stop). Každý startuje z navazovacího snímku předchozího."""
+def cmd_render(m, src, w, h, todo, hd, stop=None):
+    """Beaty s indexy z `todo` (vzestupně). Každý startuje z navazovacího
+    snímku předchozího, první beat scény s vlastním `source` z jejího obrázku."""
     name, beats = m["name"], m["beats"]
-    orig = "%s_seed00.png" % name
-    shutil.copy(src, os.path.join(IN, orig))
-    if start >= stop:
+    stop = len(beats) if stop is None else stop
+    stage_anchors(m, src)
+    if not todo:
         print("  nic k renderu — beaty %s–%s jsou hotové" % (beats[0]["id"], beats[stop - 1]["id"]))
         return
-    if start:
-        need = os.path.join(IN, "%s_seed%02d.png" % (name, start))
-        if not os.path.exists(need):
-            die("chybí %s — beat %s navazuje na předchozí, spusť napřed ty"
-                % (os.path.basename(need), beats[start]["id"]))
-        print("  od beatu %s (%s hotové); co je za ním se přegeneruje taky — mění se navazující snímek"
-              % (beats[start]["id"], "%s–%s" % (beats[0]["id"], beats[start - 1]["id"])))
+    for i in todo:
+        if i and not beats[i].get("cut") and i - 1 not in todo:
+            need = os.path.join(IN, "%s_seed%02d.png" % (name, i))
+            if not os.path.exists(need):
+                die("chybí %s — beat %s navazuje na předchozí, spusť napřed ten"
+                    % (os.path.basename(need), beats[i]["id"]))
+    if todo != list(range(stop)):
+        print("  renderuju beaty %s (ostatní hotové); co na nich visí až do dalšího obrázku "
+              "scény, se přegeneruje taky — mění se navazující snímek" % span(m, todo))
 
     st = load_state(m)
-    for i in range(start, stop):
+    for i in todo:
         b = beats[i]
-        seed_img = "%s_seed%02d.png" % (name, i)
+        seed_img, orig = beat_inputs(m, i)
         if b.get("control"):
             shutil.copy(pose_path(b["control"]), os.path.join(IN, os.path.basename(pose_path(b["control"]))))
         path = beat_path(m, b)
@@ -679,7 +838,8 @@ def cmd_render(m, src, w, h, start, stop, hd):
         # LTX: oživení tváře až teď, druhým promptem (do jednoho grafu se nevejde)
         # beat_ref: original → další beat handoff ignoruje, oživovat ho je jen ztráta času
         if (m["engine"] == "ltx" and b.get("identity") == "face"
-                and b.get("beat_ref") != "original" and i + 1 < len(beats)):
+                and b.get("beat_ref") != "original" and i + 1 < len(beats)
+                and not beats[i + 1].get("cut")):
             staged = "%s_pre%02d.png" % (name, i + 1)
             shutil.copy(nxt, os.path.join(IN, staged))
             rg = refresh_prompt(b, staged, orig, "%s/face%02d" % (name, i + 1))
@@ -689,8 +849,8 @@ def cmd_render(m, src, w, h, start, stop, hd):
             print("     tvář oživena z originálu  →  %s" % os.path.basename(nxt))
         st[b["id"]] = beat_hash(m, b, w, h)
         # co je za právě vyrenderovaným beatem, stojí na starém navazovacím
-        # snímku — pro --resume už neplatí
-        for later in beats[i + 1:]:
+        # snímku — pro --resume už neplatí (až po další obrázek scény)
+        for later in beats[i + 1:next_cut(m, i)]:
             st.pop(later["id"], None)
         save_state(m, st)
     print("hotovo — slep to přes --assemble")
@@ -725,8 +885,48 @@ def slices_expr(bands):
     return "if(eq(mod(floor(Y*%d/H),2),0),%s,%s)" % (bands, odd, even)
 
 
+def joined_graph(n, fps, lengths, joins, bands, with_audio):
+    """filter_complex pro vstupy s různými přechody (joins[i] = join() před
+    vstupem i, joins[0] se nečte). Postupné skládání: xfade/acrossfade pro
+    prolnutí, concat pro tvrdé střihy; u sdíleného snímku se první snímek
+    dalšího vstupu zahodí. fps= za každým krokem srovná časovou základnu,
+    kterou xfade vyžaduje stejnou na obou vstupech."""
+    parts = []
+    for i in range(n):
+        trim = ",trim=start_frame=1,setpts=PTS-STARTPTS" if i and joins[i][0] == "shared" else ""
+        parts.append("[%d:v]setpts=PTS-STARTPTS,fps=%d%s[v%d]" % (i, fps, trim, i))
+    prev, total = "[v0]", lengths[0]
+    for i in range(1, n):
+        kind, k = joins[i]
+        out = "[out]" if i == n - 1 else "[x%d]" % i
+        if kind in ("fade", "slices"):
+            tr = "custom:expr='%s'" % slices_expr(bands) if kind == "slices" else "fade"
+            parts.append("%s[v%d]xfade=transition=%s:duration=%.4f:offset=%.4f,fps=%d%s"
+                         % (prev, i, tr, k / fps, (total - k) / fps, fps, out))
+            total += lengths[i] - k
+        else:
+            parts.append("%s[v%d]concat=n=2:v=1:a=0,fps=%d%s" % (prev, i, fps, out))
+            total += lengths[i] - (1 if kind == "shared" else 0)
+        prev = out
+    if n == 1:
+        parts[0] = parts[0].replace("[v0]", "[out]")
+    amap = None
+    if with_audio:
+        prev = "[0:a]"
+        for i in range(1, n):
+            kind, k = joins[i]
+            out = "[aout]" if i == n - 1 else "[a%d]" % i
+            if kind in ("fade", "slices"):
+                parts.append("%s[%d:a]acrossfade=d=%.4f:c1=tri:c2=tri%s" % (prev, i, k / fps, out))
+            else:
+                parts.append("%s[%d:a]concat=n=2:v=0:a=1%s" % (prev, i, out))
+            prev = out
+        amap = "0:a" if n == 1 else "[aout]"
+    return ";".join(parts), amap
+
+
 def concat(files, fps, dst, xfade=1, lengths=None, transition="fade", bands=12,
-           with_audio=False):
+           with_audio=False, joins=None):
     """ffmpeg spojení vstupů, které sdílejí hraniční snímek.
 
     Vstup N+1 začíná přesně tím snímkem, kterým vstup N končí (sdílený
@@ -736,8 +936,12 @@ def concat(files, fps, dst, xfade=1, lengths=None, transition="fade", bands=12,
     (ffmpeg xfade; `transition` fade = prolínačka, slices = pásová
     přejížďka) — skok z re-encode navazovacího snímku a resetu pohybu se
     rozloží do k snímků; `lengths` = počty snímků vstupů, kvůli offsetům.
-    Platí pro segmenty i pro RIFE chunky."""
-    if xfade > 1:
+    Platí pro segmenty i pro RIFE chunky. `joins` = přechod zvlášť pro každý
+    spoj (scény s vlastním obrázkem) — pak se xfade/transition nečtou."""
+    afilter, amap = "", None
+    if joins:
+        fc, amap = joined_graph(len(files), fps, lengths, joins, bands, with_audio)
+    elif xfade > 1:
         assert lengths and len(lengths) == len(files)
         kind = "custom:expr='%s'" % slices_expr(bands) if transition == "slices" else "fade"
         parts = ["[%d:v]setpts=PTS-STARTPTS,fps=%d[v%d];" % (i, fps, i) for i in range(len(files))]
@@ -759,8 +963,7 @@ def concat(files, fps, dst, xfade=1, lengths=None, transition="fade", bands=12,
     # Zvuk: `with_audio` = vstupy ho nesou (LTX), jinak se dolepí ticho. Prolínačka
     # obrazu má svůj protějšek v acrossfade, aby hudba na střihu nelupla; u tvrdého
     # střihu se stopy jen navážou.
-    afilter, amap = "", None
-    if with_audio:
+    if with_audio and not joins:
         if len(files) == 1:
             amap = "0:a"
         elif xfade > 1:
@@ -873,12 +1076,20 @@ def cmd_soundtrack(m, video):
     return video
 
 
+def joins_of(m, upto):
+    """Přechody per spoj, když manifest má scény s vlastním obrázkem; jinak
+    None (jednotný přechod, původní cesta)."""
+    if not any(b.get("cut") for b in m["beats"][1:upto]):
+        return None
+    return [None] + [join(m, i) for i in range(1, upto)]
+
+
 def cmd_assemble(m, upto):
     segs, fps = segments(m, upto), m["fps"]
     dst = concat(segs, fps, full_path(m), xfade=m["crossfade"],
                  lengths=[b["length"] for b in m["beats"][:upto]],
                  transition=m["transition"], bands=m["bands"],
-                 with_audio=m["engine"] == "ltx")
+                 with_audio=m["engine"] == "ltx", joins=joins_of(m, upto))
     n = nframes(dst)
     print("  %s  %d snímků = %.2f s" % (dst, n, duration_s(dst)))
     if m.get("soundtrack"):
@@ -913,9 +1124,14 @@ def cmd_smooth(m, upto):
                                 fps=float(fps * 2), crf=20.0)
         chunks.append(outfile(submit(g, "RIFE %d→%d fps beat %s" % (fps, fps * 2, b["id"])), "4", ".webm"))
     k = m["crossfade"]
+    joins = joins_of(m, upto)
+    if joins:
+        # na dvojnásobné fps: prolnutí k → 2k−1 snímků, tvrdé střihy beze změny
+        joins = [None] + [(kind, 2 * j - 1) if kind in ("fade", "slices") else (kind, j)
+                          for kind, j in joins[1:]]
     dst = concat(chunks, fps * 2, os.path.join(OUT, m["name"], "%s_%dfps.mp4" % (m["name"], fps * 2)),
                  xfade=(2 * k - 1) if k > 1 else 1, lengths=[2 * b["length"] - 1 for b in beats],
-                 transition=m["transition"], bands=m["bands"])
+                 transition=m["transition"], bands=m["bands"], joins=joins)
     n = nframes(dst)
     print("  %s  %d snímků = %.2f s" % (dst, n, duration_s(dst)))
     if m.get("soundtrack"):
@@ -923,9 +1139,9 @@ def cmd_smooth(m, upto):
     return dst
 
 
-def cmd_all(m, src, w, h, start, stop, hd):
+def cmd_all(m, src, w, h, todo, stop, hd):
     """Render → slepení → RIFE na jeden zátah. Co si obvykle přeješ."""
-    cmd_render(m, src, w, h, start, stop, hd)
+    cmd_render(m, src, w, h, todo, hd, stop)
     full = cmd_assemble(m, stop)
     final = cmd_smooth(m, stop)
     print("\nHOTOVO")
@@ -951,6 +1167,8 @@ if __name__ == "__main__":
                     help="skonči po beatu / scéně; slepení a RIFE jen přes tenhle prefix")
     ap.add_argument("--resume", action="store_true",
                     help="pokračuj od prvního nehotového beatu (output/<name>/state.json)")
+    ap.add_argument("--only", metavar="BEAT|SCÉNA",
+                    help="jen beat / scénu a co na ní visí do další scény s vlastním obrázkem")
     ap.add_argument("--hd", action="store_true", help="~1 Mpx místo ~0.44 Mpx")
     ap.add_argument("--assemble", action="store_true", help="slepení, bez GPU")
     ap.add_argument("--smooth", action="store_true", help="RIFE 2× fps po scénách")
@@ -968,15 +1186,21 @@ if __name__ == "__main__":
     # U LTX je vyšší rozlišení skoro zadarmo (naměřeno: 2,15x pixelů = 1,2x čas)
     # a identitu znatelně zvedne (0.43 -> 0.61), takže hd je default.
     w, h = resolution(m, src, "hd" if (a.hd or m["engine"] == "ltx") else "draft")
-    if a.start and a.resume:
-        die("--from a --resume se vylučují")
-    start = 0
+    if sum(map(bool, (a.start, a.resume, a.only))) > 1:
+        die("--from, --only a --resume se vylučují")
+    todo = list(range(stop))
     if a.start:
         start = resolve(m, a.start)
         if start >= stop:
             die("--from %s je za --until %s" % (a.start, a.until))
+        todo = list(range(start, stop))
+    elif a.only:
+        first, last = resolve(m, a.only), resolve(m, a.only, end=True)
+        if first >= stop:
+            die("--only %s je za --until %s" % (a.only, a.until))
+        todo = list(range(first, min(next_cut(m, last), stop)))
     elif a.resume:
-        start = resume_index(m, w, h)
+        todo = todo_resume(m, w, h, stop)
     if a.plan:
         cmd_plan(m, src, w, h)
     elif a.materialize:
@@ -984,6 +1208,6 @@ if __name__ == "__main__":
     elif a.validate:
         sys.exit(0 if cmd_validate(m, src, w, h) else 1)
     elif a.all:
-        cmd_all(m, src, w, h, start, stop, a.hd)
+        cmd_all(m, src, w, h, todo, stop, a.hd)
     else:
-        cmd_render(m, src, w, h, start, stop, a.hd)
+        cmd_render(m, src, w, h, todo, a.hd, stop)
