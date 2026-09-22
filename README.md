@@ -96,7 +96,14 @@ uživatele, `_prompt_used` to, co skutečně jelo.
 Manifest je `CUSTOM_TPL` v `serve.py` — bez `photorealistic` a bez oživení
 tváře, obrázek může být anime. `GET /scenes` k tomu vrací `custom` s mezemi
 (max beatů, délka promptu, sekundy a minuty na beat); appka podle něj
-nabídku zobrazí. Odpověď na `POST` nese i `prompt`, který skutečně jel.
+nabídku zobrazí. Odpověď na `POST` přepsaný prompt nenese — v tu chvíli
+ještě není; co jelo, je v `jobs/<id>.log` a v manifestu.
+
+Překlad je jediné místo, kde video-stack potřebuje textové LLM: scény ani
+příběhy na gateway nesahají. Model drží kontejner `fallback` na SPARKu
+(`vllm` s Qwen3-4B-AWQ, `--gpu-memory-utilization 0.08`, tj. ~10 GB ze
+130 GB; naběhne za ~30 s, přepis pak trvá 0,3 s). Když neběží, jde český
+text rovnou do Wanu — umT5 mu rozumí, jen výsledek bývá slabší.
 
 Scény jsou v `scenes/<id>.json` — kus manifestu (`style_tail`, `negative`,
 `scenes[]` s beaty) + `id`/`label`/`desc`; server doplní `name`/`source`/`seed`.
