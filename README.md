@@ -313,9 +313,19 @@ Jak to drží pohromadě:
   ipadapter` jde přes Illustrious + IPAdapter a drží jen hrdinu. Otisk
   (prompt, reference, metoda, seed) je v `kf/NN.json` — změna promptu
   přegeneruje jen ten záběr se stejným seedem, `--reroll` dá nový.
-- **Obsazená role si vzhled nese z reference.** Když roli obsadíš vlastním
-  obrázkem (appka, `story.py cast`), vypadne z promptu `desc` ze scénáře a
-  přibude věta, že vzhled je jen z reference. Dokud tam popis stál, Kontext
+- **Obsazená role si vzhled nese z reference.** Reference se nejdřív jednou
+  překreslí do stylu příběhu (`chars/<role>_book.png`) a z ní pak vychází
+  všech dvanáct záběrů — nahraná fotka je mimo doménu a Kontext z ní pokaždé
+  přečte trochu jinou postavu. Popis do promptu vzniká z tagů té překreslené
+  reference (WD14 sidecar, port 8097), takže text říká totéž, co je vidět.
+- **Jiné zvíře, než čeká scénář:** u postavy jde poslat `{image, who}`,
+  kde `who` je český popisek („ježek Bodlinka"). `story.py` podle něj přepíše
+  postavu v promptech, v pohybech, ve vyprávění i v titulcích a druh zvířete
+  dá i do překreslení reference. Rod ve větách srovná ještě jeden průchod
+  gateway („seděl veverka" → „seděla veverka"). V appce je to pole „Kdo to
+  je" pod vybraným obrázkem, předvyplněné tím, co má scénář.
+- **Popis ze scénáře jde u obsazené role pryč.** Vypadne z promptu `desc`
+  a přibude věta, že vzhled je jen z reference. Dokud tam popis stál, Kontext
   poslechl text a nahraný obrázek prakticky ignoroval. Značka je `cast: true`
   v `characters` (doplní `serve.py`), u ruční cesty soubor `chars/<role>.cast`.
   Výchozí postava popis dál používá — potvrzuje, co je na obrázku.
@@ -333,6 +343,9 @@ Jak to drží pohromadě:
   Věta záběru začíná 0,2 s po
   dokončení prolnutí; delší než záběr se zrychlí až na 1,2×, jinak varování.
   `check_stories.py` hlídá délku textu předem (~2 slova/s česky).
+- **Vypravěč nejede na doraz.** Piper vrací věty se špičkami na ±1.0 a část
+  vzorků rovně uříznutou; pod hudbou to chrastí. Po syntéze jde `adeclip` a
+  limiter na −1 dB (`VOICE_FIX`), což zároveň srovná lichý datový blok WAVu.
 - **Hudba**: ACE-Step přes AiStack `services/audio` (`AUDIO_URL`, default
   `localhost:8093`) na celou délku; když neběží (noční režim 00–07), zaskočí
   LTX dárce z `chain.py` (19 s smyčka), jinak bez hudby. Pod vypravěčem se
