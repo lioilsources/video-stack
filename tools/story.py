@@ -1165,13 +1165,18 @@ def ffmpeg(*args):
 
 
 LOUD = "I=-16:TP=-1.5:LRA=11"
+LOUD_I = -16.0                    # cíl (LUFS)
+LOUD_TP = 0.841                   # −1.5 dBTP
 
 
 def loudnorm(inputs, filt, total):
-    """Nastavení loudnorm pro druhý průchod. Jednoprůchodový loudnorm cíl jen
-    odhaduje a u příběhu s tichou hudbou pod řečí podstřelil na −19 LUFS;
-    první průchod proto jen měří a druhý si nese naměřené hodnoty, takže
-    výsledek na −16 LUFS opravdu sedí. Když měření selže, jede jako dřív."""
+    """Změří mix a vrátí filtr, který ho posadí na cíl.
+
+    Sám loudnorm to neudělá: v dynamickém režimu cíl podstřeluje (u příběhu
+    s tichou hudbou pod řečí vyšlo −19 LUFS místo −16 a i druhý průchod
+    s naměřenými hodnotami skončil stejně). Měření tedy jen přečteme a
+    přidáme konstantní zisk; špičky pohlídá limiter na −1,5 dBTP, dynamika
+    zůstane, jak je. Když měření selže, jede se jako dřív."""
     try:
         out = subprocess.run(
             ["ffmpeg", "-hide_banner", "-nostats"] + list(inputs) + [
@@ -1179,12 +1184,13 @@ def loudnorm(inputs, filt, total):
                 "-map", "[aout]", "-t", "%.3f" % total, "-vn", "-f", "null", "-"],
             capture_output=True, text=True, check=True).stderr
         d = json.loads(out[out.rindex("{"):out.rindex("}") + 1])
-        m = {k: float(d[k]) for k in ("input_i", "input_tp", "input_lra", "input_thresh")}
-        if any(v == float("-inf") or v != v for v in m.values()):
+        i, tp = float(d["input_i"]), float(d["input_tp"])
+        if i != i or i < -70 or i == float("-inf"):
             raise ValueError("ticho")
-        return ("loudnorm=%s:measured_I=%.2f:measured_TP=%.2f:measured_LRA=%.2f:"
-                "measured_thresh=%.2f:linear=true" % (LOUD, m["input_i"], m["input_tp"],
-                                                      m["input_lra"], m["input_thresh"]))
+        gain = max(-12.0, min(12.0, LOUD_I - i))
+        print("  hlasitost: %.1f LUFS → %+.1f dB na %.0f (špička %.1f dBTP)"
+              % (i, gain, LOUD_I, tp), flush=True)
+        return "volume=%.2fdB,alimiter=limit=%.3f:level=false" % (gain, LOUD_TP)
     except (subprocess.CalledProcessError, ValueError, KeyError) as e:
         print("  ! měření hlasitosti selhalo (%s) — jedu jednoprůchodově" % str(e)[:60], flush=True)
         return "loudnorm=" + LOUD
