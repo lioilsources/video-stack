@@ -442,9 +442,17 @@ def recast(st, work, path=None):
 
 
 def swap_words(text, pairs):
+    """Záměna postavy v textu. Bez ohledu na velikost písmen — na začátku věty
+    stojí „Medvídek Bručoun" a jinde „medvídek" — a velké písmeno se přenese
+    na náhradu, ať věta nezačíná malým."""
     for old, new in pairs:
-        if old and new and old != new:
-            text = re.sub(r"\b%s\b" % re.escape(old), new, text)
+        if not old or not new or old.lower() == new.lower():
+            continue
+
+        def cap(m, new=new):
+            return new[:1].upper() + new[1:] if m.group(0)[:1].isupper() else new
+
+        text = re.sub(r"\b%s\b" % re.escape(old), cap, text, flags=re.I)
     return text
 
 
@@ -459,22 +467,26 @@ CZ_SHOTS = [
      "Na plotě seděla veverka Zrzka. S jejím deštníkem!"),
     ("Postava: veverka Zrzka\nVěta: Zrzka jí deštník vrátil. Hodný veverka.",
      "Zrzka jí deštník vrátila. Hodná veverka."),
+    ("Postava: holčička Mia\nVěta: Holčička Mia sklouzne pod peřinu a koukají mu jen oči.",
+     "Holčička Mia sklouzne pod peřinu a koukají jí jen oči."),
 ]
 
 
 def fix_czech(st, label=""):
-    """Po záměně sedí slova, ale ne vždy rod („seděl veverka"). Gateway větu
-    srovná; bez ní zůstane, jak vyšla ze záměny — význam je správný."""
+    """Po záměně sedí slova, ale ne vždy rod („seděl veverka", „koukají mu jen
+    oči"). Gateway větu srovná; bez ní zůstane, jak vyšla ze záměny — význam je
+    správný. Kromě vyprávění i `action`, ten appka ukazuje v kontrole záběrů."""
     for sh in st["shots"]:
-        t = (sh.get("narration") or "").strip()
-        if not t:
-            continue
-        out = llm(CZ_SYSTEM, CZ_SHOTS, "Postava: %s\nVěta: %s" % (label, t), max_tokens=120)
-        if not out:
-            return                                      # LLM je dole, nemá smysl zkoušet dál
-        out = out.strip().strip('"\u201e\u201c').strip()
-        if out and 0.5 * len(t) < len(out) < 2 * len(t) and re.search("[ěščřžýáíéúůň]", out, re.I):
-            sh["narration"] = out
+        for k in ("narration", "action"):
+            t = (sh.get(k) or "").strip()
+            if not t:
+                continue
+            out = llm(CZ_SYSTEM, CZ_SHOTS, "Postava: %s\nVěta: %s" % (label, t), max_tokens=220)
+            if not out:
+                return                                  # LLM je dole, nemá smysl zkoušet dál
+            out = out.strip().strip('"\u201e\u201c').strip()
+            if out and 0.5 * len(t) < len(out) < 2 * len(t) and re.search("[ěščřžýáíéúůň]", out, re.I):
+                sh[k] = out
 
 
 def ref_tags(path):
