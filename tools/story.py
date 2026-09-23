@@ -338,8 +338,9 @@ def kf_prompt(st, work, sh, method):
         # U obsazené role ještě jednou a natvrdo: vzhled je z reference. Samotné
         # „keep … as in the reference" nestačilo, dokud vedle stál popis ze scénáře.
         hard = (" Take %s appearance only from the reference image: face, hairstyle, hair color, eye "
-                "color, outfit and body proportions. Do not invent a different character."
-                % ("the characters'" if len(cast) > 1 else st["characters"][cast[0]]["tag"] + "'s")) \
+                "color, outfit and body proportions. Do not invent %s."
+                % (("the characters'", "different characters") if len(cast) > 1
+                   else (st["characters"][cast[0]]["tag"] + "'s", "a different character"))) \
             if cast else ""
         return ("%s Create a new single illustration, not a character sheet: %s%s Setting: %s. "
                 "Keep every character's face, hairstyle, outfit, body proportions and colors exactly as in "
