@@ -444,14 +444,15 @@ def recast(st, work, path=None):
 
 def swap_words(text, pairs):
     """Záměna postavy v textu. Bez ohledu na velikost písmen — na začátku věty
-    stojí „Medvídek Bručoun" a jinde „medvídek" — a velké písmeno se přenese
-    na náhradu, ať věta nezačíná malým."""
+    stojí „Medvídek Bručoun" a jinde „medvídek". Velké písmeno se doplní jen
+    na začátku věty: uprostřed patří „leží holčička Mia", ne „leží Holčička"."""
     for old, new in pairs:
         if not old or not new or old.lower() == new.lower():
             continue
 
         def cap(m, new=new):
-            return new[:1].upper() + new[1:] if m.group(0)[:1].isupper() else new
+            head = m.string[:m.start()].rstrip()
+            return new[:1].upper() + new[1:] if not head or head[-1] in ".!?:\u201e\"" else new
 
         text = re.sub(r"\b%s\b" % re.escape(old), cap, text, flags=re.I)
     return text
@@ -473,15 +474,33 @@ CZ_SHOTS = [
 ]
 
 
+# „Bručoun the cyclops" → slovo „the" sedí skoro v každé anglické větě a
+# průchod pak přepisoval věty o jiné postavě.
+STOP = {"the", "and", "with", "her", "his", "its", "their", "little", "small", "big",
+        "malý", "malá", "velký", "velká", "můj", "moje"}
+
+
 def stems(label):
     """Kmeny slov popisku pro hledání ve skloňovaném textu („kyklopa
-    Bručouna" pozná podle „kyklo" a „Bruča"... tedy prvních pět písmen)."""
-    return [w[:5].lower() for w in re.sub(r"[^\w\s]", " ", label).split() if len(w) > 2]
+    Bručouna" pozná podle „kyklo" a „bruča"... tedy prvních pět písmen)."""
+    return [w[:5].lower() for w in re.sub(r"[^\w\s]", " ", label).split()
+            if len(w) > 2 and w.lower() not in STOP]
 
 
 def mentions(text, label):
     low = text.lower()
     return any(st_ in low for st_ in stems(label))
+
+
+def keeps_names(src, out):
+    """Věta po opravě musí nést tatáž vlastní jména. Model jinak ochotně
+    udělal z věty o dvou postavách větu o té jedné, na kterou se ptáme
+    („Mia zvedne Bručouna" → „Bručoun zvedne")."""
+    def names(t):
+        # velké písmeno uprostřed věty = jméno; první slovo věty se nepočítá
+        return {w[:5].lower() for w in re.findall(r"(?<![.!?]\s)(?<!^)\b[A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ][\w]+",
+                                                  t, re.M)}
+    return names(src) <= names(out)
 
 
 def fix_czech(st, label=""):
@@ -502,8 +521,9 @@ def fix_czech(st, label=""):
             if not out:
                 return                                  # LLM je dole, nemá smysl zkoušet dál
             out = out.strip().strip('"\u201e\u201c').strip()
-            if (out and 0.5 * len(t) < len(out) < 2 * len(t)
-                    and re.search("[ěščřžýáíéúůň]", out, re.I) and mentions(out, label)):
+            if (out and 0.6 * len(t) < len(out) < 1.6 * len(t)
+                    and re.search("[ěščřžýáíéúůň]", out, re.I)
+                    and mentions(out, label) and keeps_names(t, out)):
                 sh[k] = out
 
 
@@ -531,7 +551,8 @@ def fix_english(st, label=""):
             if not out:
                 return
             out = out.strip().strip('"').strip()
-            if out and 0.5 * len(t) < len(out) < 2 * len(t) and mentions(out, label):
+            if (out and 0.6 * len(t) < len(out) < 1.6 * len(t)
+                    and mentions(out, label) and keeps_names(t, out)):
                 sh[k] = out
 
 
