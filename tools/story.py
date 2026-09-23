@@ -37,6 +37,31 @@ CHAINS = os.path.join(HERE, "chains")
 WORKFLOWS = os.path.join(HERE, "workflows")
 PIPER_HOME = os.environ.get("PIPER_HOME", os.path.expanduser("~/.local/share/video-stack/piper"))
 AUDIO_URL = os.environ.get("AUDIO_URL", "http://localhost:8093")    # AiStack services/audio
+TAGGER_URL = os.environ.get("TAGGER_URL", "http://127.0.0.1:8097/tag")   # AiStack finetune-wd14
+# Tagy, které popisují obrázek, ne postavu: kompozici, pozadí, náladu, médium.
+# Do promptu keyframu nepatří — ten si kompozici i prostředí určuje sám.
+TAG_DROP = {
+    "solo", "full body", "upper body", "lower body", "cowboy shot", "portrait", "close-up",
+    "looking at viewer", "looking away", "looking back", "looking down", "looking up",
+    "standing", "sitting", "kneeling", "lying", "walking", "running", "jumping", "arms up",
+    "simple background", "white background", "grey background", "gradient background",
+    "transparent background", "outdoors", "indoors", "day", "night", "sky", "cloud", "water",
+    "tree", "grass", "flower", "wall", "window", "blurry", "blurry background", "depth of field",
+    "signature", "artist name", "dated", "watermark", "web address", "english text", "text",
+    "border", "letterboxed", "traditional media", "photo (medium)", "realistic", "monochrome",
+    "greyscale", "sketch", "painting (medium)", "watercolor (medium)", "no humans",
+    "smile", "blush", "open mouth", "closed mouth", "closed eyes", "parted lips", "teeth",
+    "holding", "holding weapon", "weapon", "sparkle", "light particles", "motion blur",
+}
+# Tagy, které do dětského příběhu nepatří; reference může být z jiné tvorby.
+TAG_BLOCK = {
+    "breasts", "large breasts", "medium breasts", "small breasts", "huge breasts", "cleavage",
+    "nipples", "areolae", "nude", "nudity", "topless", "bottomless", "completely nude",
+    "panties", "underwear", "bra", "lingerie", "thong", "pantyshot", "upskirt", "ass",
+    "sideboob", "underboob", "navel", "pussy", "penis", "sex", "spread legs", "bondage",
+    "covered nipples", "see-through", "wet clothes", "bikini", "swimsuit", "lactation",
+}
+TAG_MAX = 10                       # delší výčet Kontext stejně neudrží
 
 KF_W, KF_H = 768, 1344            # SDXL/Kontext bucket blízko 9:16; Wan z něj dopočítá 496×880 / 752×1312
 LANGS = ("cs", "en")
@@ -298,6 +323,47 @@ def cmd_cast(st, work, role, image):
 
 # ---------------------------------------------------------------- keyframy
 
+def ref_tags(path):
+    """WD14 sidecar AiStacku: obrázek → booru tagy podle jistoty. Když neběží,
+    prázdný seznam a prompt jede bez popisu (jako předtím)."""
+    try:
+        data = open(path, "rb").read()
+        req = urllib.request.Request(TAGGER_URL, data, {"Content-Type": "application/octet-stream"})
+        d = json.load(urllib.request.urlopen(req, timeout=120))
+    except Exception as e:                                 # noqa: BLE001
+        print("  ! tagger nedostupný (%s) — reference zůstane bez popisu" % str(e)[:60], flush=True)
+        return []
+    tags = sorted(d.get("general", {}).items(), key=lambda kv: -kv[1])
+    out = []
+    for tag, conf in tags:
+        t = tag.replace("_", " ")
+        if conf < 0.5 or t in TAG_DROP or t in TAG_BLOCK:
+            continue
+        out.append(t)
+        if len(out) == TAG_MAX:
+            break
+    return out
+
+
+def cast_desc(st, work, role):
+    """Popis obsazené role Z JEJÍ REFERENCE (WD14), ne ze scénáře. Drží dvě věci
+    najednou: prompt říká totéž, co je na obrázku, a říká to u všech dvanácti
+    keyframů stejně — bez popisu si Kontext u každého záběru vymyslel jinou
+    postavu, zvlášť když jsou reference dvě slepené vedle sebe.
+    Vedle obrázku se to cachuje (.desc), takže se tagger ptá jednou."""
+    img = char_path(st, work, role)
+    if not img:
+        return ""
+    cache = img + ".desc"
+    if os.path.exists(cache) and os.path.getmtime(cache) >= os.path.getmtime(img):
+        return open(cache).read().strip()
+    desc = ", ".join(ref_tags(img))
+    open(cache, "w").write(desc)
+    if desc:
+        print("  %s podle reference: %s" % (role, desc), flush=True)
+    return desc
+
+
 def is_cast(st, work, role):
     """Roli obsadil uživatel vlastním obrázkem — z appky (`cast` v story.json,
     doplní serve.py) nebo přes `story.py cast` (soubor .cast u obrázku).
@@ -306,10 +372,13 @@ def is_cast(st, work, role):
 
 
 def look_of(st, work, role):
-    """Závorka s popisem postavy do promptu. U obsazené role prázdná: `desc`
-    popisuje kanonickou postavu a Kontext text poslechne víc než obrázek, takže
-    by nahranou referenci přebil (fotka ženy → pořád holčička ze scénáře)."""
-    return "" if is_cast(st, work, role) else " (%s)" % st["characters"][role]["desc"]
+    """Závorka s popisem postavy do promptu. Obsazená role: popis z vlastní
+    reference (tagy), ne `desc` ze scénáře — ten popisuje kanonickou postavu a
+    Kontext text poslechne víc než obrázek, takže by nahranou referenci přebil."""
+    if not is_cast(st, work, role):
+        return " (%s)" % st["characters"][role]["desc"]
+    d = cast_desc(st, work, role)
+    return " (%s)" % d if d else ""
 
 
 def who(st, work, roles):
