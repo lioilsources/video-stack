@@ -573,10 +573,14 @@ def ref_tags(path):
     return [t for t, _ in keep[:TAG_MAX]]
 
 
-CAST_SHEET = ("Redraw the character shown in the reference image as one full-body character standing and "
-              "facing the viewer on a plain white background, arms relaxed, friendly neutral expression. "
-              "Keep the face, hairstyle, hair color and hair length, eye color, outfit, its colors and the "
-              "body proportions exactly as in the reference. %s. No text, no frame, no scenery.")
+# Pozor na slovník: „keep the hairstyle and the outfit" předpokládá člověka a
+# Kontext podle toho z jednooké příšerky udělal chlapečka se zelenými vlasy.
+# Druh jde dopředu, rysy z tagů reference hned za něj a teprve pak styl.
+CAST_SHEET = ("Redraw the %(kind)s shown in the reference image as one full-body character standing and "
+              "facing the viewer on a plain white background, friendly expression. "
+              "Keep exactly what the reference shows: %(tags)sthe face and its features, the body shape "
+              "and proportions, and all colors. It stays the same creature — do not turn it into a human "
+              "or a child. %(style)s. No text, no frame, no scenery.")
 
 
 def cast_sheet(st, work, role):
@@ -592,8 +596,10 @@ def cast_sheet(st, work, role):
     if not src or not is_cast(st, work, role):
         return src
     dst = work.p("chars", role + "_book.png")
-    kind = (st["characters"][role].get("species_en") or "").strip()
-    prompt = (CAST_SHEET % st["style"]) + (" The character is a %s." % kind if kind else "")
+    kind = (st["characters"][role].get("species_en") or "").strip() or "character"
+    tags = ref_tags(src)
+    prompt = CAST_SHEET % {"kind": kind, "style": st["style"],
+                           "tags": ("its distinctive features (%s), " % ", ".join(tags[:8])) if tags else ""}
     seed = st["seed"] + 500 + sum(ord(ch) for ch in role)
     key = sha([chain.file_sha(src), prompt, seed, KF_W, KF_H])
     if os.path.exists(dst) and os.path.exists(dst + ".key") and open(dst + ".key").read() == key:
@@ -627,7 +633,7 @@ def cast_desc(st, work, role):
     keyframů stejně — bez popisu si Kontext u každého záběru vymyslel jinou
     postavu, zvlášť když jsou reference dvě slepené vedle sebe.
     Vedle obrázku se to cachuje (.desc), takže se tagger ptá jednou."""
-    img = ref_image(st, work, role)
+    img = char_path(st, work, role)      # tagy z nahrané reference: ta je pravda
     if not img:
         return ""
     cache = img + ".desc"
