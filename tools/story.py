@@ -1335,7 +1335,10 @@ def cmd_run(st, work, hd=False, resume=False, only=None, review=True, until=None
     chain.free_models("po keyframech")       # FLUX Kontext ven, ať má Wan 14B paměť
     phase("render")
     cmd = [sys.executable, os.path.join(HERE, "chain.py"), path, "--all"]
-    cmd += (["--hd"] if hd else []) + (["--resume"] if resume else []) + (["--only", only] if only else [])
+    # --resume vždycky: todo_resume vezme beaty, co chybí nebo se jim změnilo
+    # zadání, a na prvním běhu to jsou stejně všechny. Bez toho by po
+    # překreslení jednoho záběru jel celý render znovu (půl hodiny místo minut).
+    cmd += (["--hd"] if hd else []) + (["--only", only] if only else ["--resume"])
     subprocess.run(cmd, cwd=HERE, check=True)
     phase("voice")
     cmd_voice(st, work, lang)
