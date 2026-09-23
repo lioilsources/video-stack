@@ -578,9 +578,10 @@ def ref_tags(path):
 # Druh jde dopředu, rysy z tagů reference hned za něj a teprve pak styl.
 CAST_SHEET = ("Redraw the %(kind)s shown in the reference image as one full-body character standing and "
               "facing the viewer on a plain white background, friendly expression. "
-              "Keep exactly what the reference shows: %(tags)sthe face and its features, the body shape "
-              "and proportions, and all colors. It stays the same creature — do not turn it into a human "
-              "or a child. %(style)s. No text, no frame, no scenery.")
+              "Keep exactly what the reference shows: %(tags)sthe face and its features, the same number "
+              "of eyes, limbs, horns and ears, the body shape and proportions, and all colors. It stays "
+              "the same creature — do not turn it into a human or a child. %(style)s. "
+              "No text, no frame, no scenery.")
 
 
 def cast_sheet(st, work, role):
