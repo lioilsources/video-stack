@@ -469,9 +469,9 @@ def recast(st, work, path=None):
         done.append("%s → %s" % (role, who))
     if not done:
         return
-    for c in st["characters"].values():
+    for role, c in st["characters"].items():
         if c.get("_recast"):
-            fix_czech(st, c["name"])
+            fix_czech(st, c["name"], role)
             fix_english(st, c["tag"])
     print("  obsazení: %s" % ", ".join(done), flush=True)
     if path and os.path.exists(path):
@@ -578,7 +578,7 @@ def keeps_names(src, out):
     return names(src) <= names(out)
 
 
-def fix_czech(st, label=""):
+def fix_czech(st, label="", role=None):
     """Po záměně sedí slova, ale ne vždy rod („seděl veverka", „koukají mu jen
     oči"). Gateway větu srovná; bez ní zůstane, jak vyšla ze záměny — význam je
     správný. Kromě vyprávění i `action`, ten appka ukazuje v kontrole záběrů.
@@ -590,7 +590,8 @@ def fix_czech(st, label=""):
     for sh in st["shots"]:
         for k in ("narration", "action"):
             t = (sh.get(k) or "").strip()
-            if not t or not mentions(t, label):
+            # i věta bez jména: „Uložil Zubejdu vedle sebe." má podmět z chars
+            if not t or not (mentions(t, label) or (role and role in sh["chars"])):
                 continue
             out = llm(CZ_SYSTEM, CZ_SHOTS, "Postava: %s\nVěta: %s" % (label, t), max_tokens=220)
             if not out:
