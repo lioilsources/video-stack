@@ -462,7 +462,17 @@ class Jobs:
         import chain
         chain.drop_page_cache()
         free = vram_free_gb()
-        if free is not None and free < MIN_FREE_GB:
+        # vram_free_gb() vrací None na cokoli — nulu, ComfyUI dole, timeout —
+        # takže "obsazená paměť" a "server neběží" byly dřív jedna hláška:
+        # `free is not None and free < MIN_FREE_GB` je při None vždy False, tak
+        # to spadlo až v chain.py jako syrový urllib.error.URLError. ComfyUI
+        # jede jen 07:00–00:00 (rag-schedule.sh, DAY_START/NIGHT_START) — noční
+        # joby na tohle narážely opakovaně, retry na retry se stejným výsledkem.
+        if free is None:
+            self.update(jid, status="error", finished=time.time(),
+                        error="ComfyUI neběží (noční režim 00:00–07:00, GPU má RAG) — zkus to po 7:00")
+            return
+        if free < MIN_FREE_GB:
             self.update(jid, status="error", finished=time.time(),
                         error="GPU paměť obsazená (%.0f GB volno, potřeba %d) — uvolni LLM"
                               % (free, MIN_FREE_GB))
