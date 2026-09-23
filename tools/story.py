@@ -1045,6 +1045,11 @@ def wav_dur(path):
 # („Invalid PCM packet, data has size 1").
 VOICE_FIX = "adeclip,alimiter=limit=0.891:level=false"
 MUSIC_XF = 2.0                    # překryv smyčky hudby (s)
+# Generovaná hudba (ACE-Step i LTX dárce) sype v tichých místech fizz nad
+# 6 kHz — naměřeno na hotovém příběhu: v šumivých oknech leželo 60 % energie
+# nad 6 kHz proti 20 % v čistých. Je tichý, ale mezi větami vypravěčky je ho
+# slyšet. Shelf ho srazí na polovinu a hlasitost skladby se nezmění.
+MUSIC_TAME = "highshelf=f=6000:g=-9"
 
 
 def cmd_voice(st, work, lang):
@@ -1159,29 +1164,31 @@ def ffmpeg(*args):
     subprocess.run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error"] + list(args), check=True)
 
 
-def music_bed(src, total, work):
-    """Hudba na celou délku. Kratší stopa (typicky 19s LTX dárce) se nelepí
-    natvrdo `-stream_loop`, ale skládá přes acrossfade — tvrdý šev jinak
-    lupne a opakování je slyšet. Delší stopa jde beze změny, mix si ji ořízne."""
+def music_bed(st, src, total, work):
+    """Hudební podklad na celou délku: zkrocené výšky a, když je stopa kratší
+    (typicky 19s LTX dárce), složená přes acrossfade. Natvrdo `-stream_loop`
+    tu byl dřív a šev lupal."""
     dur = chain.duration_s(src)
-    if dur >= total - 0.2 or dur <= MUSIC_XF * 2:
-        return src
-    n = max(2, int(math.ceil((total - dur) / (dur - MUSIC_XF))) + 1)
+    tame = st.get("music_tame", MUSIC_TAME)
+    n = 1 if dur >= total - 0.2 or dur <= MUSIC_XF * 2 \
+        else max(2, int(math.ceil((total - dur) / (dur - MUSIC_XF))) + 1)
     dst = work.p("music_bed.m4a")
-    key = sha([os.path.basename(src), chain.file_sha(src), round(total, 1), n, MUSIC_XF])
+    key = sha([os.path.basename(src), chain.file_sha(src), round(total, 1), n, MUSIC_XF, tame])
     if os.path.exists(dst) and os.path.exists(dst + ".key") and open(dst + ".key").read() == key:
         return dst
     args, filt, prev = [], [], "[0:a]"
     for i in range(n):
         args += ["-i", src]
     for i in range(1, n):
-        out = "[x%d]" % i if i < n - 1 else "[bed]"
+        out = "[x%d]" % i
         filt.append("%s[%d:a]acrossfade=d=%.2f:c1=tri:c2=tri%s" % (prev, i, MUSIC_XF, out))
         prev = out
+    filt.append("%s%s[bed]" % (prev, tame or "anull"))
     ffmpeg(*args, "-filter_complex", ";".join(filt), "-map", "[bed]", "-t", "%.3f" % total,
            "-c:a", "aac", "-b:a", "192k", ensure(dst))
     open(dst + ".key", "w").write(key)
-    print("  hudba na %.1f s: %d× smyčka s překryvem %.1f s" % (total, n, MUSIC_XF), flush=True)
+    print("  hudba na %.1f s: %s, výšky %s" % (total, "%d× smyčka s překryvem %.1f s" % (n, MUSIC_XF)
+                                               if n > 1 else "jedním kusem", tame or "beze změny"), flush=True)
     return dst
 
 
@@ -1231,7 +1238,7 @@ def cmd_mix(st, work, lang, music=False):
                     % ("".join("[n%d]" % j for j in range(len(voices))), len(voices), total))
     if music:
         idx = len(voices) + 1
-        inputs += ["-i", music_bed(music, total, work)]     # kratší stopa už je slepená s překryvem
+        inputs += ["-i", music_bed(st, music, total, work)]  # zkrocené výšky, případně slepená smyčka
         filt.append("[%d:a]aresample=44100,aformat=channel_layouts=stereo,atrim=0:%.3f,"
                     "afade=t=in:d=1.5,afade=t=out:st=%.3f:d=2.5,volume=%.2f[mus]"
                     % (idx, total, max(0.0, total - 2.5), float(st.get("music_volume", 0.45))))
