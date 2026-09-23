@@ -389,6 +389,24 @@ def label_parts(label):
     return name, " ".join(w for w in words if w != name).strip()
 
 
+LOOK_SYSTEM = ("You name what makes an animal or creature recognizable in a drawing. "
+               "Answer with one short English noun phrase, at most 12 words, nothing else.")
+LOOK_SHOTS = [
+    ("cyclops", "a single large eye in the middle of its face, no second eye"),
+    ("hedgehog", "a round body covered in spines, a small pointed snout, tiny paws"),
+    ("squirrel", "a bushy upright tail, large front teeth, small tufted ears"),
+]
+
+
+def species_look(kind):
+    """Druh → čím se pozná. Tagy z reference tohle neřeknou: fotka jednooké
+    příšerky dala „red eyes, sharp teeth" a Kontext podle svého zvyku nakreslil
+    oči dvě. Kešuje se v postavě (`species_look` ve story.json jobu)."""
+    out = llm(LOOK_SYSTEM, LOOK_SHOTS, kind, max_tokens=40)
+    out = (out or "").strip().strip('".').strip()
+    return out if out and len(out) <= 120 and "\n" not in out else ""
+
+
 def recast(st, work, path=None):
     """Obsazená role může být úplně jiné zvíře, než co má scénář — `who`
     („ježek Bodlinka") přijde z appky vedle obrázku. Přepíše postavu v
@@ -429,6 +447,7 @@ def recast(st, work, path=None):
             if isinstance(sh.get("prompts"), list):
                 sh["prompts"] = [swap_words(t, swap) for t in sh["prompts"]]
         c.update(name=new_name, name_en=new_tag, tag=new_tag, species_en=info["species_en"],
+                 species_look=species_look(info["species_en"]) if info["species_en"] else "",
                  _recast=who)
         done.append("%s → %s" % (role, who))
     if not done:
@@ -599,8 +618,10 @@ def cast_sheet(st, work, role):
     dst = work.p("chars", role + "_book.png")
     kind = (st["characters"][role].get("species_en") or "").strip() or "character"
     tags = ref_tags(src)
+    look = (st["characters"][role].get("species_look") or "").strip()
+    marks = ([look] if look else []) + tags[:8]
     prompt = CAST_SHEET % {"kind": kind, "style": st["style"],
-                           "tags": ("its distinctive features (%s), " % ", ".join(tags[:8])) if tags else ""}
+                           "tags": ("its distinctive features (%s), " % ", ".join(marks)) if marks else ""}
     seed = st["seed"] + 500 + sum(ord(ch) for ch in role)
     key = sha([chain.file_sha(src), prompt, seed, KF_W, KF_H])
     if os.path.exists(dst) and os.path.exists(dst + ".key") and open(dst + ".key").read() == key:
@@ -640,9 +661,12 @@ def cast_desc(st, work, role):
     cache = img + ".desc"
     if os.path.exists(cache) and os.path.getmtime(cache) >= os.path.getmtime(img):
         return open(cache).read().strip()
-    kind = (st["characters"][role].get("species_en") or "").strip()
+    c = st["characters"][role]
+    kind = (c.get("species_en") or "").strip()
+    look = (c.get("species_look") or "").strip()
     tags = ref_tags(img)
-    desc = ", ".join(([kind] if kind else []) + [t for t in tags if t != kind])
+    desc = ", ".join(([kind] if kind else []) + ([look] if look else [])
+                     + [t for t in tags if t != kind])
     if tags:
         open(cache, "w").write(desc)        # prázdno necachovat: tagger byl dole
         print("  %s podle reference: %s" % (role, desc), flush=True)
