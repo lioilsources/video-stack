@@ -357,6 +357,9 @@ WHO_SHOTS = [
     ("ježek Bodlinka", '{"name": "Bodlinka", "species_cs": "ježek", "species_en": "hedgehog"}'),
     ("veverka", '{"name": "", "species_cs": "veverka", "species_en": "squirrel"}'),
     ("dráček Pip", '{"name": "Pip", "species_cs": "dráček", "species_en": "little dragon"}'),
+    # vzhled do jména nepatří, popisek si ho uživatel občas přibalí
+    ("Kyklop Bručoun s jedním okem a žlutými vlasy",
+     '{"name": "Bručoun", "species_cs": "kyklop", "species_en": "cyclops"}'),
 ]
 
 
@@ -397,7 +400,12 @@ def recast(st, work, path=None):
         if not who or c.get("_recast") == who:
             continue
         info = who_info(who)
-        new_name = who                                   # český popisek tak, jak ho uživatel napsal
+        # Do vět patří jméno a druh, ne celý popisek: uživatel do pole často
+        # napíše i vzhled („Mia, blonďatá holka v modrých šatech") a vypravěčka
+        # to pak předčítala celé. Vzhled stejně nese obrázek, ne text.
+        species = info["species_cs"] if len(info["species_cs"]) <= 24 else ""
+        new_name = (("%s %s" % (species, info["name"])).strip()
+                    if info["name"] and species else (info["name"] or species or who))
         new_tag = (("%s the %s" % (info["name"], info["species_en"])).strip()
                    if info["name"] and info["species_en"]
                    else (info["name"] or info["species_en"] or who))
@@ -406,12 +414,12 @@ def recast(st, work, path=None):
         old_en_name, old_en_species = label_parts(c["tag"])
         swap = [(c["tag"], new_tag), (c["name_en"], new_tag), (c["name"], new_name),
                 (old_cs_name, info["name"] or new_name), (old_en_name, info["name"] or new_tag),
-                (old_cs_species, info["species_cs"] or new_name),
+                (old_cs_species, species or new_name),
                 (old_en_species, info["species_en"] or new_tag)]
         swap = [(a, b) for a, b in swap if a and b]
         swap.sort(key=lambda ab: -len(ab[0]))
         for sh in st["shots"]:
-            for k in ("keyframe", "narration", "narration_en"):
+            for k in ("keyframe", "action", "narration", "narration_en"):
                 if sh.get(k):
                     sh[k] = swap_words(sh[k], swap)
             if isinstance(sh.get("motion"), list):
