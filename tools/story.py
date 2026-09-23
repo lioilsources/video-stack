@@ -1164,6 +1164,32 @@ def ffmpeg(*args):
     subprocess.run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error"] + list(args), check=True)
 
 
+LOUD = "I=-16:TP=-1.5:LRA=11"
+
+
+def loudnorm(inputs, filt, total):
+    """Nastavení loudnorm pro druhý průchod. Jednoprůchodový loudnorm cíl jen
+    odhaduje a u příběhu s tichou hudbou pod řečí podstřelil na −19 LUFS;
+    první průchod proto jen měří a druhý si nese naměřené hodnoty, takže
+    výsledek na −16 LUFS opravdu sedí. Když měření selže, jede jako dřív."""
+    try:
+        out = subprocess.run(
+            ["ffmpeg", "-hide_banner", "-nostats"] + list(inputs) + [
+                "-filter_complex", filt + ";[pre]loudnorm=%s:print_format=json[aout]" % LOUD,
+                "-map", "[aout]", "-t", "%.3f" % total, "-vn", "-f", "null", "-"],
+            capture_output=True, text=True, check=True).stderr
+        d = json.loads(out[out.rindex("{"):out.rindex("}") + 1])
+        m = {k: float(d[k]) for k in ("input_i", "input_tp", "input_lra", "input_thresh")}
+        if any(v == float("-inf") or v != v for v in m.values()):
+            raise ValueError("ticho")
+        return ("loudnorm=%s:measured_I=%.2f:measured_TP=%.2f:measured_LRA=%.2f:"
+                "measured_thresh=%.2f:linear=true" % (LOUD, m["input_i"], m["input_tp"],
+                                                      m["input_lra"], m["input_thresh"]))
+    except (subprocess.CalledProcessError, ValueError, KeyError) as e:
+        print("  ! měření hlasitosti selhalo (%s) — jedu jednoprůchodově" % str(e)[:60], flush=True)
+        return "loudnorm=" + LOUD
+
+
 def music_bed(st, src, total, work):
     """Hudební podklad na celou délku: zkrocené výšky a, když je stopa kratší
     (typicky 19s LTX dárce), složená přes acrossfade. Natvrdo `-stream_loop`
@@ -1256,10 +1282,11 @@ def cmd_mix(st, work, lang, music=False):
         # LTX nese vlastní zvuk scény — nechat ho tiše pod vším jako atmosféru
         filt[-1] = filt[-1].replace("[pre]", "[pre0]")
         filt.append("[0:a]volume=0.35[amb];[pre0][amb]amix=inputs=2:normalize=0:duration=first[pre]")
-    filt.append("[pre]loudnorm=I=-16:TP=-1.5:LRA=11,aresample=44100[aout]")
     main = work.final(lang)
-    ffmpeg(*inputs, "-filter_complex", ";".join(filt), "-map", "0:v", "-map", "[aout]",
-           "-t", "%.3f" % total, "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", main)
+    norm = loudnorm(inputs, ";".join(filt), total)
+    ffmpeg(*inputs, "-filter_complex", ";".join(filt + ["[pre]%s,aresample=44100[aout]" % norm]),
+           "-map", "0:v", "-map", "[aout]", "-t", "%.3f" % total, "-c:v", "copy", "-c:a", "aac",
+           "-b:a", "160k", "-movflags", "+faststart", main)
 
     enc = ["-c:v", "libx264", "-crf", "18", "-preset", "medium", "-pix_fmt", "yuv420p", "-profile:v", "high",
            "-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709",
