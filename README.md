@@ -99,6 +99,27 @@ tváře, obrázek může být anime. `GET /scenes` k tomu vrací `custom` s meze
 nabídku zobrazí. Odpověď na `POST` přepsaný prompt nenese — v tu chvíli
 ještě není; co jelo, je v `jobs/<id>.log` a v manifestu.
 
+### Jak psát prompt pohybu
+
+Piš česky, celou větou a jen o tom, **co postava dělá**. Vzhled nese zdrojový
+obrázek, kameru si šablona přidává sama (`static camera`), délku určují beaty.
+
+```
+dobře:  Chlapec vytáhne z kapsy jablko, kousne si a spokojeně přikývne.
+        → The boy pulls an apple from his pocket, bites it, and nods contentedly.
+špatně: mávne rukou
+        → model si domyslí švih oběma pažemi
+špatně: Zoom na obličej, holka mrkne.
+        → zoom projde do promptu a pere se se `static camera` v šabloně
+```
+
+Vzhled překládat nemusíš, a radši ani nezkoušej — „holka v modrých šatech"
+vyšla jako „girl in blue shorts". Jak postava vypadá, drží obrázek.
+Jeden pohyb na beat; beaty 1–3 po ~5 s dostanou tentýž prompt, takže pohyb
+pokračuje nebo se zopakuje. Limit promptu je 500 znaků, ale vejdeš se do
+jedné věty. Co model vyrobil, je v logu:
+`journalctl --user -u video-api | grep "prompt .* →"`.
+
 Překlad je jediné místo, kde video-stack potřebuje textové LLM: scény ani
 příběhy na gateway nesahají. Model drží kontejner `fallback` na SPARKu
 (`vllm` s Qwen3-4B-AWQ, `--gpu-memory-utilization 0.08`, tj. ~10 GB ze
