@@ -61,7 +61,14 @@ TAG_BLOCK = {
     "sideboob", "underboob", "navel", "pussy", "penis", "sex", "spread legs", "bondage",
     "covered nipples", "see-through", "wet clothes", "bikini", "swimsuit", "lactation",
 }
-TAG_MAX = 10                       # delší výčet Kontext stejně neudrží
+TAG_MAX = 14                       # delší výčet Kontext stejně neudrží
+# Co dělá postavu postavou: tohle jde do popisu dřív než cokoli jiného, i když
+# má nižší jistotu. Bez toho vypadla „brown hair" za limitem a Kontext barvil
+# vlasy v každém záběru jinak.
+TAG_FIRST = re.compile(
+    r"\b(hair|eyes|dress|shirt|skirt|jacket|coat|hoodie|sweater|uniform|shorts|pants|trousers|"
+    r"footwear|shoes|boots|socks|hat|cap|ribbon|bow|glasses|ornament|braid|ponytail|twintails|"
+    r"bangs|ahoge|horns|ears|tail|wings|fur|whiskers|beak|scales|freckles|apron|scarf|gloves|belt)\b")
 
 KF_W, KF_H = 768, 1344            # SDXL/Kontext bucket blízko 9:16; Wan z něj dopočítá 496×880 / 752×1312
 LANGS = ("cs", "en")
@@ -333,16 +340,58 @@ def ref_tags(path):
     except Exception as e:                                 # noqa: BLE001
         print("  ! tagger nedostupný (%s) — reference zůstane bez popisu" % str(e)[:60], flush=True)
         return []
-    tags = sorted(d.get("general", {}).items(), key=lambda kv: -kv[1])
-    out = []
-    for tag, conf in tags:
-        t = tag.replace("_", " ")
-        if conf < 0.5 or t in TAG_DROP or t in TAG_BLOCK:
-            continue
-        out.append(t)
-        if len(out) == TAG_MAX:
-            break
-    return out
+    keep = [(t.replace("_", " "), c) for t, c in d.get("general", {}).items() if c >= 0.4]
+    keep = [(t, c) for t, c in keep if t not in TAG_DROP and t not in TAG_BLOCK]
+    # identita napřed (a uvnitř podle jistoty), zbytek doplní zbývající místa
+    keep.sort(key=lambda tc: (not TAG_FIRST.search(tc[0]), -tc[1]))
+    return [t for t, _ in keep[:TAG_MAX]]
+
+
+CAST_SHEET = ("Redraw the character shown in the reference image as one full-body character standing and "
+              "facing the viewer on a plain white background, arms relaxed, friendly neutral expression. "
+              "Keep the face, hairstyle, hair color and hair length, eye color, outfit, its colors and the "
+              "body proportions exactly as in the reference. %s. No text, no frame, no scenery.")
+
+
+def cast_sheet(st, work, role):
+    """Nahraná reference → JEDEN referenční list ve stylu příběhu; z něj pak
+    jedou všechny keyframy.
+
+    Nahraná fotka je mimo doménu (jiný styl, jiné světlo, často i rám a pozadí)
+    a Kontext z ní pokaždé přečte něco jiného — Mie se mezi záběry měnily vlasy
+    i šaty. Když se jednou překreslí do stylu příběhu a všech dvanáct záběrů pak
+    vychází z TÉHOŽ obrázku, identita drží. Není to řetěz: reference je pořád ta
+    samá, takže se drift nekumuluje."""
+    src = char_path(st, work, role)
+    if not src or not is_cast(st, work, role):
+        return src
+    dst = work.p("chars", role + "_book.png")
+    prompt = CAST_SHEET % st["style"]
+    seed = st["seed"] + 500 + sum(ord(ch) for ch in role)
+    key = sha([chain.file_sha(src), prompt, seed, KF_W, KF_H])
+    if os.path.exists(dst) and os.path.exists(dst + ".key") and open(dst + ".key").read() == key:
+        return dst
+    g = template("story_keyframe_kontext")
+    g["4"]["inputs"]["image"] = stage(src, "%s_cast_%s.png" % (work.name, role))
+    del g["5"], g["6"]
+    g["7"]["inputs"]["image"] = ["4", 0]
+    g["9"]["inputs"]["text"] = prompt
+    g["13"]["inputs"].update(width=KF_W, height=KF_H)
+    g["14"]["inputs"]["seed"] = seed
+    g["16"]["inputs"]["filename_prefix"] = "%s/story/_gen/cast_%s" % (work.name, role)
+    outs = images(chain.submit(g, "referenční list %s" % role), "16")
+    if not outs:
+        die("referenční list %s: ComfyUI nevrátil obrázek" % role)
+    shutil.copy(outs[0], ensure(dst))
+    open(dst + ".key", "w").write(key)
+    print("  ok referenční list %s" % role, flush=True)
+    return dst
+
+
+def ref_image(st, work, role):
+    """Obrázek, který jde do keyframu: u obsazené role list ve stylu příběhu,
+    u výchozí postavy její vygenerovaný sheet."""
+    return cast_sheet(st, work, role) if is_cast(st, work, role) else char_path(st, work, role)
 
 
 def cast_desc(st, work, role):
@@ -351,7 +400,7 @@ def cast_desc(st, work, role):
     keyframů stejně — bez popisu si Kontext u každého záběru vymyslel jinou
     postavu, zvlášť když jsou reference dvě slepené vedle sebe.
     Vedle obrázku se to cachuje (.desc), takže se tagger ptá jednou."""
-    img = char_path(st, work, role)
+    img = ref_image(st, work, role)
     if not img:
         return ""
     cache = img + ".desc"
@@ -424,13 +473,13 @@ def kf_prompt(st, work, sh, method):
 
 
 def kf_key(st, work, sh, method, seed):
-    refs = [chain.file_sha(char_path(st, work, r)) for r in sh["chars"]]
+    refs = [chain.file_sha(ref_image(st, work, r)) for r in sh["chars"]]
     return sha([kf_prompt(st, work, sh, method), method, seed, refs, KF_W, KF_H,
                 st.get("sheet_ckpt") if method == "ipadapter" else None])
 
 
 def kf_graph(st, work, sh, method, seed):
-    refs = [stage(char_path(st, work, r), "%s_char_%s.png" % (work.name, r)) for r in sh["chars"]]
+    refs = [stage(ref_image(st, work, r), "%s_char_%s.png" % (work.name, r)) for r in sh["chars"]]
     prefix = "%s/story/_gen/kf%s" % (work.name, sh["id"])
     if method == "kontext":
         g = template("story_keyframe_kontext")
