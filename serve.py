@@ -101,6 +101,10 @@ MOTION_SHOTS = [
     # táhne — Wan pak hýbe obrazem místo postavou.
     ("detailní záběr, krásné anime, kamera zajede blíž, vlasy jí vlají ve větru",
      "Her hair lifts and flows in the wind, then settles as she holds still."),
+    # Druhý příklad, kde je kamera HLAVNÍ věta: s jedním si 4B model vystačil
+    # jen tam, kde vedle ní stál i pohyb postavy.
+    ("kamera obletí postavu, ta se zatím usměje",
+     "The figure smiles warmly and holds the smile."),
 ]
 _CZECH = re.compile("[ěščřžůňťď]", re.I)
 
