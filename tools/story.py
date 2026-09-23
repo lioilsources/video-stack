@@ -618,7 +618,12 @@ def cast_sheet(st, work, role):
     dst = work.p("chars", role + "_book.png")
     kind = (st["characters"][role].get("species_en") or "").strip() or "character"
     tags = ref_tags(src)
-    look = (st["characters"][role].get("species_look") or "").strip()
+    c = st["characters"][role]
+    # Job obsazený starší verzí popis druhu nemá; dopočítá se tady, aby z
+    # opravy něco měl i rozdělaný příběh, když si necháš záběr překreslit.
+    if c.get("species_en") and not c.get("species_look"):
+        c["species_look"] = species_look(c["species_en"])
+    look = (c.get("species_look") or "").strip()
     marks = ([look] if look else []) + tags[:8]
     prompt = CAST_SHEET % {"kind": kind, "style": st["style"],
                            "tags": ("its distinctive features (%s), " % ", ".join(marks)) if marks else ""}
