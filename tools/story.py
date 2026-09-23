@@ -453,6 +453,9 @@ def recast(st, work, path=None):
             for k in ("keyframe", "action", "narration", "narration_en"):
                 if sh.get(k):
                     sh[k] = swap_words(sh[k], swap)
+            for k in ("action", "narration"):               # čeština se skloňuje
+                if sh.get(k) and old_cs_name:
+                    sh[k] = swap_czech(sh[k], old_cs_name, new_name, info["name"])
             if isinstance(sh.get("motion"), list):
                 sh["motion"] = [swap_words(t, swap) for t in sh["motion"]]
             elif sh.get("motion"):
@@ -473,6 +476,45 @@ def recast(st, work, path=None):
     print("  obsazení: %s" % ", ".join(done), flush=True)
     if path and os.path.exists(path):
         json.dump(st, open(path, "w"), indent=2, ensure_ascii=False)
+
+
+CZ_SWAP_SYSTEM = ("Nahradíš v české větě jednu postavu druhou. Nové jméno skloňuj podle věty, "
+                  "sloveso a přívlastky srovnej na jeho rod, význam i slovosled nech být. "
+                  "Nic nepřidávej, vrať jen tu jednu větu.")
+CZ_SWAP_SHOTS = [
+    ("Dřív: Kuba\nTeď: holčička Mia\nVěta: Dobrou noc, Kubo.", "Dobrou noc, Mio."),
+    ("Dřív: Kuba\nTeď: holčička Mia\nVěta: Kubovi se tak ulevilo, že zatančil makarenu.",
+     "Mie se tak ulevilo, že zatančila makarenu."),
+    ("Dřív: medvídek Bručoun\nTeď: kyklop Zubejda\nVěta: Uložil Bručouna vedle sebe.",
+     "Uložil Zubejdu vedle sebe."),
+]
+
+
+def cz_forms(name):
+    """Vzor na jméno ve všech pádech: „Kuba" → Kuba, Kubovi, Kubu, Kubo, Kubou.
+    Kmen musí mít aspoň tři znaky a začínat velkým písmenem, ať se to netrefí
+    do běžných slov. None, když je jméno na vzor krátké."""
+    stem = name[:-1] if name[-1:].lower() in "aeiouy" else name
+    if len(stem) < 3:
+        return None
+    return re.compile(r"\b%s(a|y|u|e|i|o|ovi|ovu|ou|em|ovy)?\b" % re.escape(stem))
+
+
+def swap_czech(text, old_name, new_label, new_name):
+    """Skloňované tvary původního jména („Kubovi", „Kubo") prostá záměna mine —
+    ta sedí jen na první pád. Větu proto přepíše gateway, která české pády umí;
+    bez ní zaskočí náhrada prvním pádem, ať tam aspoň nestojí stará postava."""
+    pat = cz_forms(old_name)
+    if not pat or not pat.search(text):
+        return text
+    out = llm(CZ_SWAP_SYSTEM, CZ_SWAP_SHOTS,
+              "Dřív: %s\nTeď: %s\nVěta: %s" % (old_name, new_label, text), max_tokens=200)
+    out = (out or "").strip().strip('"\u201e\u201c').strip()
+    keep = cz_forms(new_name or new_label)
+    if (out and 0.5 * len(text) < len(out) < 1.8 * len(text)
+            and not pat.search(out) and (not keep or keep.search(out))):
+        return out
+    return pat.sub(new_name or new_label, text)
 
 
 def swap_words(text, pairs):
