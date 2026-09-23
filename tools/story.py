@@ -398,6 +398,19 @@ LOOK_SHOTS = [
 ]
 
 
+# U lidí popis druhu nepomáhá a umí uškodit: „panáček" dal „a middle-aged man
+# with a beard" a Kontext podle toho postavu překreslil. Jak člověk vypadá,
+# nese reference; popis druhu je tu kvůli tvorům („cyclops" → jedno oko).
+HUMAN = {"girl", "boy", "man", "woman", "child", "kid", "human", "person", "lady", "guy",
+         "teen", "teenager", "baby", "toddler", "grandma", "grandmother", "grandpa", "mother",
+         "father", "doll", "figure", "puppet"}
+
+
+def useful_look(kind, look):
+    words = re.sub(r"[^\w\s]", " ", (kind or "").lower()).split()
+    return "" if any(w in HUMAN for w in words) else (look or "")
+
+
 def species_look(kind):
     """Druh → čím se pozná. Tagy z reference tohle neřeknou: fotka jednooké
     příšerky dala „red eyes, sharp teeth" a Kontext podle svého zvyku nakreslil
@@ -447,7 +460,8 @@ def recast(st, work, path=None):
             if isinstance(sh.get("prompts"), list):
                 sh["prompts"] = [swap_words(t, swap) for t in sh["prompts"]]
         c.update(name=new_name, name_en=new_tag, tag=new_tag, species_en=info["species_en"],
-                 species_look=species_look(info["species_en"]) if info["species_en"] else "",
+                 species_look=(species_look(info["species_en"])
+                               if info["species_en"] and useful_look(info["species_en"], "x") else ""),
                  _recast=who)
         done.append("%s → %s" % (role, who))
     if not done:
@@ -623,7 +637,7 @@ def cast_sheet(st, work, role):
     # opravy něco měl i rozdělaný příběh, když si necháš záběr překreslit.
     if c.get("species_en") and not c.get("species_look"):
         c["species_look"] = species_look(c["species_en"])
-    look = (c.get("species_look") or "").strip()
+    look = useful_look(c.get("species_en"), c.get("species_look")).strip()
     marks = ([look] if look else []) + tags[:8]
     prompt = CAST_SHEET % {"kind": kind, "style": st["style"],
                            "tags": ("its distinctive features (%s), " % ", ".join(marks)) if marks else ""}
@@ -668,7 +682,7 @@ def cast_desc(st, work, role):
         return open(cache).read().strip()
     c = st["characters"][role]
     kind = (c.get("species_en") or "").strip()
-    look = (c.get("species_look") or "").strip()
+    look = useful_look(kind, c.get("species_look")).strip()
     tags = ref_tags(img)
     desc = ", ".join(([kind] if kind else []) + ([look] if look else [])
                      + [t for t in tags if t != kind])
