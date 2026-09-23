@@ -463,6 +463,7 @@ def recast(st, work, path=None):
             if isinstance(sh.get("prompts"), list):
                 sh["prompts"] = [swap_words(t, swap) for t in sh["prompts"]]
         c.update(name=new_name, name_en=new_tag, tag=new_tag, species_en=info["species_en"],
+                 _recast_from=c["name"],
                  species_look=(species_look(info["species_en"])
                                if info["species_en"] and useful_look(info["species_en"], "x") else ""),
                  _recast=who)
@@ -471,7 +472,7 @@ def recast(st, work, path=None):
         return
     for role, c in st["characters"].items():
         if c.get("_recast"):
-            fix_czech(st, c["name"], role)
+            fix_czech(st, c["_recast_from"], c["name"], role)
             fix_english(st, c["tag"])
     print("  obsazení: %s" % ", ".join(done), flush=True)
     if path and os.path.exists(path):
@@ -533,73 +534,52 @@ def swap_words(text, pairs):
     return text
 
 
-CZ_SYSTEM = ("Dostaneš postavu a větu, ve které se ta postava vyměnila za jinou. Oprav shodu: "
-             "sloveso v minulém čase, přídavná jména i zájmena se musí řídit rodem nové postavy "
-             "(ježek = mužský, veverka = ženský, kotě = střední). Nic nepřidávej ani neubírej, "
-             "vrať jen opravenou větu.")
-CZ_SHOTS = [
-    ("Postava: ježek Bodlinka\nVěta: Na plotě seděl ježek Bodlinka. S jejím deštníkem!",
-     "Na plotě seděl ježek Bodlinka. S jejím deštníkem!"),
-    ("Postava: veverka Zrzka\nVěta: Na plotě seděl veverka Zrzka. S jejím deštníkem!",
-     "Na plotě seděla veverka Zrzka. S jejím deštníkem!"),
-    ("Postava: veverka Zrzka\nVěta: Zrzka jí deštník vrátil. Hodný veverka.",
-     "Zrzka jí deštník vrátila. Hodná veverka."),
-    ("Postava: holčička Mia\nVěta: Holčička Mia sklouzne pod peřinu a koukají mu jen oči.",
-     "Holčička Mia sklouzne pod peřinu a koukají jí jen oči."),
-]
+# Rodovou shodu („seděl veverka") model zvládne, jen když se ho zeptáš přímo
+# na převod rodu. Formulace „oprav shodu podle postavy" mu nešla: větu vracel
+# beze změny, nebo z ní udělal větu o té postavě.
+CZ_MF = {
+    ("m", "f"): ("Převedeš českou větu z mužského rodu do ženského. Měň jen tvary slov, "
+                 "nic nepřidávej ani neubírej. Vrať jen tu větu.",
+                 [("Kuba se nadechl a usnul.", "Kuba se nadechla a usnula."),
+                  ("Uložil medvídka vedle sebe.", "Uložila medvídka vedle sebe."),
+                  ("Byl rád, že to zvládl.", "Byla ráda, že to zvládla.")]),
+    ("f", "m"): ("Převedeš českou větu ze ženského rodu do mužského. Měň jen tvary slov, "
+                 "nic nepřidávej ani neubírej. Vrať jen tu větu.",
+                 [("Mia se nadechla a usnula.", "Mia se nadechl a usnul."),
+                  ("Uložila medvídka vedle sebe.", "Uložil medvídka vedle sebe."),
+                  ("Byla ráda, že to zvládla.", "Byl rád, že to zvládl.")]),
+}
 
 
-# „Bručoun the cyclops" → slovo „the" sedí skoro v každé anglické větě a
-# průchod pak přepisoval věty o jiné postavě.
-STOP = {"the", "and", "with", "her", "his", "its", "their", "little", "small", "big",
-        "malý", "malá", "velký", "velká", "můj", "moje"}
+def cz_gender(label):
+    """Rod postavy podle prvního slova popisku: „holčička Mia" ženský,
+    „kyklop Zubejda" mužský. Na dětské příběhy to stačí."""
+    w = (label.split() or [""])[0].lower()
+    return "f" if w.endswith(("a", "e")) else "m"
 
 
-def stems(label):
-    """Kmeny slov popisku pro hledání ve skloňovaném textu („kyklopa
-    Bručouna" pozná podle „kyklo" a „bruča"... tedy prvních pět písmen)."""
-    return [w[:5].lower() for w in re.sub(r"[^\w\s]", " ", label).split()
-            if len(w) > 2 and w.lower() not in STOP]
-
-
-def mentions(text, label):
-    low = text.lower()
-    return any(st_ in low for st_ in stems(label))
-
-
-def keeps_names(src, out):
-    """Věta po opravě musí nést tatáž vlastní jména. Model jinak ochotně
-    udělal z věty o dvou postavách větu o té jedné, na kterou se ptáme
-    („Mia zvedne Bručouna" → „Bručoun zvedne")."""
-    def names(t):
-        # velké písmeno uprostřed věty = jméno; první slovo věty se nepočítá
-        return {w[:5].lower() for w in re.findall(r"(?<![.!?]\s)(?<!^)\b[A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ][\w]+",
-                                                  t, re.M)}
-    return names(src) <= names(out)
-
-
-def fix_czech(st, label="", role=None):
-    """Po záměně sedí slova, ale ne vždy rod („seděl veverka", „koukají mu jen
-    oči"). Gateway větu srovná; bez ní zůstane, jak vyšla ze záměny — význam je
-    správný. Kromě vyprávění i `action`, ten appka ukazuje v kontrole záběrů.
-
-    Jen věty, kde ta postava opravdu je: model jinak poslušně přepsal větu o
-    někom jiném na zadanou postavu („Holčička Mia sklouzne pod peřinu" →
-    „Kyklop Bručoun sklouzne pod peřinu"). Výsledek musí postavu pořád nést,
-    jinak se zahodí."""
+def fix_czech(st, old_label, new_label, role=None):
+    """Po záměně postavy sedí slova, ale ne rod („seděl veverka", „koukají mu
+    jen oči"). Jede jen když se rod opravdu mění a jen u záběrů, kde postava
+    hraje — jinak model ochotně přepsal i větu o někom jiném. Bez gateway
+    zůstane věta po záměně: význam je správný, gramatika kulhá."""
+    a, b = cz_gender(old_label), cz_gender(new_label)
+    if a == b:
+        return
+    system, shots = CZ_MF[(a, b)]
     for sh in st["shots"]:
+        if role and role not in sh["chars"] and not mentions(sh.get("narration", ""), new_label):
+            continue
         for k in ("narration", "action"):
             t = (sh.get(k) or "").strip()
-            # i věta bez jména: „Uložil Zubejdu vedle sebe." má podmět z chars
-            if not t or not (mentions(t, label) or (role and role in sh["chars"])):
+            if not t:
                 continue
-            out = llm(CZ_SYSTEM, CZ_SHOTS, "Postava: %s\nVěta: %s" % (label, t), max_tokens=220)
+            out = llm(system, shots, t, max_tokens=220)
             if not out:
                 return                                  # LLM je dole, nemá smysl zkoušet dál
             out = out.strip().strip('"\u201e\u201c').strip()
             if (out and 0.6 * len(t) < len(out) < 1.6 * len(t)
-                    and re.search("[ěščřžýáíéúůň]", out, re.I)
-                    and mentions(out, label) and keeps_names(t, out)):
+                    and re.search("[ěščřžýáíéúůň]", out, re.I) and keeps_names(t, out)):
                 sh[k] = out
 
 
