@@ -547,9 +547,10 @@ def cast_desc(st, work, role):
     if os.path.exists(cache) and os.path.getmtime(cache) >= os.path.getmtime(img):
         return open(cache).read().strip()
     kind = (st["characters"][role].get("species_en") or "").strip()
-    desc = ", ".join(([kind] if kind else []) + [t for t in ref_tags(img) if t != kind])
-    open(cache, "w").write(desc)
-    if desc:
+    tags = ref_tags(img)
+    desc = ", ".join(([kind] if kind else []) + [t for t in tags if t != kind])
+    if tags:
+        open(cache, "w").write(desc)        # prázdno necachovat: tagger byl dole
         print("  %s podle reference: %s" % (role, desc), flush=True)
     return desc
 
