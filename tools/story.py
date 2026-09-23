@@ -513,9 +513,15 @@ def manifest_dict(st, work):
                     b["control_start"] = int(sh.get("control_start", 0))
             if sh.get("_camera"):
                 b.update(camera=sh["_camera"], camera_speed=float(sh.get("camera_speed", 0.5)))
-            for knob in ("shift", "motion", "boundary"):
+            # POZOR: `motion` je v příběhu TEXT pohybu (→ prompt), kdežto
+            # v manifestu chain.py je to síla LoRA (float). Sílu proto bere
+            # záběr z `motion_strength`, jinak by text skončil ve
+            # strength_model a ComfyUI graf odmítne.
+            for knob in ("shift", "boundary"):
                 if knob in sh:
                     b[knob] = sh[knob]
+            if "motion_strength" in sh:
+                b["motion"] = sh["motion_strength"]
             beats.append(b)
         m["scenes"].append({"name": "shot" + sh["id"], "source": work.kf(sh["id"]), "beats": beats})
     return m

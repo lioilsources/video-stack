@@ -95,6 +95,11 @@ MOTION_SHOTS = [
     ("dívka se otočí a usměje",
      "The girl slowly turns her head toward the viewer, smiles warmly and holds the smile."),
     ("drak roztáhne křídla", "The dragon slowly spreads its wings wide, holds them open, then stays still."),
+    # Kamera a styl v zadání: model je musí zahodit, ne přeložit. Šablona
+    # vlastního pohybu si přidává „static camera" a zoom v promptu proti ní
+    # táhne — Wan pak hýbe obrazem místo postavou.
+    ("detailní záběr, krásné anime, kamera zajede blíž, vlasy jí vlají ve větru",
+     "Her hair lifts and flows in the wind, then settles as she holds still."),
 ]
 _CZECH = re.compile("[ěščřžůňťď]", re.I)
 

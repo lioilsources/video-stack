@@ -185,6 +185,12 @@ def load_dict(m):
                     b.setdefault(k, s.get(k, m.get(k)))
             b.setdefault("length", 121 if ltx else 81)
             check_length(b["length"], "beat %s" % b["id"], m["engine"])
+            # Knoby jsou čísla; text sem občas zabloudí ze jmenné kolize
+            # (příběh má `motion` jako prompt pohybu). Radši umřít tady než
+            # poslat string do FLOAT vstupu a číst chybu z ComfyUI grafu.
+            for k in ("motion", "boundary", "shift", "sharpen", "identity", "face_denoise"):
+                if b.get(k) is not None and isinstance(b[k], (str, list, dict)):
+                    die("beat %s: %s je %r — čekám číslo" % (b["id"], k, b[k]))
             if b.get("control"):
                 pose = pose_path(b["control"])
                 if not os.path.exists(pose):
