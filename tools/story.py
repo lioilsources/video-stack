@@ -436,6 +436,7 @@ def recast(st, work, path=None):
     for c in st["characters"].values():
         if c.get("_recast"):
             fix_czech(st, c["name"])
+            fix_english(st, c["tag"])
     print("  obsazení: %s" % ", ".join(done), flush=True)
     if path and os.path.exists(path):
         json.dump(st, open(path, "w"), indent=2, ensure_ascii=False)
@@ -472,20 +473,65 @@ CZ_SHOTS = [
 ]
 
 
+def stems(label):
+    """Kmeny slov popisku pro hledání ve skloňovaném textu („kyklopa
+    Bručouna" pozná podle „kyklo" a „Bruča"... tedy prvních pět písmen)."""
+    return [w[:5].lower() for w in re.sub(r"[^\w\s]", " ", label).split() if len(w) > 2]
+
+
+def mentions(text, label):
+    low = text.lower()
+    return any(st_ in low for st_ in stems(label))
+
+
 def fix_czech(st, label=""):
     """Po záměně sedí slova, ale ne vždy rod („seděl veverka", „koukají mu jen
     oči"). Gateway větu srovná; bez ní zůstane, jak vyšla ze záměny — význam je
-    správný. Kromě vyprávění i `action`, ten appka ukazuje v kontrole záběrů."""
+    správný. Kromě vyprávění i `action`, ten appka ukazuje v kontrole záběrů.
+
+    Jen věty, kde ta postava opravdu je: model jinak poslušně přepsal větu o
+    někom jiném na zadanou postavu („Holčička Mia sklouzne pod peřinu" →
+    „Kyklop Bručoun sklouzne pod peřinu"). Výsledek musí postavu pořád nést,
+    jinak se zahodí."""
     for sh in st["shots"]:
         for k in ("narration", "action"):
             t = (sh.get(k) or "").strip()
-            if not t:
+            if not t or not mentions(t, label):
                 continue
             out = llm(CZ_SYSTEM, CZ_SHOTS, "Postava: %s\nVěta: %s" % (label, t), max_tokens=220)
             if not out:
                 return                                  # LLM je dole, nemá smysl zkoušet dál
             out = out.strip().strip('"\u201e\u201c').strip()
-            if out and 0.5 * len(t) < len(out) < 2 * len(t) and re.search("[ěščřžýáíéúůň]", out, re.I):
+            if (out and 0.5 * len(t) < len(out) < 2 * len(t)
+                    and re.search("[ěščřžýáíéúůň]", out, re.I) and mentions(out, label)):
+                sh[k] = out
+
+
+EN_SYSTEM = ("You fix pronoun agreement in one English sentence after a character was swapped. "
+             "Keep every other word, only make the pronouns match the named character. "
+             "Answer with the corrected sentence and nothing else.")
+EN_SHOTS = [
+    ("Character: Mia the girl\nSentence: Mia the girl hides under his star quilt, only his eyes peeking out.",
+     "Mia the girl hides under her star quilt, only her eyes peeking out."),
+    ("Character: Bručoun the cyclops\nSentence: Bručoun the cyclops falls from the shelf onto the carpet.",
+     "Bručoun the cyclops falls from the shelf onto the carpet."),
+]
+
+
+def fix_english(st, label=""):
+    """Totéž anglicky: prompt keyframu i pohybu drží zájmena původní postavy
+    („Mia … under his quilt") a FLUX podle nich kreslí. Jen věty s tou
+    postavou, výsledek ji musí pořád nést."""
+    for sh in st["shots"]:
+        for k in ("keyframe", "narration_en"):
+            t = (sh.get(k) or "").strip()
+            if not t or not mentions(t, label):
+                continue
+            out = llm(EN_SYSTEM, EN_SHOTS, "Character: %s\nSentence: %s" % (label, t), max_tokens=220)
+            if not out:
+                return
+            out = out.strip().strip('"').strip()
+            if out and 0.5 * len(t) < len(out) < 2 * len(t) and mentions(out, label):
                 sh[k] = out
 
 
