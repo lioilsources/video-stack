@@ -87,7 +87,8 @@ MOTION_SYSTEM = (
     "You write English prompts for an image-to-video model that animates a still image. "
     "Step 1: translate the request into English (it is often Czech) — keep the exact meaning of every verb. "
     "Step 2: describe only the motion as one continuous arc that ends in a still pose. "
-    "Never describe the image, style, lighting or camera. Answer with one English sentence, "
+    "Never describe the image, style, lighting or camera. If the request asks for a camera move "
+    "(zoom, pan, orbit, close-up), drop it and keep only what the subject does. Answer with one English sentence, "
     "at most 40 words, nothing else."
 )
 MOTION_SHOTS = [
