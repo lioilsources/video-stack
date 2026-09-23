@@ -534,6 +534,35 @@ def swap_words(text, pairs):
     return text
 
 
+# „Bručoun the cyclops" → slovo „the" sedí skoro v každé anglické větě a
+# průchod by přepisoval i věty o jiné postavě.
+STOP = {"the", "and", "with", "her", "his", "its", "their", "little", "small", "big",
+        "malý", "malá", "velký", "velká", "můj", "moje"}
+
+
+def stems(label):
+    """Kmeny slov popisku pro hledání ve skloňovaném textu („kyklopa
+    Zubejdu" pozná podle „kyklo" a „zubej"... tedy prvních pět písmen)."""
+    return [w[:5].lower() for w in re.sub(r"[^\w\s]", " ", label).split()
+            if len(w) > 2 and w.lower() not in STOP]
+
+
+def mentions(text, label):
+    low = text.lower()
+    return any(st_ in low for st_ in stems(label))
+
+
+def keeps_names(src, out):
+    """Věta po opravě musí nést tatáž vlastní jména. Model jinak ochotně
+    udělal z věty o dvou postavách větu o té jedné („Mia zvedne Zubejdu" →
+    „Zubejda zvedne")."""
+    def names(t):
+        # velké písmeno uprostřed věty = jméno; první slovo věty se nepočítá
+        return {w[:5].lower() for w in re.findall(r"(?<![.!?]\s)(?<!^)\b[A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ][\w]+",
+                                                  t, re.M)}
+    return names(src) <= names(out)
+
+
 # Rodovou shodu („seděl veverka") model zvládne, jen když se ho zeptáš přímo
 # na převod rodu. Formulace „oprav shodu podle postavy" mu nešla: větu vracel
 # beze změny, nebo z ní udělal větu o té postavě.
