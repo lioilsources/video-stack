@@ -291,21 +291,37 @@ def cmd_cast(st, work, role, image):
         bg = Image.new("RGBA", im.size, (255, 255, 255, 255))
         im = Image.alpha_composite(bg, im)
     im.convert("RGB").save(ensure(work.char(role)))
+    open(work.char(role) + ".cast", "w").write(os.path.basename(image))
     print("  %s ← %s (%d×%d)" % (role, image, *im.size))
     return work.char(role)
 
 
 # ---------------------------------------------------------------- keyframy
 
-def who(st, roles):
+def is_cast(st, work, role):
+    """Roli obsadil uživatel vlastním obrázkem — z appky (`cast` v story.json,
+    doplní serve.py) nebo přes `story.py cast` (soubor .cast u obrázku).
+    U obsazené role rozhoduje o vzhledu reference, ne `desc` ze scénáře."""
+    return bool(st["characters"][role].get("cast")) or os.path.exists(work.char(role) + ".cast")
+
+
+def look_of(st, work, role):
+    """Závorka s popisem postavy do promptu. U obsazené role prázdná: `desc`
+    popisuje kanonickou postavu a Kontext text poslechne víc než obrázek, takže
+    by nahranou referenci přebil (fotka ženy → pořád holčička ze scénáře)."""
+    return "" if is_cast(st, work, role) else " (%s)" % st["characters"][role]["desc"]
+
+
+def who(st, work, roles):
     """Věta, která Kontextu řekne, kdo je kdo na referenci (vedle sebe slepené)."""
     ch = st["characters"]
     if len(roles) == 1:
-        c = ch[roles[0]]
-        return "%s is the character shown in the reference image (%s)." % (c["tag"], c["desc"])
+        return "%s is the character shown in the reference image%s." \
+            % (ch[roles[0]]["tag"], look_of(st, work, roles[0]))
     a, b = ch[roles[0]], ch[roles[1]]
-    return ("The reference image shows two characters side by side: on the left %s (%s), "
-            "on the right %s (%s)." % (a["tag"], a["desc"], b["tag"], b["desc"]))
+    return ("The reference image shows two characters side by side: on the left %s%s, "
+            "on the right %s%s." % (a["tag"], look_of(st, work, roles[0]),
+                                    b["tag"], look_of(st, work, roles[1])))
 
 
 def full_body(st, sh):
@@ -316,22 +332,30 @@ def full_body(st, sh):
             "frame height, arms relaxed, feet visible." % st["characters"][sh["chars"][0]]["tag"])
 
 
-def kf_prompt(st, sh, method):
+def kf_prompt(st, work, sh, method):
+    cast = [r for r in sh["chars"] if is_cast(st, work, r)]
     if method == "kontext":
+        # U obsazené role ještě jednou a natvrdo: vzhled je z reference. Samotné
+        # „keep … as in the reference" nestačilo, dokud vedle stál popis ze scénáře.
+        hard = (" Take %s appearance only from the reference image: face, hairstyle, hair color, eye "
+                "color, outfit and body proportions. Do not invent a different character."
+                % ("the characters'" if len(cast) > 1 else st["characters"][cast[0]]["tag"] + "'s")) \
+            if cast else ""
         return ("%s Create a new single illustration, not a character sheet: %s%s Setting: %s. "
                 "Keep every character's face, hairstyle, outfit, body proportions and colors exactly as in "
-                "the reference. %s. Vertical composition, the whole scene with background, no text, "
-                "no speech bubbles." % (who(st, sh["chars"]), sh["keyframe"].rstrip(". ") + ".",
-                                        full_body(st, sh), st["world"], st["style"]))
+                "the reference.%s %s. Vertical composition, the whole scene with background, no text, "
+                "no speech bubbles." % (who(st, work, sh["chars"]), sh["keyframe"].rstrip(". ") + ".",
+                                        full_body(st, sh), st["world"], hard, st["style"]))
     ch = st["characters"]
-    return ", ".join([SHEET_PREFIX] + [ch[r]["desc"] for r in sh["chars"]]
+    # IPAdapter: popis obsazené role taky ven, vzhled nese reference přes adaptér
+    return ", ".join([SHEET_PREFIX] + [ch[r]["desc"] for r in sh["chars"] if r not in cast]
                      + [sh["keyframe"].rstrip(". "), st["world"], st["style"]]
                      + (["full body, standing, facing viewer"] if sh.get("control") else []))
 
 
 def kf_key(st, work, sh, method, seed):
     refs = [chain.file_sha(char_path(st, work, r)) for r in sh["chars"]]
-    return sha([kf_prompt(st, sh, method), method, seed, refs, KF_W, KF_H,
+    return sha([kf_prompt(st, work, sh, method), method, seed, refs, KF_W, KF_H,
                 st.get("sheet_ckpt") if method == "ipadapter" else None])
 
 
@@ -346,7 +370,7 @@ def kf_graph(st, work, sh, method, seed):
         else:
             del g["5"], g["6"]
             g["7"]["inputs"]["image"] = ["4", 0]
-        g["9"]["inputs"]["text"] = kf_prompt(st, sh, method)
+        g["9"]["inputs"]["text"] = kf_prompt(st, work, sh, method)
         g["13"]["inputs"].update(width=KF_W, height=KF_H)
         g["14"]["inputs"]["seed"] = seed
         g["16"]["inputs"]["filename_prefix"] = prefix
@@ -355,7 +379,7 @@ def kf_graph(st, work, sh, method, seed):
     # čtverec rozpůlila; pomocník jde jen textem
     g = template("story_keyframe_ipadapter")
     g["1"]["inputs"]["ckpt_name"] = st.get("sheet_ckpt", SHEET_CKPT)
-    g["2"]["inputs"]["text"] = kf_prompt(st, sh, method)
+    g["2"]["inputs"]["text"] = kf_prompt(st, work, sh, method)
     g["4"]["inputs"]["image"] = refs[0]
     g["9"]["inputs"].update(width=KF_W, height=KF_H)
     g["10"]["inputs"]["seed"] = seed
@@ -399,7 +423,7 @@ def cmd_keyframes(st, work, shots=None, method=None, seed=None, force=False, rer
         if not outs:
             die("keyframe %s: ComfyUI nevrátil obrázek" % sh["id"])
         shutil.copy(outs[0], ensure(work.kf(sh["id"])))
-        json.dump({"seed": s, "key": key, "method": how, "prompt": kf_prompt(st, sh, how),
+        json.dump({"seed": s, "key": key, "method": how, "prompt": kf_prompt(st, work, sh, how),
                    "chars": sh["chars"], "time": time.time()},
                   open(meta_path, "w"), indent=1, ensure_ascii=False)
         done += 1

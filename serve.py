@@ -794,6 +794,9 @@ class Handler(BaseHTTPRequestHandler):
                                      % (role, c["name"], role))
                 shutil.copy(src, dst)
             raw["characters"][role]["sheet"] = dst
+            # obsazeno uživatelem → story.py z promptu vyhodí `desc` a vzhled
+            # nechá na referenci; výchozí obrázek popis ze scénáře potvrzuje
+            raw["characters"][role]["cast"] = role in sent
         seed = body.get("seed")
         raw["seed"] = int(seed) if isinstance(seed, int) and seed >= 0 else raw.get("seed", 42)
         raw["lang"] = lang

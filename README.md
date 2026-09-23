@@ -313,6 +313,12 @@ Jak to drží pohromadě:
   ipadapter` jde přes Illustrious + IPAdapter a drží jen hrdinu. Otisk
   (prompt, reference, metoda, seed) je v `kf/NN.json` — změna promptu
   přegeneruje jen ten záběr se stejným seedem, `--reroll` dá nový.
+- **Obsazená role si vzhled nese z reference.** Když roli obsadíš vlastním
+  obrázkem (appka, `story.py cast`), vypadne z promptu `desc` ze scénáře a
+  přibude věta, že vzhled je jen z reference. Dokud tam popis stál, Kontext
+  poslechl text a nahraný obrázek prakticky ignoroval. Značka je `cast: true`
+  v `characters` (doplní `serve.py`), u ruční cesty soubor `chars/<role>.cast`.
+  Výchozí postava popis dál používá — potvrzuje, co je na obrázku.
 - **Kontaktní arch je brána.** `approve` uloží sha keyframů; když se keyframe
   změní, `compile` odmítne, dokud se neschválí znovu. `--no-review` bránu
   obejde (batch draft, server bez `review`).
