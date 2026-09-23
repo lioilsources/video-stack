@@ -781,11 +781,19 @@ class Handler(BaseHTTPRequestHandler):
         for role, c in st["characters"].items():
             dst = os.path.join(chars_dir, role + ".png")
             if role in sent:
+                # buď holý base64, nebo {image, who} — `who` říká, KDO na obrázku
+                # je („ježek Bodlinka"), když roli obsadíš jiným zvířetem, než
+                # co čeká scénář; story.py podle toho přepíše prompty i vyprávění
+                item = sent[role]
+                img = item.get("image") if isinstance(item, dict) else item
+                who = (item.get("who") or "").strip()[:80] if isinstance(item, dict) else ""
                 try:
-                    decode_image(sent[role]).save(dst)
+                    decode_image(img or "").save(dst)
                 except ValueError as e:
                     shutil.rmtree(os.path.join(OUT, jid), ignore_errors=True)
                     return self._err(400, "postava %s: %s" % (role, e))
+                if who:
+                    raw["characters"][role]["who"] = who
             else:
                 src = story.char_path(st, default_work, role)
                 if not src:

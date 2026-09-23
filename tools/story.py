@@ -38,6 +38,8 @@ WORKFLOWS = os.path.join(HERE, "workflows")
 PIPER_HOME = os.environ.get("PIPER_HOME", os.path.expanduser("~/.local/share/video-stack/piper"))
 AUDIO_URL = os.environ.get("AUDIO_URL", "http://localhost:8093")    # AiStack services/audio
 TAGGER_URL = os.environ.get("TAGGER_URL", "http://127.0.0.1:8097/tag")   # AiStack finetune-wd14
+LLM_GATEWAY = os.environ.get("LLM_GATEWAY", "http://localhost:8080/v1/chat/completions")
+PROMPT_MODEL = os.environ.get("VIDEO_PROMPT_MODEL", "shop")
 # Tagy, které popisují obrázek, ne postavu: kompozici, pozadí, náladu, médium.
 # Do promptu keyframu nepatří — ten si kompozici i prostředí určuje sám.
 TAG_DROP = {
@@ -330,6 +332,137 @@ def cmd_cast(st, work, role, image):
 
 # ---------------------------------------------------------------- keyframy
 
+def llm(system, shots, user, max_tokens=120):
+    """Gateway AiStacku s few-shotem; None, když neodpoví. Volá se z workeru,
+    nikdy z obsluhy HTTP — model sdílí GPU s ComfyUI a umí mlčet i půl minuty."""
+    msgs = [{"role": "system", "content": system}]
+    for u, a in shots:
+        msgs += [{"role": "user", "content": u}, {"role": "assistant", "content": a}]
+    msgs.append({"role": "user", "content": user})
+    body = {"model": PROMPT_MODEL, "max_tokens": max_tokens, "temperature": 0.1, "messages": msgs}
+    try:
+        req = urllib.request.Request(LLM_GATEWAY, json.dumps(body).encode(),
+                                     {"Content-Type": "application/json"})
+        d = json.load(urllib.request.urlopen(req, timeout=60))
+        return d["choices"][0]["message"]["content"].strip()
+    except Exception as e:                                 # noqa: BLE001
+        print("  ! LLM nedostupné (%s)" % str(e)[:60], flush=True)
+        return None
+
+
+WHO_SYSTEM = ("You split a Czech character label into JSON. Answer with one JSON object and nothing else: "
+              '{"name": "<the proper name, or empty>", "species_cs": "<the Czech species in nominative>", '
+              '"species_en": "<the English species>"}.')
+WHO_SHOTS = [
+    ("ježek Bodlinka", '{"name": "Bodlinka", "species_cs": "ježek", "species_en": "hedgehog"}'),
+    ("veverka", '{"name": "", "species_cs": "veverka", "species_en": "squirrel"}'),
+    ("dráček Pip", '{"name": "Pip", "species_cs": "dráček", "species_en": "little dragon"}'),
+]
+
+
+def who_info(who):
+    """„ježek Bodlinka" → jméno, český a anglický druh. Bez LLM heuristika:
+    velké písmeno = jméno, zbytek druh (anglicky pak nic, vzhled nese obrázek)."""
+    raw = llm(WHO_SYSTEM, WHO_SHOTS, who.strip(), max_tokens=80) or ""
+    m = re.search(r"\{.*\}", raw, re.S)
+    if m:
+        try:
+            d = json.loads(m.group(0))
+            if isinstance(d, dict) and (d.get("species_cs") or d.get("name")):
+                return {"name": (d.get("name") or "").strip(),
+                        "species_cs": (d.get("species_cs") or "").strip(),
+                        "species_en": (d.get("species_en") or "").strip()}
+        except ValueError:
+            pass
+    words = who.split()
+    name = next((w for w in words if w[:1].isupper()), "")
+    return {"name": name, "species_cs": " ".join(w for w in words if w != name), "species_en": ""}
+
+
+def label_parts(label):
+    """„kocour Mourek" → („Mourek", „kocour"); „Tom the cat" → („Tom", „cat")."""
+    words = re.sub(r"\bthe\b", " ", label).split()
+    name = next((w for w in words if w[:1].isupper()), "")
+    return name, " ".join(w for w in words if w != name).strip()
+
+
+def recast(st, work, path=None):
+    """Obsazená role může být úplně jiné zvíře, než co má scénář — `who`
+    („ježek Bodlinka") přijde z appky vedle obrázku. Přepíše postavu v
+    promptech i ve vyprávění a zapíše se do story.json jobu, aby to viděla
+    i vypravěčka a titulky. Jednou: `_recast` drží, co už proběhlo."""
+    done = []
+    for role, c in st["characters"].items():
+        who = (c.get("who") or "").strip()
+        if not who or c.get("_recast") == who:
+            continue
+        info = who_info(who)
+        new_name = who                                   # český popisek tak, jak ho uživatel napsal
+        new_tag = (("%s the %s" % (info["name"], info["species_en"])).strip()
+                   if info["name"] and info["species_en"]
+                   else (info["name"] or info["species_en"] or who))
+        # delší dřív, ať se „kocour Mourek" nerozpadne na „kocour" + „Mourek"
+        old_cs_name, old_cs_species = label_parts(c["name"])
+        old_en_name, old_en_species = label_parts(c["tag"])
+        swap = [(c["tag"], new_tag), (c["name_en"], new_tag), (c["name"], new_name),
+                (old_cs_name, info["name"] or new_name), (old_en_name, info["name"] or new_tag),
+                (old_cs_species, info["species_cs"] or new_name),
+                (old_en_species, info["species_en"] or new_tag)]
+        swap = [(a, b) for a, b in swap if a and b]
+        swap.sort(key=lambda ab: -len(ab[0]))
+        for sh in st["shots"]:
+            for k in ("keyframe", "narration", "narration_en"):
+                if sh.get(k):
+                    sh[k] = swap_words(sh[k], swap)
+            if isinstance(sh.get("motion"), list):
+                sh["motion"] = [swap_words(t, swap) for t in sh["motion"]]
+            elif sh.get("motion"):
+                sh["motion"] = swap_words(sh["motion"], swap)
+            if isinstance(sh.get("prompts"), list):
+                sh["prompts"] = [swap_words(t, swap) for t in sh["prompts"]]
+        c.update(name=new_name, name_en=new_tag, tag=new_tag, species_en=info["species_en"],
+                 _recast=who)
+        done.append("%s → %s" % (role, who))
+    if not done:
+        return
+    fix_czech(st)
+    print("  obsazení: %s" % ", ".join(done), flush=True)
+    if path and os.path.exists(path):
+        json.dump(st, open(path, "w"), indent=2, ensure_ascii=False)
+
+
+def swap_words(text, pairs):
+    for old, new in pairs:
+        if old and new and old != new:
+            text = re.sub(r"\b%s\b" % re.escape(old), new, text)
+    return text
+
+
+CZ_SYSTEM = ("Opravíš českou větu po záměně postavy: sloveso, přívlastek i rod musí sedět na nové "
+             "jméno. Nic nepřidávej ani neubírej, vrať jen tu jednu opravenou větu.")
+CZ_SHOTS = [
+    ("Na plotě seděl ježek Bodlinka. S jejím deštníkem!",
+     "Na plotě seděl ježek Bodlinka. S jejím deštníkem!"),
+    ("Na plotě seděl veverka Zrzka. S jejím deštníkem!",
+     "Na plotě seděla veverka Zrzka. S jejím deštníkem!"),
+]
+
+
+def fix_czech(st):
+    """Po záměně sedí slova, ale ne vždy rod („seděl veverka"). Gateway větu
+    srovná; bez ní zůstane, jak vyšla ze záměny — význam je správný."""
+    for sh in st["shots"]:
+        t = (sh.get("narration") or "").strip()
+        if not t:
+            continue
+        out = llm(CZ_SYSTEM, CZ_SHOTS, t, max_tokens=120)
+        if not out:
+            return                                      # LLM je dole, nemá smysl zkoušet dál
+        out = out.strip().strip('"\u201e\u201c').strip()
+        if out and 0.5 * len(t) < len(out) < 2 * len(t) and re.search("[ěščřžýáíéúůň]", out, re.I):
+            sh["narration"] = out
+
+
 def ref_tags(path):
     """WD14 sidecar AiStacku: obrázek → booru tagy podle jistoty. Když neběží,
     prázdný seznam a prompt jede bez popisu (jako předtím)."""
@@ -366,7 +499,8 @@ def cast_sheet(st, work, role):
     if not src or not is_cast(st, work, role):
         return src
     dst = work.p("chars", role + "_book.png")
-    prompt = CAST_SHEET % st["style"]
+    kind = (st["characters"][role].get("species_en") or "").strip()
+    prompt = (CAST_SHEET % st["style"]) + (" The character is a %s." % kind if kind else "")
     seed = st["seed"] + 500 + sum(ord(ch) for ch in role)
     key = sha([chain.file_sha(src), prompt, seed, KF_W, KF_H])
     if os.path.exists(dst) and os.path.exists(dst + ".key") and open(dst + ".key").read() == key:
@@ -406,7 +540,8 @@ def cast_desc(st, work, role):
     cache = img + ".desc"
     if os.path.exists(cache) and os.path.getmtime(cache) >= os.path.getmtime(img):
         return open(cache).read().strip()
-    desc = ", ".join(ref_tags(img))
+    kind = (st["characters"][role].get("species_en") or "").strip()
+    desc = ", ".join(([kind] if kind else []) + [t for t in ref_tags(img) if t != kind])
     open(cache, "w").write(desc)
     if desc:
         print("  %s podle reference: %s" % (role, desc), flush=True)
@@ -524,6 +659,7 @@ def cmd_keyframes(st, work, shots=None, method=None, seed=None, force=False, rer
     `run` bez přepínače tak nepřegeneruje záběry udělané ručně jinou metodou."""
     if method not in (None, "kontext", "ipadapter"):
         die("metoda %r: čekám kontext nebo ipadapter" % method)
+    recast(st, work, work.p("story.json"))
     sel = select_shots(st, shots)
     need_chars(st, work, sorted({r for sh in sel for r in sh["chars"]}))
     done = 0
