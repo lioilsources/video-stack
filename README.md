@@ -321,8 +321,10 @@ Jak to drží pohromadě:
   mezi záběry fade 8 snímků. Tanec startuje kostru od začátku v každém záběru.
 - **Oživení tváře (`identity: face`) se nepoužívá** — PuLID/InsightFace je na
   fotky, anime tvář by přemaloval. Identitu drží keyframe každého záběru.
-- **Vypravěč**: Piper (`tools/get_piper.sh`, CPU, vlastní venv), hlasy
-  `cs_CZ-jirka-medium` a `en_US-lessac-medium`. Věta záběru začíná 0,2 s po
+- **Vypravěčka**: Piper (`tools/get_piper.sh`, CPU, vlastní venv), hlasy
+  `cs_CZ-kasandra-medium` a `en_US-lessac-medium` — oba ženské; Piper má
+  česky jen kasandru a jirku (mužský), příběh si hlas přebije polem `voice`.
+  Věta záběru začíná 0,2 s po
   dokončení prolnutí; delší než záběr se zrychlí až na 1,2×, jinak varování.
   `check_stories.py` hlídá délku textu předem (~2 slova/s česky).
 - **Hudba**: ACE-Step přes AiStack `services/audio` (`AUDIO_URL`, default

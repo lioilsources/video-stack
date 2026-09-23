@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # get_piper.sh — vypravěč pro tools/story.py: Piper TTS + hlasy (na SPARKu, bez sudo).
 #
-#   tools/get_piper.sh                       # venv + výchozí hlasy (cs jirka, en lessac)
+#   tools/get_piper.sh                       # venv + výchozí hlasy (cs kasandra, en lessac)
 #   tools/get_piper.sh cs_CZ-jirka-low       # další hlas podle jména z rhasspy/piper-voices
 #
 # Kam: $PIPER_HOME (default ~/.local/share/video-stack/piper) — venv/ a voices/.
@@ -13,7 +13,7 @@ HOME_DIR="${PIPER_HOME:-$HOME/.local/share/video-stack/piper}"
 VERSION="${PIPER_VERSION:-1.3.0}"
 BASE="https://huggingface.co/rhasspy/piper-voices/resolve/main"
 VOICES=("$@")
-[ ${#VOICES[@]} -gt 0 ] || VOICES=(cs_CZ-jirka-medium en_US-lessac-medium)
+[ ${#VOICES[@]} -gt 0 ] || VOICES=(cs_CZ-kasandra-medium en_US-lessac-medium)
 
 mkdir -p "$HOME_DIR/voices"
 if [ ! -x "$HOME_DIR/venv/bin/piper" ]; then

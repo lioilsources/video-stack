@@ -40,7 +40,10 @@ AUDIO_URL = os.environ.get("AUDIO_URL", "http://localhost:8093")    # AiStack se
 
 KF_W, KF_H = 768, 1344            # SDXL/Kontext bucket blízko 9:16; Wan z něj dopočítá 496×880 / 752×1312
 LANGS = ("cs", "en")
-VOICES = {"cs": "cs_CZ-jirka-medium", "en": "en_US-lessac-medium"}
+# Vypravěčka: kasandra je jediný ženský český hlas, který Piper má
+# (vedle jirky); en lessac je taky ženský. Příběh si hlas může přebít
+# polem `voice` ({"cs": "...", "en": "..."}).
+VOICES = {"cs": "cs_CZ-kasandra-medium", "en": "en_US-lessac-medium"}
 WORDS_PER_S = {"cs": 2.2, "en": 2.5}    # Piper při length_scale 1.0; pomalejší čtení to dál dělí
 LENGTH_SCALE = 1.1                       # dětský vypravěč: o desetinu pomaleji
 SHEET_CKPT = "Illustrious-XL-v2.0.safetensors"
