@@ -425,7 +425,9 @@ def recast(st, work, path=None):
         done.append("%s → %s" % (role, who))
     if not done:
         return
-    fix_czech(st)
+    for c in st["characters"].values():
+        if c.get("_recast"):
+            fix_czech(st, c["name"])
     print("  obsazení: %s" % ", ".join(done), flush=True)
     if path and os.path.exists(path):
         json.dump(st, open(path, "w"), indent=2, ensure_ascii=False)
@@ -438,24 +440,28 @@ def swap_words(text, pairs):
     return text
 
 
-CZ_SYSTEM = ("Opravíš českou větu po záměně postavy: sloveso, přívlastek i rod musí sedět na nové "
-             "jméno. Nic nepřidávej ani neubírej, vrať jen tu jednu opravenou větu.")
+CZ_SYSTEM = ("Dostaneš postavu a větu, ve které se ta postava vyměnila za jinou. Oprav shodu: "
+             "sloveso v minulém čase, přídavná jména i zájmena se musí řídit rodem nové postavy "
+             "(ježek = mužský, veverka = ženský, kotě = střední). Nic nepřidávej ani neubírej, "
+             "vrať jen opravenou větu.")
 CZ_SHOTS = [
-    ("Na plotě seděl ježek Bodlinka. S jejím deštníkem!",
+    ("Postava: ježek Bodlinka\nVěta: Na plotě seděl ježek Bodlinka. S jejím deštníkem!",
      "Na plotě seděl ježek Bodlinka. S jejím deštníkem!"),
-    ("Na plotě seděl veverka Zrzka. S jejím deštníkem!",
+    ("Postava: veverka Zrzka\nVěta: Na plotě seděl veverka Zrzka. S jejím deštníkem!",
      "Na plotě seděla veverka Zrzka. S jejím deštníkem!"),
+    ("Postava: veverka Zrzka\nVěta: Zrzka jí deštník vrátil. Hodný veverka.",
+     "Zrzka jí deštník vrátila. Hodná veverka."),
 ]
 
 
-def fix_czech(st):
+def fix_czech(st, label=""):
     """Po záměně sedí slova, ale ne vždy rod („seděl veverka"). Gateway větu
     srovná; bez ní zůstane, jak vyšla ze záměny — význam je správný."""
     for sh in st["shots"]:
         t = (sh.get("narration") or "").strip()
         if not t:
             continue
-        out = llm(CZ_SYSTEM, CZ_SHOTS, t, max_tokens=120)
+        out = llm(CZ_SYSTEM, CZ_SHOTS, "Postava: %s\nVěta: %s" % (label, t), max_tokens=120)
         if not out:
             return                                      # LLM je dole, nemá smysl zkoušet dál
         out = out.strip().strip('"\u201e\u201c').strip()
