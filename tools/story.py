@@ -587,6 +587,24 @@ def cz_gender(label):
     return "f" if w.endswith(("a", "e")) else "m"
 
 
+SUBJ_SYSTEM = ("Řekneš, kdo nebo co je podmětem české věty. Odpověz jen tím podmětem, jedním nebo "
+               "dvěma slovy. Když podmět není vyjádřený, odpověz: nevyjádřený.")
+SUBJ_SHOTS = [("Na plotě seděl kocour Mourek.", "kocour Mourek"),
+              ("Pak se nadechl a rozsvítil lampičku.", "nevyjádřený"),
+              ("Stín byl čím dál větší.", "stín"), ("Mia se schovala pod peřinu.", "Mia")]
+
+
+def subject_is(text, old_label, new_label):
+    """Je podmětem věty ta postava (nebo podmět chybí a jde tedy o hrdinu
+    záběru)? Plošný převod rodu jinak přechýlil i „Na zdi byl velký stín" na
+    „byla velká stín". Klasifikátor se plete u předmětu a oslovení, ale směrem
+    k opatrnosti: věta se pak nechá být."""
+    ans = (llm(SUBJ_SYSTEM, SUBJ_SHOTS, text, max_tokens=12) or "").strip().lower()
+    if not ans:
+        return False
+    return ans.startswith("nevyj") or mentions(ans, old_label) or mentions(ans, new_label)
+
+
 def fix_czech(st, old_label, new_label, role=None):
     """Po záměně postavy sedí slova, ale ne rod („seděl veverka", „koukají mu
     jen oči"). Jede jen když se rod opravdu mění a jen u záběrů, kde postava
@@ -601,7 +619,7 @@ def fix_czech(st, old_label, new_label, role=None):
             continue
         for k in ("narration", "action"):
             t = (sh.get(k) or "").strip()
-            if not t:
+            if not t or not subject_is(t, old_label, new_label):
                 continue
             out = llm(system, shots, t, max_tokens=220)
             if not out:
@@ -1154,9 +1172,11 @@ def piper_say(model, text, dst, scale):
     out.close()
 
 
-def strip_plateau(path, win_s=0.05, min_s=0.5, level_db=-14.0, flat_db=2.0):
+def strip_plateau(path, win_s=0.05, min_s=0.7, level_db=-9.0, flat_db=1.0):
     """Pojistka: souvislý úsek s konstantní vysokou hlasitostí (řeč tak nikdy
-    nevypadá) je blok šumu ze syntézy — vynuluje se. Vrací vystřižené sekundy."""
+    nevypadá) je blok šumu ze syntézy — vynuluje se. Vrací vystřižené sekundy.
+    Prahy podle skutečného bloku (−5 dBFS, rozptyl pod 1 dB, ≥ 0,95 s); volnější
+    −14 dB / 2 dB / 0,5 s sebraly i dlouhou samohlásku v „čím dál větší"."""
     import wave
     import numpy as np
     w = wave.open(path); params = w.getparams()
