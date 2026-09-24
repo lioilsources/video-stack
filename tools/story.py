@@ -1109,7 +1109,12 @@ def wav_dur(path):
 # adeclip špičky dopočítá, limiter je pak drží pod −1 dB. Při stejném průchodu
 # se srovná i lichý datový blok, na který si ffmpeg v mixu stěžoval
 # („Invalid PCM packet, data has size 1").
-VOICE_FIX = "adeclip,alimiter=limit=0.891:level=false"
+# K tomu odšumění: mezi slovy má Piper podlahu −34 dBFS a plochou (šumovou),
+# po normalizaci mixu na −16 LUFS je to slyšet jako syčení pod vypravěčkou.
+# afftdn s bílým modelem ji srazí o 10 dB (naměřeno −34 → −44 dBFS na 12
+# větách), gate dočistí mezery, řeč zůstane na stejné úrovni.
+VOICE_FIX = ("adeclip,highpass=f=120,afftdn=nt=w:nr=20:nf=-40,"
+             "agate=threshold=0.03:ratio=3:attack=3:release=120:knee=4,alimiter=limit=0.891:level=false")
 MUSIC_XF = 2.0                    # překryv smyčky hudby (s)
 # Generovaná hudba (ACE-Step i LTX dárce) sype v tichých místech fizz nad
 # 6 kHz — naměřeno na hotovém příběhu: v šumivých oknech leželo 60 % energie
