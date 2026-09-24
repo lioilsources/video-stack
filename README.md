@@ -343,9 +343,14 @@ Jak to drží pohromadě:
   Věta záběru začíná 0,2 s po
   dokončení prolnutí; delší než záběr se zrychlí až na 1,2×, jinak varování.
   `check_stories.py` hlídá délku textu předem (~2 slova/s česky).
-- **Vypravěč nejede na doraz.** Piper vrací věty se špičkami na ±1.0 a část
-  vzorků rovně uříznutou; pod hudbou to chrastí. Po syntéze jde `adeclip` a
-  limiter na −1 dB (`VOICE_FIX`), což zároveň srovná lichý datový blok WAVu.
+- **Piper po větách, bez `--sentence-silence`.** Piper 1.3 s tím přepínačem
+  druhou větu nenamluví a místo ní vyrobí blok konstantního šumu na −5 dBFS
+  dlouhý zhruba jako ta věta (kasandra i jirka). Odtud „šum, když vypravěčka
+  ztichne" i uříznuté vzorky. Věty se syntetizují každá zvlášť a spojují
+  skutečným tichem (`SENT_GAP`); pojistka `strip_plateau` vynuluje souvislý
+  úsek s konstantní vysokou hlasitostí, kdyby se to vrátilo.
+- **Po syntéze `VOICE_FIX`**: `adeclip`, odšumění (`afftdn`, podlaha mezi
+  slovy −34 → −44 dBFS), gate na mezery a limiter na −1 dB.
 - **Hudba**: ACE-Step přes AiStack `services/audio` (`AUDIO_URL`, default
   `localhost:8093`) na celou délku; když neběží (noční režim 00–07), zaskočí
   LTX dárce z `chain.py` (19 s smyčka), jinak bez hudby. Pod vypravěčem se
