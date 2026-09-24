@@ -1123,6 +1123,65 @@ MUSIC_XF = 2.0                    # překryv smyčky hudby (s)
 MUSIC_TAME = "highshelf=f=6000:g=-9"
 
 
+SENT_SPLIT = re.compile(r"(?<=[.!?…])\s+")
+SENT_GAP = 0.25                    # ticho mezi větami (s)
+
+
+def piper_say(model, text, dst, scale):
+    """Text → WAV, každou větu zvlášť a mezi ně skutečné ticho.
+
+    Piper 1.3 s `--sentence-silence` druhou větu nenamluví: místo ní vyrobí
+    blok šumu na −5 dBFS dlouhý zhruba jako ta věta (kasandra i jirka, ověřeno
+    na „Bylo zhasnuto. Holčička Mia ale nemohla usnout."). Bez přepínače je to
+    v pořádku, jen chybí pauza — tu vkládáme sami."""
+    import wave
+    parts = [p.strip() for p in SENT_SPLIT.split(text.replace("\n", " ")) if p.strip()] or [text]
+    frames, params = [], None
+    for i, p in enumerate(parts):
+        tmp = "%s.s%d" % (dst, i)
+        subprocess.run([piper_bin(), "-m", model, "-f", tmp, "--length-scale", str(scale)],
+                       input=p.encode(), check=True, capture_output=True)
+        w = wave.open(tmp)
+        params = params or w.getparams()
+        if i:
+            frames.append(b"\0" * int(SENT_GAP * params.framerate) * params.sampwidth * params.nchannels)
+        frames.append(w.readframes(w.getnframes()))
+        w.close()
+        os.remove(tmp)
+    out = wave.open(dst, "wb")
+    out.setparams(params)
+    out.writeframes(b"".join(frames))
+    out.close()
+
+
+def strip_plateau(path, win_s=0.05, min_s=0.5, level_db=-14.0, flat_db=2.0):
+    """Pojistka: souvislý úsek s konstantní vysokou hlasitostí (řeč tak nikdy
+    nevypadá) je blok šumu ze syntézy — vynuluje se. Vrací vystřižené sekundy."""
+    import wave
+    import numpy as np
+    w = wave.open(path); params = w.getparams()
+    x = np.frombuffer(w.readframes(w.getnframes()), dtype=np.int16).astype(np.float32); w.close()
+    win = max(1, int(win_s * params.framerate)); n = len(x) // win
+    if n < 2:
+        return 0.0
+    lvl = 20 * np.log10(np.sqrt((x[:n * win].reshape(n, win) ** 2).mean(axis=1)) / 32768 + 1e-9)
+    loud = lvl > level_db
+    cut, i = 0, 0
+    while i < n:
+        if not loud[i]:
+            i += 1; continue
+        j = i
+        while j < n and loud[j]:
+            j += 1
+        if (j - i) * win_s >= min_s and lvl[i:j].std() < flat_db:
+            x[i * win:j * win] = 0; cut += j - i
+        i = j
+    if cut:
+        out = wave.open(path, "wb"); out.setparams(params)
+        out.writeframes(x.astype(np.int16).tobytes()); out.close()
+    return cut * win_s
+
+
 def cmd_voice(st, work, lang):
     """Věta záběru → WAV. Otisk textu a hlasu vedle, takže se přečte jen změna."""
     model, scale = voice_model(st, lang), float(st.get("length_scale", LENGTH_SCALE))
@@ -1134,15 +1193,16 @@ def cmd_voice(st, work, lang):
             if os.path.exists(dst):
                 os.remove(dst)
             continue
-        key = sha([text, os.path.basename(model), scale, VOICE_FIX])
+        key = sha([text, os.path.basename(model), scale, VOICE_FIX, "po větách", SENT_GAP])
         if os.path.exists(dst) and os.path.exists(dst + ".key") and open(dst + ".key").read() == key:
             continue
         raw = dst + ".piper.wav"
-        subprocess.run([piper_bin(), "-m", model, "-f", ensure(raw), "--length-scale", str(scale),
-                        "--sentence-silence", "0.25"], input=text.replace("\n", " ").encode(),
-                       check=True, capture_output=True)
+        piper_say(model, text, ensure(raw), scale)
         ffmpeg("-i", raw, "-af", VOICE_FIX, "-c:a", "pcm_s16le", dst)
         os.remove(raw)
+        cut = strip_plateau(dst)
+        if cut:
+            print("  ! hlas %s: Piper vrátil %.1f s šumu místo řeči — vystřiženo" % (sh["id"], cut), flush=True)
         open(dst + ".key", "w").write(key)
         print("  hlas %s  %.1f s  %s" % (sh["id"], wav_dur(dst), text[:50]), flush=True)
         n += 1
