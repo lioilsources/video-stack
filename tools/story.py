@@ -529,6 +529,15 @@ CASES = ("nom", "gen", "dat", "acc", "voc", "ins")
 SOFT = {"k": "c", "h": "z", "g": "z", "ch": "š", "r": "ř"}   # dat/lok ženských -a: Marcelka → Marcelce
 
 
+def cz_gender(label):
+    """Rod podle prvního slova popisku: „holčička Mia" ženský, „kyklop Zubejda"
+    mužský. Slovo na -a/-e je ženské — u jmen jako Ondra nebo Kuba to neplatí,
+    proto má katalog u postav `gender` a obsazený popisek dostává rod od slova
+    druhu."""
+    w = (label.split() or [""])[0].lower()
+    return "f" if w.endswith(("a", "e")) else "m"
+
+
 def cz_paradigm(word, gender):
     """Tvary jednoho slova (jméno nebo druh) ve všech pádech, pro dětský příběh
     stačí tři vzory: mužské životné na souhlásku (pán/Pip, s vsuvným -e-:
