@@ -376,10 +376,13 @@ def who_info(who):
             d = json.loads(m.group(0))
             if isinstance(d, dict) and (d.get("species_cs") or d.get("name")):
                 g = str(d.get("gender") or "").strip().lower()[:1]
+                kind = (d.get("species_cs") or "").strip()
+                # rod řídí slovo druhu („brouček Ájinka" je mužský, i když se
+                # jmenuje Ájinka) — LLM se nechal svést jménem; bez druhu jméno
                 return {"name": (d.get("name") or "").strip(),
-                        "species_cs": (d.get("species_cs") or "").strip(),
+                        "species_cs": kind,
                         "species_en": (d.get("species_en") or "").strip(),
-                        "gender": g if g in ("m", "f") else cz_gender(who)}
+                        "gender": cz_gender(kind) if kind else (g if g in ("m", "f") else cz_gender(who))}
         except ValueError:
             pass
     words = who.split()
