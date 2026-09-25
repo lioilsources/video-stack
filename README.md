@@ -321,9 +321,14 @@ Jak to drží pohromadě:
 - **Jiné zvíře, než čeká scénář:** u postavy jde poslat `{image, who}`,
   kde `who` je český popisek („ježek Bodlinka"). `story.py` podle něj přepíše
   postavu v promptech, v pohybech, ve vyprávění i v titulcích a druh zvířete
-  dá i do překreslení reference. Rod ve větách srovná ještě jeden průchod
-  gateway („seděl veverka" → „seděla veverka"). V appce je to pole „Kdo to
-  je" pod vybraným obrázkem, předvyplněné tím, co má scénář.
+  dá i do překreslení reference. Česky se skloňuje vlastním enginem (tři
+  vzory: pán/Ptáček s vsuvným -e-, předseda/Ondra, žena/Marcelka) — tvar
+  starého jména určí pád, nové se dosadí v témže pádě, i s druhem („kocoura
+  Mourka" → „veverky Zrzky"). Rodová shoda je deterministická a jen tam,
+  kde je hrdina jistě podmětem; postavy v katalogu mají `gender`, obsazený
+  popisek dostává rod od slova druhu. Věty s předložkou na začátku („Pod
+  postelí našel…") zůstávají — tam si podmětem nejsme jistí. V appce je to
+  pole „Kdo to je" pod vybraným obrázkem, předvyplněné tím, co má scénář.
 - **Popis ze scénáře jde u obsazené role pryč.** Vypadne z promptu `desc`
   a přibude věta, že vzhled je jen z reference. Dokud tam popis stál, Kontext
   poslechl text a nahraný obrázek prakticky ignoroval. Značka je `cast: true`
