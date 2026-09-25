@@ -502,7 +502,6 @@ def recast(st, work, path=None):
         return
     for role, c in st["characters"].items():
         if c.get("_recast"):
-            fix_czech(st, c["_recast_from"], c["name"], role, c.get("_recast_gender"))
             fix_english(st, c["tag"])
     print("  obsazení: %s" % ", ".join(done), flush=True)
     if path and os.path.exists(path):
@@ -641,7 +640,7 @@ def cz_regender(text, new_label, a, b, alone, others):
     name, kind = label_parts(new_label)
     heads = [x for x in (new_label, name, kind) if x]
     parts = re.split(r"(?<=[.!?…])\s+", text)
-    out, prev_hero = [], True
+    out, subjects, prev_hero = [], [], True
     for sent in parts:
         low = sent.lower()
         explicit = any(low.startswith(h.lower()) for h in heads)
@@ -654,11 +653,18 @@ def cz_regender(text, new_label, a, b, alone, others):
         # bez vyjádřeného podmětu: „Uložil…", „Už se nebál.", „Pak se nadechl…",
         # ne „Na zdi byl velký stín" (ta má podmět, jen jinde ve větě)
         implicit = (prev_hero and cut > 0
-                    and re.match(r"^(?:(?:už|pak|potom|nakonec|hned|zase|najednou|teď|ráno|večer|a|ale)\s+)?"
-                                 r"(?:(?:se|si)\s+)?\w+l[aoi]?\b", sent, re.I) is not None)
+                    and re.match(r"^(?:(?:už|pak|potom|nakonec|hned|zase|najednou|teď|ráno|večer|a|ale|tak)\s+)*"
+                                 r"(?:(?:se|si)\s+)?\w+l[aoi]?\b", sent, re.I) is not None
+                    # „A byl opravdový!" — přísudkové přídavné jméno v mužském rodě
+                    # prozradí, že podmět je ten dort z předchozí věty, ne hrdina
+                    and re.search(r"\b\w+l\s+\w+ý\b", sent) is None)
         if explicit or implicit:
             sent = cz_regender_verbs(sent[:cut], a) + sent[cut:]
-        prev_hero = explicit or implicit
+        # věta bez slovesa v minulém čase („Ahoj, jsem Ema!", „Venku pršelo.")
+        # nemění, o kom se mluví — „A už se nenudil." za ní je pořád o hrdinovi
+        if explicit or implicit or cut < len(sent) or re.search(r"\b\w+l\b", sent):
+            prev_hero = explicit or implicit
+        subjects.append(explicit or implicit)
         out.append(sent)
     text = " ".join(out)
     # přídavné jméno a sloveso těsně před popiskem: „moudrá sova" → „moudrý
@@ -672,10 +678,22 @@ def cz_regender(text, new_label, a, b, alone, others):
             text = re.sub(r"\b(\w+)á (%s)\b" % hh, r"\1ý \2", text)
             text = re.sub(r"\b(\w+)la (%s)\b" % hh, r"\1l \2", text)
     if alone:
+        # 4. pád („ho") ve větě s hrdinou v podmětu ukazuje na věc („vybarví ho"),
+        # 3. pád a přivlastnění („mu", „jeho") patří hrdinovi i tam („koukají mu jen oči")
         table = CZ_PRON[(a, b)]
-        text = re.sub(r"\b(%s)\b" % "|".join(map(re.escape, table)),
-                      lambda m: (table[m.group(1).lower()].capitalize() if m.group(1)[:1].isupper()
-                                 else table[m.group(1).lower()]), text)
+        acc = {"ho", "ji", "něho"}
+        rx = r"\b(%s)\b" % "|".join(map(re.escape, table))
+
+        def pron(m, subj):
+            w = m.group(1); low = w.lower()
+            if low in acc and subj:
+                return w
+            return table[low].capitalize() if w[:1].isupper() else table[low]
+
+        sents = re.split(r"(?<=[.!?…])\s+", text)
+        if len(sents) == len(subjects):
+            text = " ".join(re.sub(rx, lambda m, subj=subj: pron(m, subj), sent)
+                            for sent, subj in zip(sents, subjects))
     return text
 
 
@@ -749,73 +767,6 @@ def keeps_names(src, out):
         return {w[:5].lower() for w in re.findall(r"(?<![.!?]\s)(?<!^)\b[A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ][\w]+",
                                                   t, re.M)}
     return names(src) <= names(out)
-
-
-# Rodovou shodu („seděl veverka") model zvládne, jen když se ho zeptáš přímo
-# na převod rodu. Formulace „oprav shodu podle postavy" mu nešla: větu vracel
-# beze změny, nebo z ní udělal větu o té postavě.
-CZ_MF = {
-    ("m", "f"): ("Převedeš českou větu z mužského rodu do ženského. Měň jen tvary slov, "
-                 "nic nepřidávej ani neubírej. Vrať jen tu větu.",
-                 [("Kuba se nadechl a usnul.", "Kuba se nadechla a usnula."),
-                  ("Uložil medvídka vedle sebe.", "Uložila medvídka vedle sebe."),
-                  ("Byl rád, že to zvládl.", "Byla ráda, že to zvládla.")]),
-    ("f", "m"): ("Převedeš českou větu ze ženského rodu do mužského. Měň jen tvary slov, "
-                 "nic nepřidávej ani neubírej. Vrať jen tu větu.",
-                 [("Mia se nadechla a usnula.", "Mia se nadechl a usnul."),
-                  ("Uložila medvídka vedle sebe.", "Uložil medvídka vedle sebe."),
-                  ("Byla ráda, že to zvládla.", "Byl rád, že to zvládl.")]),
-}
-
-
-def cz_gender(label):
-    """Rod postavy podle prvního slova popisku: „holčička Mia" ženský,
-    „kyklop Zubejda" mužský. Na dětské příběhy to stačí."""
-    w = (label.split() or [""])[0].lower()
-    return "f" if w.endswith(("a", "e")) else "m"
-
-
-SUBJ_SYSTEM = ("Řekneš, kdo nebo co je podmětem české věty. Odpověz jen tím podmětem, jedním nebo "
-               "dvěma slovy. Když podmět není vyjádřený, odpověz: nevyjádřený.")
-SUBJ_SHOTS = [("Na plotě seděl kocour Mourek.", "kocour Mourek"),
-              ("Pak se nadechl a rozsvítil lampičku.", "nevyjádřený"),
-              ("Stín byl čím dál větší.", "stín"), ("Mia se schovala pod peřinu.", "Mia")]
-
-
-def subject_is(text, old_label, new_label):
-    """Je podmětem věty ta postava (nebo podmět chybí a jde tedy o hrdinu
-    záběru)? Plošný převod rodu jinak přechýlil i „Na zdi byl velký stín" na
-    „byla velká stín". Klasifikátor se plete u předmětu a oslovení, ale směrem
-    k opatrnosti: věta se pak nechá být."""
-    ans = (llm(SUBJ_SYSTEM, SUBJ_SHOTS, text, max_tokens=12) or "").strip().lower()
-    if not ans:
-        return False
-    return ans.startswith("nevyj") or mentions(ans, old_label) or mentions(ans, new_label)
-
-
-def fix_czech(st, old_label, new_label, role=None, genders=None):
-    """Po záměně postavy sedí slova, ale ne rod („seděl veverka", „koukají mu
-    jen oči"). Jede jen když se rod opravdu mění a jen u záběrů, kde postava
-    hraje — jinak model ochotně přepsal i větu o někom jiném. Bez gateway
-    zůstane věta po záměně: význam je správný, gramatika kulhá."""
-    a, b = genders or (cz_gender(old_label), cz_gender(new_label))
-    if a == b:
-        return
-    system, shots = CZ_MF[(a, b)]
-    for sh in st["shots"]:
-        if role and role not in sh["chars"] and not mentions(sh.get("narration", ""), new_label):
-            continue
-        for k in ("narration", "action"):
-            t = (sh.get(k) or "").strip()
-            if not t or not subject_is(t, old_label, new_label):
-                continue
-            out = llm(system, shots, t, max_tokens=220)
-            if not out:
-                return                                  # LLM je dole, nemá smysl zkoušet dál
-            out = out.strip().strip('"\u201e\u201c').strip()
-            if (out and 0.6 * len(t) < len(out) < 1.6 * len(t)
-                    and re.search("[ěščřžýáíéúůň]", out, re.I) and keeps_names(t, out)):
-                sh[k] = out
 
 
 EN_SYSTEM = ("You fix pronoun agreement in one English sentence after a character was swapped. "

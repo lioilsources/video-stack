@@ -482,6 +482,8 @@ class Jobs:
         self.update(jid, status="running", phase=None if story_job else "render", started=time.time())
         resume = jid in self.resume
         self.resume.discard(jid)
+        if resume:
+            comfy_reset(jid)
         if story_job:
             sj = os.path.join(story_dir(jid), "story.json")
             base = [sys.executable, os.path.join(HERE, "tools", "story.py")]
@@ -564,6 +566,21 @@ def rewrite_prompt(jid):
     json.dump(m, open(tmp, "w"), indent=2, ensure_ascii=False)
     os.replace(tmp, path)
     log("job", jid, "prompt %r → %r" % (raw, used))
+
+
+def comfy_reset(jid):
+    """Před navázáním (--resume) uklidit frontu ComfyUI. Utržený chain.py po
+    sobě nechá běžet svůj graf a nový --resume pošle další: dva Wan 14B grafy
+    naráz — 25. 9. tak OOM killer sestřelil comfyui.service uprostřed Dráčka.
+    Server pouští jeden job, takže ve frontě nemá být nic cizího."""
+    try:
+        urllib.request.urlopen(urllib.request.Request(
+            API + "/queue", json.dumps({"clear": True}).encode(), {"Content-Type": "application/json"}),
+            timeout=5).read()
+        urllib.request.urlopen(urllib.request.Request(API + "/interrupt", b"", method="POST"), timeout=5).read()
+        log("job", jid, "navazuji: fronta ComfyUI vyčištěna, běžící graf přerušen")
+    except Exception as e:                                 # noqa: BLE001 — ComfyUI dole řeší _run sám
+        log("job", jid, "navazuji: ComfyUI nereaguje (%s)" % str(e)[:50])
 
 
 def job_pid(jid):

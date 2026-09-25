@@ -27,10 +27,13 @@ WorkingDirectory=%h/Code/video-stack
 ExecStart=%h/Code/ComfyUI/.venv/bin/python %h/Code/video-stack/serve.py
 Restart=always
 RestartSec=10
-# KillMode=mixed: SIGTERM dostane jen serve.py, běžící chain.py / story.py
-# ne. Na tom stojí resume — server se po startu k živému renderu zase
+# KillMode=process: SIGTERM dostane jen serve.py, běžící chain.py / story.py
+# zůstanou. Na tom stojí resume — server se po startu k živému renderu zase
 # připojí (job_pid v serve.py), místo aby hodinový job umřel s restartem.
-KillMode=mixed
+# Dřív tu bylo `mixed`, které po odchodu hlavního procesu zbytek cgroupy
+# SIGKILLne: každý restart tak render zabil, ComfyUI dál počítalo jeho graf
+# a navázaný job přidal druhý — 25. 9. OOM uprostřed Dráčka.
+KillMode=process
 KillSignal=SIGTERM
 TimeoutStopSec=30
 # Environment=VIDEO_API_PORT=8096
