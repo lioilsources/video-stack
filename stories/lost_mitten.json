@@ -15,13 +15,15 @@
       "name": "Aneta",
       "name_en": "Annie",
       "desc": "a lively 7-year-old girl with long blond hair under a white knitted hat with a pompom, rosy cheeks, a purple winter coat, a pink scarf and red knitted mittens",
-      "look": "Živá sedmiletá holčička s dlouhými blond vlasy pod bílou pletenou čepicí s bambulí, s růžovými tvářemi, ve fialovém kabátku, s růžovou šálou a červenými pletenými rukavicemi."
+      "look": "Živá sedmiletá holčička s dlouhými blond vlasy pod bílou pletenou čepicí s bambulí, s růžovými tvářemi, ve fialovém kabátku, s růžovou šálou a červenými pletenými rukavicemi.",
+      "gender": "f"
     },
     "snowman": {
       "name": "sněhulák",
       "name_en": "the snowman",
       "desc": "a friendly round snowman with a carrot nose, coal eyes and a coal smile, two stick arms and a small black top hat",
-      "look": "Přátelský kulatý sněhulák s mrkví místo nosu, uhlíkovýma očima a úsměvem, s rukama z klacíků a malým černým cylindrem."
+      "look": "Přátelský kulatý sněhulák s mrkví místo nosu, uhlíkovýma očima a úsměvem, s rukama z klacíků a malým černým cylindrem.",
+      "gender": "m"
     }
   },
   "shots": [

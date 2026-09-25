@@ -16,13 +16,15 @@
       "name_en": "Pip",
       "tag": "Pip the little dragon",
       "desc": "a small chubby green baby dragon standing upright on two legs, big round yellow eyes, tiny orange wings, a pale yellow belly and a short curly tail",
-      "look": "Malý baculatý zelený dráček, stojí na zadních, má velké žluté oči, oranžová křidélka, světlé bříško a zatočený ocásek."
+      "look": "Malý baculatý zelený dráček, stojí na zadních, má velké žluté oči, oranžová křidélka, světlé bříško a zatočený ocásek.",
+      "gender": "m"
     },
     "owl": {
       "name": "sova Hedvika",
       "name_en": "Hedwig the owl",
       "desc": "a wise round brown owl with big golden eyes, small round glasses and a tiny blue scarf",
-      "look": "Moudrá kulatá hnědá sova se zlatýma očima, kulatými brýlemi a modrou šálou."
+      "look": "Moudrá kulatá hnědá sova se zlatýma očima, kulatými brýlemi a modrou šálou.",
+      "gender": "f"
     }
   },
   "shots": [

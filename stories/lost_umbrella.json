@@ -15,13 +15,15 @@
       "name": "Mia",
       "name_en": "Mia",
       "desc": "a cheerful 7-year-old girl with a short black bob haircut and big brown eyes, wearing a bright yellow raincoat and red rubber boots",
-      "look": "Veselá sedmiletá holčička s černým mikádem a velkýma hnědýma očima, ve žluté pláštěnce a červených holínkách."
+      "look": "Veselá sedmiletá holčička s černým mikádem a velkýma hnědýma očima, ve žluté pláštěnce a červených holínkách.",
+      "gender": "f"
     },
     "cat": {
       "name": "kocour Mourek",
       "name_en": "Tom the cat",
       "desc": "a chubby fluffy grey tabby cat with round green eyes and a white chest",
-      "look": "Baculatý chlupatý šedý mourovatý kocour s kulatýma zelenýma očima a bílou náprsenkou."
+      "look": "Baculatý chlupatý šedý mourovatý kocour s kulatýma zelenýma očima a bílou náprsenkou.",
+      "gender": "m"
     }
   },
   "shots": [

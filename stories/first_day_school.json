@@ -15,13 +15,15 @@
       "name": "Tomík",
       "name_en": "Tommy",
       "desc": "a small shy 6-year-old boy with messy brown hair and round glasses, wearing a green hoodie, blue shorts and a huge orange backpack",
-      "look": "Malý nesmělý šestiletý kluk s rozcuchanými hnědými vlasy a kulatými brýlemi, v zelené mikině, modrých kraťasech a s obrovským oranžovým batohem."
+      "look": "Malý nesmělý šestiletý kluk s rozcuchanými hnědými vlasy a kulatými brýlemi, v zelené mikině, modrých kraťasech a s obrovským oranžovým batohem.",
+      "gender": "m"
     },
     "bip": {
       "name": "robot Bip",
       "name_en": "Bip the robot",
       "desc": "a friendly small round white robot with a blue screen face showing two dot eyes, short stubby arms, a single wheel and a little antenna with a red light",
-      "look": "Malý kulatý bílý robot s modrou obrazovkou místo obličeje, krátkými ručkami, jedním kolečkem a anténkou s červeným světýlkem."
+      "look": "Malý kulatý bílý robot s modrou obrazovkou místo obličeje, krátkými ručkami, jedním kolečkem a anténkou s červeným světýlkem.",
+      "gender": "m"
     }
   },
   "shots": [

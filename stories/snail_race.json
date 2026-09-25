@@ -16,14 +16,16 @@
       "name_en": "Speedy",
       "tag": "Speedy the hare",
       "desc": "a tall slim white hare standing upright on two legs like a person, long ears, red sneakers and a blue sports shirt with the number 1",
-      "look": "Vysoký štíhlý bílý zajíc, chodí vzpřímeně jako člověk, má dlouhé uši, červené tenisky a modrý sportovní dres s číslem 1."
+      "look": "Vysoký štíhlý bílý zajíc, chodí vzpřímeně jako člověk, má dlouhé uši, červené tenisky a modrý sportovní dres s číslem 1.",
+      "gender": "m"
     },
     "snail": {
       "name": "šnek Pomalík",
       "name_en": "Slowpoke",
       "tag": "Slowpoke the snail",
       "desc": "a small cheerful yellow snail with a big swirly orange shell, tiny eyes on stalks and a green cap",
-      "look": "Malý veselý žlutý šnek s velkou zatočenou oranžovou ulitou, očky na stopkách a zelenou kšiltovkou."
+      "look": "Malý veselý žlutý šnek s velkou zatočenou oranžovou ulitou, očky na stopkách a zelenou kšiltovkou.",
+      "gender": "m"
     }
   },
   "shots": [

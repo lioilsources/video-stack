@@ -352,14 +352,17 @@ def llm(system, shots, user, max_tokens=120):
 
 WHO_SYSTEM = ("You split a Czech character label into JSON. Answer with one JSON object and nothing else: "
               '{"name": "<the proper name, or empty>", "species_cs": "<the Czech species in nominative>", '
-              '"species_en": "<the English species>"}.')
+              '"species_en": "<the English species>", "gender": "<m or f: the grammatical gender of the '
+              'Czech species word, or of the name when there is no species>"}.')
 WHO_SHOTS = [
-    ("ježek Bodlinka", '{"name": "Bodlinka", "species_cs": "ježek", "species_en": "hedgehog"}'),
-    ("veverka", '{"name": "", "species_cs": "veverka", "species_en": "squirrel"}'),
-    ("dráček Pip", '{"name": "Pip", "species_cs": "dráček", "species_en": "little dragon"}'),
+    ("ježek Bodlinka", '{"name": "Bodlinka", "species_cs": "ježek", "species_en": "hedgehog", "gender": "m"}'),
+    ("veverka", '{"name": "", "species_cs": "veverka", "species_en": "squirrel", "gender": "f"}'),
+    ("dráček Pip", '{"name": "Pip", "species_cs": "dráček", "species_en": "little dragon", "gender": "m"}'),
+    ("Kuba", '{"name": "Kuba", "species_cs": "", "species_en": "boy", "gender": "m"}'),
+    ("princezna Marcelka", '{"name": "Marcelka", "species_cs": "princezna", "species_en": "princess", "gender": "f"}'),
     # vzhled do jména nepatří, popisek si ho uživatel občas přibalí
     ("Kyklop Bručoun s jedním okem a žlutými vlasy",
-     '{"name": "Bručoun", "species_cs": "kyklop", "species_en": "cyclops"}'),
+     '{"name": "Bručoun", "species_cs": "kyklop", "species_en": "cyclops", "gender": "m"}'),
 ]
 
 
@@ -372,14 +375,17 @@ def who_info(who):
         try:
             d = json.loads(m.group(0))
             if isinstance(d, dict) and (d.get("species_cs") or d.get("name")):
+                g = str(d.get("gender") or "").strip().lower()[:1]
                 return {"name": (d.get("name") or "").strip(),
                         "species_cs": (d.get("species_cs") or "").strip(),
-                        "species_en": (d.get("species_en") or "").strip()}
+                        "species_en": (d.get("species_en") or "").strip(),
+                        "gender": g if g in ("m", "f") else cz_gender(who)}
         except ValueError:
             pass
     words = who.split()
     name = next((w for w in words if w[:1].isupper()), "")
-    return {"name": name, "species_cs": " ".join(w for w in words if w != name), "species_en": ""}
+    return {"name": name, "species_cs": " ".join(w for w in words if w != name), "species_en": "",
+            "gender": cz_gender(who)}
 
 
 def label_parts(label):
@@ -431,8 +437,9 @@ def recast_reset(st):
         sh.pop("prompts", None)
     for role, c in st["characters"].items():
         o = orig["characters"][role]
-        for k in ("name", "name_en", "desc"):
-            c[k] = o.get(k, c.get(k))
+        for k in ("name", "name_en", "desc", "gender"):
+            if k in o:
+                c[k] = o[k]
         c["tag"] = c["name_en"]
         for k in ("_recast", "_recast_from", "species_en", "species_look"):
             c.pop(k, None)
@@ -466,7 +473,9 @@ def recast(st, work, path=None):
                    (old_en_name, info["name"] or new_tag),
                    (old_en_species, info["species_en"] or new_tag)]
         swap_en = sorted([(a, b) for a, b in swap_en if a and b], key=lambda ab: -len(ab[0]))
-        old_g, new_g = cz_gender(c["name"]), cz_gender(new_name)
+        # Rod: starý z katalogu (`gender` u postavy — „Ondra" i „Kuba" končí na -a
+        # a heuristika by je vzala za ženské), nový od LLM s heuristikou v záloze.
+        old_g, new_g = c.get("gender") or cz_gender(c["name"]), info.get("gender") or cz_gender(new_name)
         others = [x["name"] for r2, x in st["characters"].items() if r2 != role]
         for sh in st["shots"]:
             for k in ("keyframe", "narration_en"):
@@ -484,7 +493,7 @@ def recast(st, work, path=None):
             if isinstance(sh.get("prompts"), list):
                 sh["prompts"] = [swap_words(t, swap_en) for t in sh["prompts"]]
         c.update(name=new_name, name_en=new_tag, tag=new_tag, species_en=info["species_en"],
-                 _recast_from=c["name"],
+                 gender=new_g, _recast_from=c["name"], _recast_gender=(old_g, new_g),
                  species_look=(species_look(info["species_en"])
                                if info["species_en"] and useful_look(info["species_en"], "x") else ""),
                  _recast=who)
@@ -493,7 +502,7 @@ def recast(st, work, path=None):
         return
     for role, c in st["characters"].items():
         if c.get("_recast"):
-            fix_czech(st, c["_recast_from"], c["name"], role)
+            fix_czech(st, c["_recast_from"], c["name"], role, c.get("_recast_gender"))
             fix_english(st, c["tag"])
     print("  obsazení: %s" % ", ".join(done), flush=True)
     if path and os.path.exists(path):
@@ -784,12 +793,12 @@ def subject_is(text, old_label, new_label):
     return ans.startswith("nevyj") or mentions(ans, old_label) or mentions(ans, new_label)
 
 
-def fix_czech(st, old_label, new_label, role=None):
+def fix_czech(st, old_label, new_label, role=None, genders=None):
     """Po záměně postavy sedí slova, ale ne rod („seděl veverka", „koukají mu
     jen oči"). Jede jen když se rod opravdu mění a jen u záběrů, kde postava
     hraje — jinak model ochotně přepsal i větu o někom jiném. Bez gateway
     zůstane věta po záměně: význam je správný, gramatika kulhá."""
-    a, b = cz_gender(old_label), cz_gender(new_label)
+    a, b = genders or (cz_gender(old_label), cz_gender(new_label))
     if a == b:
         return
     system, shots = CZ_MF[(a, b)]

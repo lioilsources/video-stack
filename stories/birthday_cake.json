@@ -15,13 +15,15 @@
       "name": "Kája",
       "name_en": "Katie",
       "desc": "a lively 8-year-old girl with curly dark hair tied in a high ponytail and a big smile, wearing a yellow T-shirt, blue shorts and a red apron",
-      "look": "Živá osmiletá holčička s kudrnatými tmavými vlasy ve vysokém culíku a širokým úsměvem, ve žlutém tričku, modrých kraťasech a červené zástěře."
+      "look": "Živá osmiletá holčička s kudrnatými tmavými vlasy ve vysokém culíku a širokým úsměvem, ve žlutém tričku, modrých kraťasech a červené zástěře.",
+      "gender": "f"
     },
     "grandma": {
       "name": "babička",
       "name_en": "Grandma",
       "desc": "a cheerful plump grandmother with white hair in a bun, round glasses, rosy cheeks, a flowery blue dress and a white apron",
-      "look": "Veselá kyprá babička s bílými vlasy v drdolu, kulatými brýlemi a růžovými tvářemi, v modrých květovaných šatech a bílé zástěře."
+      "look": "Veselá kyprá babička s bílými vlasy v drdolu, kulatými brýlemi a růžovými tvářemi, v modrých květovaných šatech a bílé zástěře.",
+      "gender": "f"
     }
   },
   "shots": [

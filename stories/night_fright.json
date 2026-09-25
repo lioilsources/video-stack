@@ -15,14 +15,16 @@
       "name": "Kuba",
       "name_en": "Jake",
       "desc": "a 6-year-old boy with fluffy red hair and big blue eyes, wearing light blue pajamas with yellow stars",
-      "look": "Šestiletý kluk s načechranými zrzavými vlasy a velkýma modrýma očima, ve světle modrém pyžamu se žlutými hvězdičkami."
+      "look": "Šestiletý kluk s načechranými zrzavými vlasy a velkýma modrýma očima, ve světle modrém pyžamu se žlutými hvězdičkami.",
+      "gender": "m"
     },
     "teddy": {
       "name": "medvídek Bručoun",
       "name_en": "Teddy",
       "tag": "Teddy the bear",
       "desc": "a soft old brown teddy bear with a patched ear, button eyes and a red bow tie",
-      "look": "Měkký starý hnědý plyšový medvídek se záplatou na uchu, knoflíkovýma očima a červeným motýlkem."
+      "look": "Měkký starý hnědý plyšový medvídek se záplatou na uchu, knoflíkovýma očima a červeným motýlkem.",
+      "gender": "m"
     }
   },
   "shots": [

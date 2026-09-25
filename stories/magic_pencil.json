@@ -15,14 +15,16 @@
       "name": "Ondra",
       "name_en": "Oliver",
       "desc": "a curious 7-year-old boy with spiky black hair and a big grin, wearing a red and white striped T-shirt and blue overalls",
-      "look": "Zvídavý sedmiletý kluk s ježatými černými vlasy a širokým úsměvem, v červenobíle pruhovaném tričku a modrých laclácích."
+      "look": "Zvídavý sedmiletý kluk s ježatými černými vlasy a širokým úsměvem, v červenobíle pruhovaném tričku a modrých laclácích.",
+      "gender": "m"
     },
     "spot": {
       "name": "pejsek Flíček",
       "name_en": "Spot",
       "tag": "Spot the puppy",
       "desc": "a small fluffy white puppy with one black spot around his eye, floppy ears and a wagging tail, drawn with slightly sketchy crayon outlines",
-      "look": "Malé chlupaté bílé štěně s černou skvrnou kolem oka, klopenýma ušima a vrtícím ocáskem, s lehce načrtnutými obrysy jako od pastelky."
+      "look": "Malé chlupaté bílé štěně s černou skvrnou kolem oka, klopenýma ušima a vrtícím ocáskem, s lehce načrtnutými obrysy jako od pastelky.",
+      "gender": "m"
     }
   },
   "shots": [

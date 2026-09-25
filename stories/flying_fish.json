@@ -16,14 +16,16 @@
       "name_en": "Finn",
       "tag": "Finn the fish",
       "desc": "a small round bright orange fish with big sparkly blue eyes, flowing fins and a happy face",
-      "look": "Malá kulatá zářivě oranžová rybka s velkýma třpytivýma modrýma očima, vlajícími ploutvemi a veselou tvářičkou."
+      "look": "Malá kulatá zářivě oranžová rybka s velkýma třpytivýma modrýma očima, vlajícími ploutvemi a veselou tvářičkou.",
+      "gender": "f"
     },
     "bella": {
       "name": "labuť Bělka",
       "name_en": "Bella",
       "tag": "Bella the swan",
       "desc": "a gentle graceful white swan with a long neck, an orange beak and kind dark eyes",
-      "look": "Něžná ladná bílá labuť s dlouhým krkem, oranžovým zobákem a laskavýma tmavýma očima."
+      "look": "Něžná ladná bílá labuť s dlouhým krkem, oranžovým zobákem a laskavýma tmavýma očima.",
+      "gender": "f"
     }
   },
   "shots": [

@@ -15,13 +15,15 @@
       "name": "Lenka",
       "name_en": "Lena",
       "desc": "a sweet 7-year-old girl with long light brown hair in two braids, freckles and a big smile, wearing a pink dress with a white apron and green rubber boots",
-      "look": "Milá sedmiletá holčička s dlouhými světle hnědými vlasy ve dvou copech a pihami, v růžových šatech s bílou zástěrou a zelených holínkách."
+      "look": "Milá sedmiletá holčička s dlouhými světle hnědými vlasy ve dvou copech a pihami, v růžových šatech s bílou zástěrou a zelených holínkách.",
+      "gender": "f"
     },
     "butterfly": {
       "name": "motýl",
       "name_en": "the butterfly",
       "desc": "a big friendly blue butterfly with shiny sky-blue wings with white spots and a cute smiling face",
-      "look": "Velký přátelský modrý motýl s lesklými blankytnými křídly s bílými tečkami a usměvavou tvářičkou."
+      "look": "Velký přátelský modrý motýl s lesklými blankytnými křídly s bílými tečkami a usměvavou tvářičkou.",
+      "gender": "m"
     }
   },
   "shots": [
