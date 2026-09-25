@@ -420,6 +420,25 @@ def species_look(kind):
     return out if out and len(out) <= 120 and "\n" not in out else ""
 
 
+def recast_reset(st):
+    """Vrátí texty záběrů a jména postav z katalogu, ať jde přepis spustit
+    znovu (po opravě skloňování) — obsazení (`who`, `cast`, obrázky) zůstává."""
+    orig = json.load(open(os.path.join(STORIES, st["id"] + ".json")))
+    for sh, osh in zip(st["shots"], orig["shots"]):
+        for k in ("keyframe", "action", "narration", "narration_en", "motion"):
+            if k in osh:
+                sh[k] = osh[k]
+        sh.pop("prompts", None)
+    for role, c in st["characters"].items():
+        o = orig["characters"][role]
+        for k in ("name", "name_en", "desc"):
+            c[k] = o.get(k, c.get(k))
+        c["tag"] = c["name_en"]
+        for k in ("_recast", "_recast_from", "species_en", "species_look"):
+            c.pop(k, None)
+    normalize(st, st["id"])
+
+
 def recast(st, work, path=None):
     """Obsazená role může být úplně jiné zvíře, než co má scénář — `who`
     („ježek Bodlinka") přijde z appky vedle obrázku. Přepíše postavu v
@@ -440,28 +459,30 @@ def recast(st, work, path=None):
         new_tag = (("%s the %s" % (info["name"], info["species_en"])).strip()
                    if info["name"] and info["species_en"]
                    else (info["name"] or info["species_en"] or who))
-        # delší dřív, ať se „kocour Mourek" nerozpadne na „kocour" + „Mourek"
-        old_cs_name, old_cs_species = label_parts(c["name"])
+        # Angličtina a čeština zvlášť: anglický tag do české věty nepatří
+        # („Ptáček the little dragon sedí v lavici") a naopak.
         old_en_name, old_en_species = label_parts(c["tag"])
-        swap = [(c["tag"], new_tag), (c["name_en"], new_tag), (c["name"], new_name),
-                (old_cs_name, info["name"] or new_name), (old_en_name, info["name"] or new_tag),
-                (old_cs_species, species or new_name),
-                (old_en_species, info["species_en"] or new_tag)]
-        swap = [(a, b) for a, b in swap if a and b]
-        swap.sort(key=lambda ab: -len(ab[0]))
+        swap_en = [(c["tag"], new_tag), (c["name_en"], new_tag),
+                   (old_en_name, info["name"] or new_tag),
+                   (old_en_species, info["species_en"] or new_tag)]
+        swap_en = sorted([(a, b) for a, b in swap_en if a and b], key=lambda ab: -len(ab[0]))
+        old_g, new_g = cz_gender(c["name"]), cz_gender(new_name)
+        others = [x["name"] for r2, x in st["characters"].items() if r2 != role]
         for sh in st["shots"]:
-            for k in ("keyframe", "action", "narration", "narration_en"):
+            for k in ("keyframe", "narration_en"):
                 if sh.get(k):
-                    sh[k] = swap_words(sh[k], swap)
-            for k in ("action", "narration"):               # čeština se skloňuje
-                if sh.get(k) and old_cs_name:
-                    sh[k] = swap_czech(sh[k], old_cs_name, new_name, info["name"])
+                    sh[k] = swap_words(sh[k], swap_en)
+            alone = sh["chars"] == [role]
+            for k in ("action", "narration"):
+                if sh.get(k):
+                    sh[k] = cz_swap_declined(sh[k], c["name"], old_g, new_name, new_g)
+                    sh[k] = cz_regender(sh[k], new_name, old_g, new_g, alone, others)
             if isinstance(sh.get("motion"), list):
-                sh["motion"] = [swap_words(t, swap) for t in sh["motion"]]
+                sh["motion"] = [swap_words(t, swap_en) for t in sh["motion"]]
             elif sh.get("motion"):
-                sh["motion"] = swap_words(sh["motion"], swap)
+                sh["motion"] = swap_words(sh["motion"], swap_en)
             if isinstance(sh.get("prompts"), list):
-                sh["prompts"] = [swap_words(t, swap) for t in sh["prompts"]]
+                sh["prompts"] = [swap_words(t, swap_en) for t in sh["prompts"]]
         c.update(name=new_name, name_en=new_tag, tag=new_tag, species_en=info["species_en"],
                  _recast_from=c["name"],
                  species_look=(species_look(info["species_en"])
@@ -489,6 +510,164 @@ CZ_SWAP_SHOTS = [
     ("Dřív: medvídek Bručoun\nTeď: kyklop Zubejda\nVěta: Uložil Bručouna vedle sebe.",
      "Uložil Zubejdu vedle sebe."),
 ]
+
+
+# ---------------------------------------------------------------- čeština: pády
+
+CASES = ("nom", "gen", "dat", "acc", "voc", "ins")
+SOFT = {"k": "c", "h": "z", "g": "z", "ch": "š", "r": "ř"}   # dat/lok ženských -a: Marcelka → Marcelce
+
+
+def cz_paradigm(word, gender):
+    """Tvary jednoho slova (jméno nebo druh) ve všech pádech, pro dětský příběh
+    stačí tři vzory: mužské životné na souhlásku (pán/Pip, s vsuvným -e-:
+    Ptáček → Ptáčka), mužské životné na -a (předseda/Ondra) a ženské na -a
+    (žena/Marcelka, Mia). Vrací dict pád → tvar; u neznámého vzoru všude
+    nominativ."""
+    w = word
+    low = w.lower()
+    if low.endswith("a"):
+        stem = w[:-1]
+        if gender == "f":
+            last = stem[-1:].lower()
+            if last in "aeiouy":                              # Mia → Mii, Miu, Mio, Miou
+                return {"nom": w, "gen": stem + "i", "dat": stem + "i", "acc": stem + "u",
+                        "voc": stem + "o", "ins": stem + "ou"}
+            if stem[-2:].lower() == "ch":
+                dat = stem[:-2] + "š" + "e"
+            elif last in SOFT:
+                dat = stem[:-1] + SOFT[last] + "e"
+            elif last in "dtnbpvmf":
+                dat = stem + "ě"
+            else:
+                dat = stem + "e"
+            gen = stem + ("y" if last not in "cčsšzžjďťňř" else "e")
+            return {"nom": w, "gen": gen, "dat": dat, "acc": stem + "u", "voc": stem + "o", "ins": stem + "ou"}
+        return {"nom": w, "gen": stem + "y", "dat": stem + "ovi", "acc": stem + "u",      # Ondra, Zubejda
+                "voc": stem + "o", "ins": stem + "ou"}
+    if low[-1:] in "bcčdďfghjklmnňprřsštťvxzž" and gender != "f":
+        stem = w
+        if len(w) > 3 and low[-2] == "e" and low[-1] in "kcl" and low[-3] not in "aeiouy":
+            stem = w[:-2] + w[-1]                              # Ptáček → Ptáčk-, Pavel → Pavl-
+        voc = stem + ("u" if low[-1] in "kgh" or low.endswith("ch") else "e")   # Ptáčku, Bručoune
+        return {"nom": w, "gen": stem + "a", "dat": stem + "ovi", "acc": stem + "a", "voc": voc,
+                "ins": stem + "em"}
+    return {c: w for c in CASES}
+
+
+def cz_label_forms(label, gender):
+    """„kocour Mourek" → pád → „kocoura Mourka" (každé slovo zvlášť)."""
+    words = label.split()
+    return {c: " ".join(cz_paradigm(x, gender)[c] for x in words) for c in CASES}
+
+
+def cz_swap_declined(text, old_label, old_gender, new_label, new_gender):
+    """Záměna postavy včetně pádů: každý tvar starého popisku (celý popisek,
+    samotné jméno, samotný druh) se nahradí týmž pádem nového. Deterministicky,
+    LLM na 4B pády sklonil špatně („Marcelkovi", „Ptáčku" místo „Ptáčkovi").
+    Delší tvary dřív, ať se „kocoura Mourka" nerozpadne na dvě náhrady."""
+    old_name, old_kind = label_parts(old_label)
+    new_name, new_kind = label_parts(new_label)
+    pairs = []                                          # (starý tvar, nový tvar)
+    for o, n in ((old_label, new_label), (old_name, new_name or new_label), (old_kind, new_kind or new_name)):
+        if not o or not n:
+            continue
+        fo, fn = cz_label_forms(o, old_gender), cz_label_forms(n, new_gender)
+        # akuzativ před genitivem: u mužských na souhlásku splývají („Bručouna")
+        # a ve vyprávění je to skoro vždycky předmět, ne přivlastnění
+        for c in ("nom", "acc", "gen", "dat", "voc", "ins"):
+            fn_c = fn[c]
+            if c == "voc" and new_name and " " in n:      # „Dobrou noc, Mio", ne „holčičko Mio"
+                fn_c = cz_paradigm(new_name, new_gender)["voc"]
+            pairs.append((fo[c], fn_c))
+    seen, uniq = set(), []
+    for o, n in sorted(pairs, key=lambda p: -len(p[0])):
+        if o.lower() in seen or o.lower() == n.lower():
+            continue
+        seen.add(o.lower()); uniq.append((o, n))
+    out = swap_words(text, uniq)
+    # předložka s/z před s-, z-, š-, ž- dostává -e („se Zubejdou")
+    heads = "|".join(re.escape(n) for _, n in uniq if n[:1].lower() in "szšž")
+    if heads:
+        out = re.sub(r"\b([sSzZ]) (?=(%s)\b)" % heads, lambda m: m.group(1) + "e ", out)
+    return out
+
+
+# Shoda po změně rodu, deterministicky tam, kde je to jisté: věta začíná novou
+# postavou (podmět vyjádřený), nebo nemá vyjádřený podmět a v záběru není nikdo
+# jiný — pak patří sloveso v minulém čase i „sám"/„rád" hrdinovi. Zájmena
+# „mu"/„ho" jen když je hrdina v záběru sám (jinak patří kamarádovi).
+CZ_NOUN_L = {"stůl", "anděl", "motýl", "kůl", "úl", "sokol", "orel", "popel", "kotel", "pytel", "uhel",
+             "hotel", "tunel", "model", "cíl", "díl", "sál", "žal", "bál", "val", "mel", "el"}
+CZ_PRON = {("m", "f"): {"mu": "jí", "ho": "ji", "jeho": "její", "něj": "ni", "něho": "ni", "sám": "sama",
+                        "rád": "ráda", "celý": "celá", "svůj": "svou"},
+           ("f", "m"): {"jí": "mu", "ji": "ho", "její": "jeho", "ní": "něj", "sama": "sám", "ráda": "rád",
+                        "celá": "celý", "svou": "svůj"}}
+
+
+def cz_regender_verbs(sent, a):
+    """Minulý čas a přídavná jména vázaná na podmět: -l ↔ -la, sám ↔ sama."""
+    def verb(m):
+        w = m.group(0)
+        if w.lower() in CZ_NOUN_L:
+            return w
+        if a == "m" and w.lower().endswith("l"):
+            return w + "a"
+        if a == "f" and w.lower().endswith("la"):
+            return w[:-1]
+        return w
+    out = re.sub(r"\b\w+l\b" if a == "m" else r"\b\w+la\b", verb, sent)
+    adj = {"sám": "sama", "rád": "ráda", "celý": "celá"} if a == "m" else {"sama": "sám", "ráda": "rád", "celá": "celý"}
+    return re.sub(r"\b(%s)\b" % "|".join(adj), lambda m: adj[m.group(1)], out)
+
+
+def cz_regender(text, new_label, a, b, alone, others):
+    """Shoda po změně rodu, jen kde je hrdina jistě podmětem: věta začíná jeho
+    popiskem (převádí se jen po první zmínku jiné postavy — „Marcelka tancovala
+    a Ňufíček štěkal"), nebo podmět nemá a je první ve větě / po větě o
+    hrdinovi („Uložil Zubejdu vedle sebe."). Zájmena mu/ho/jeho se mění jen
+    když je hrdina v záběru sám — jinak patří kamarádovi."""
+    if a == b:
+        return text
+    name, kind = label_parts(new_label)
+    heads = [x for x in (new_label, name, kind) if x]
+    parts = re.split(r"(?<=[.!?…])\s+", text)
+    out, prev_hero = [], True
+    for sent in parts:
+        low = sent.lower()
+        explicit = any(low.startswith(h.lower()) for h in heads)
+        cut = len(sent)
+        for o in others:                                    # kde začíná řeč o někom jiném
+            for st_ in stems(o):
+                i = low.find(st_)
+                if i >= 0:
+                    cut = min(cut, i)
+        # bez vyjádřeného podmětu: „Uložil…", „Už se nebál.", „Pak se nadechl…",
+        # ne „Na zdi byl velký stín" (ta má podmět, jen jinde ve větě)
+        implicit = (prev_hero and cut > 0
+                    and re.match(r"^(?:(?:už|pak|potom|nakonec|hned|zase|najednou|teď|ráno|večer|a|ale)\s+)?"
+                                 r"(?:(?:se|si)\s+)?\w+l[aoi]?\b", sent, re.I) is not None)
+        if explicit or implicit:
+            sent = cz_regender_verbs(sent[:cut], a) + sent[cut:]
+        prev_hero = explicit or implicit
+        out.append(sent)
+    text = " ".join(out)
+    # přídavné jméno a sloveso těsně před popiskem: „moudrá sova" → „moudrý
+    # brouček", „řekla sova" → „řekl brouček" (podmět stojí za slovesem)
+    for h in heads:
+        hh = re.escape(h)
+        if a == "m":
+            text = re.sub(r"\b(\w+)ý (%s)\b" % hh, r"\1á \2", text)
+            text = re.sub(r"\b(\w+[^l\W])l (%s)\b" % hh, r"\1la \2", text)
+        else:
+            text = re.sub(r"\b(\w+)á (%s)\b" % hh, r"\1ý \2", text)
+            text = re.sub(r"\b(\w+)la (%s)\b" % hh, r"\1l \2", text)
+    if alone:
+        table = CZ_PRON[(a, b)]
+        text = re.sub(r"\b(%s)\b" % "|".join(map(re.escape, table)),
+                      lambda m: (table[m.group(1).lower()].capitalize() if m.group(1)[:1].isupper()
+                                 else table[m.group(1).lower()]), text)
+    return text
 
 
 def cz_forms(name):
