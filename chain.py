@@ -188,7 +188,8 @@ def load_dict(m):
             # Knoby jsou čísla; text sem občas zabloudí ze jmenné kolize
             # (příběh má `motion` jako prompt pohybu). Radši umřít tady než
             # poslat string do FLOAT vstupu a číst chybu z ComfyUI grafu.
-            for k in ("motion", "boundary", "shift", "sharpen", "identity", "face_denoise"):
+            # `identity` sem nepatří: je to režim ("face"), ne síla.
+            for k in ("motion", "boundary", "shift", "sharpen", "face_denoise"):
                 if b.get(k) is not None and isinstance(b[k], (str, list, dict)):
                     die("beat %s: %s je %r — čekám číslo" % (b["id"], k, b[k]))
             if b.get("control"):
