@@ -14,3 +14,16 @@ __pycache__/
 !/chains/robot_ctl.json
 !/chains/flair_ctl.json
 !/chains/gangnam_ctl*.json
+# devconv:start
+.env
+.env.*
+!.env.example
+*.p8
+*.p12
+*.jks
+key.properties
+.claude/settings.local.json
+CLAUDE.local.md
+# devconv:end
+.venv/
+*.pyc
